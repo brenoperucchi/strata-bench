@@ -39,6 +39,13 @@ PROBE_SYSTEM = ("You are a code reviewer for a C++ inference engine. Classify ea
                 " Think about memory ordering, bounds, error handling and thread safety, but never explain: one word "
                 "only. " * 3)
 PROBE_CALLS, PROBE_SKIP = 30, 2
+# gprobe (opt-in, --sizes ...,gprobe): short-request probes shaped like an agent's classifier calls - a short fixed
+# system prompt and a ~150/300/450-token excerpt of the public xlong.txt, a different excerpt per call, 1 token out.
+# It measures the prompt path below Strata's 1024-token streamed walk, which the line probes barely touch.
+GPROBE_SYSTEM = ("You review one excerpt of C++ from an inference engine. Answer with exactly one word: SAFE if the "
+                 "excerpt has no obvious correctness risk, RISKY if it does. Risky means a data race, an out-of-bounds "
+                 "access, an ignored error or an integer overflow. One word only, no explanation.")
+GPROBE_CHARS = {150: 525, 300: 1050, 450: 1575}   # ~3.5 characters per token for this code
 
 
 class PreflightError(Exception):
@@ -287,6 +294,12 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
             if size == "probe":
                 measure_probe(base, res, probe_offset, log)
                 continue
+            if size == "gprobe":
+                d["protocol"]["gprobe"] = {"system_sha256": sha256(GPROBE_SYSTEM.encode()), "chars": GPROBE_CHARS,
+                                           "source": "xlong.txt", "calls": PROBE_CALLS, "skip_first": PROBE_SKIP,
+                                           "max_tokens": 1}
+                measure_gprobe(base, res, log)
+                continue
             text = (PROMPTS / f"{size}.txt").read_text(encoding="utf-8")
             done = []
             for kind, n in (("warmup", warmup), ("run", runs_n)):
@@ -352,3 +365,37 @@ def measure_probe(base: str, res: Result, offset: int, log):
                            "reused_median": statistics.median(reused) if reused else None}
     s = d["sizes"]["probe"]
     log(f"probe: prompt_ms median {s['prompt_ms']['median']}, reused median {s['reused_median']}")
+
+
+def gprobe_excerpt(code: str, size: int, i: int) -> str:
+    start = 2000 + (size * 37 + i * 1777) % (len(code) - 4000)
+    return code[start:start + GPROBE_CHARS[size]]
+
+
+def measure_gprobe(base: str, res: Result, log):
+    """Agent-shaped probes at ~150/300/450 tokens (see GPROBE_SYSTEM); per size the first PROBE_SKIP calls warm the
+    shared system prefix and stay out of the summary."""
+    d = res.doc
+    code = (PROMPTS / "xlong.txt").read_text(encoding="utf-8")
+    for size in GPROBE_CHARS:
+        rows = []
+        for i in range(PROBE_CALLS):
+            msg = [{"role": "system", "content": GPROBE_SYSTEM}, {"role": "user", "content": gprobe_excerpt(code, size, i)}]
+            r = {"size": f"gprobe{size}", "kind": "warmup" if i < PROBE_SKIP else "run", "index": i + 1,
+                 **call(base, msg, 1, {"chat_template_kwargs": {"enable_thinking": False}})}
+            d["runs"].append(r)
+            res.save()
+            if i >= PROBE_SKIP:
+                require(r, ("prompt_n", "prompt_ms"), f"gprobe{size} {i + 1}")
+            rows.append(r)
+        kept = rows[PROBE_SKIP:]
+        reused = [r["tokens"]["reused"] for r in kept if r["tokens"]["reused"] is not None]
+        read = [r["tokens"]["prompt"] for r in kept if r["tokens"]["prompt"] is not None]
+        d["sizes"][f"gprobe{size}"] = {"prompt_ms": summary(kept, "prompt_ms"),
+                                       "wall_ms": {"median": statistics.median(r["wall_ms"] for r in kept)},
+                                       "reused_median": statistics.median(reused) if reused else None,
+                                       "read_median": statistics.median(read) if read else None}
+        res.save()
+        g = d["sizes"][f"gprobe{size}"]
+        log(f"gprobe{size}: prompt_ms median {g['prompt_ms']['median']}, read {g['read_median']}, "
+            f"reused {g['reused_median']}")

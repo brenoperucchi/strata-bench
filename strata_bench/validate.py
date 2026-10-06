@@ -30,6 +30,11 @@ def problems(doc: dict) -> list:
     from .core import PROBE_SYSTEM, sha256          # the canonical probe system prompt
     if proto.get("probe_system_sha256") not in (None, sha256(PROBE_SYSTEM.encode())):
         out.append("probe system prompt is not standard-v1's")
+    from .core import GPROBE_CHARS, GPROBE_SYSTEM   # the canonical gprobe, when the result has one
+    gp = proto.get("gprobe") or {}
+    if gp and (gp.get("system_sha256") != sha256(GPROBE_SYSTEM.encode())
+               or gp.get("chars") != {str(k): v for k, v in GPROBE_CHARS.items()}):
+        out.append("gprobe is not standard-v1's")
     if (doc.get("validity") or {}).get("status") not in ("ok", "warnings"):
         out.append(f"result is not complete (status {(doc.get('validity') or {}).get('status')!r})")
     text = json.dumps(doc)

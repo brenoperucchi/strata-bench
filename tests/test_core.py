@@ -117,6 +117,22 @@ class CoreTest(unittest.TestCase):
         self.assertEqual(d["validity"]["status"], "ok")                             # a normal probe is not "reused"
         self.assertEqual(validate.problems(d), [])
 
+    def test_gprobe_three_sizes_distinct_excerpts_and_export(self):
+        self.assertEqual(self.go(("gprobe",)), 0)
+        d = self.doc()
+        self.assertEqual(sorted(d["sizes"]), ["gprobe150", "gprobe300", "gprobe450"])
+        calls = Fake.st["calls"]
+        self.assertEqual(len(calls), 3 * core.PROBE_CALLS)
+        self.assertTrue(all(c["messages"][0]["content"] == core.GPROBE_SYSTEM and c["max_tokens"] == 1 for c in calls))
+        for n, size in enumerate(core.GPROBE_CHARS):
+            users = [c["messages"][1]["content"] for c in calls[n * core.PROBE_CALLS:(n + 1) * core.PROBE_CALLS]]
+            self.assertEqual({len(u) for u in users}, {core.GPROBE_CHARS[size]})
+            self.assertEqual(len(set(users)), core.PROBE_CALLS)                      # a different excerpt per call
+        self.assertEqual(d["sizes"]["gprobe300"]["read_median"], 20)
+        self.assertEqual(validate.problems(d), [])
+        d["protocol"]["gprobe"]["system_sha256"] = H64
+        self.assertIn("gprobe is not standard-v1's", validate.problems(d))
+
     def test_unique_line_is_constant_per_size_and_run(self):
         self.go()
         firsts = [c["messages"][0]["content"].split("\n", 1)[0] for c in Fake.st["calls"]]

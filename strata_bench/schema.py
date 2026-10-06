@@ -75,11 +75,13 @@ PUBLIC = {
                  "max_tokens": SCALAR, "warmup": SCALAR, "runs": SCALAR,
                  "probe": {"calls": SCALAR, "skip_first": SCALAR, "max_tokens": SCALAR, "offset": SCALAR,
                            "cache_prompt": SCALAR},
+                 "gprobe": {"system_sha256": HEX, "chars": Map(r"^(150|300|450)$", SCALAR), "source": SCALAR,
+                            "calls": SCALAR, "skip_first": SCALAR, "max_tokens": SCALAR},
                  "reasoning_sent": {"sizes": SCALAR, "probe": SCALAR}, "unique_line": SCALAR},
     "runs": [RUN],
-    "sizes": Map(r"^(short|medium|long|xlong|probe)$",
+    "sizes": Map(r"^(short|medium|long|xlong|probe|gprobe150|gprobe300|gprobe450)$",
                  {"prompt_tps": SUMMARY, "decode_tps": SUMMARY, "prompt_ms": SUMMARY, "wall_ms": SUMMARY,
-                  "reused_median": SCALAR}),
+                  "reused_median": SCALAR, "read_median": SCALAR}),
     "validity": {"status": SCALAR, "warnings": [SCALAR], "error": SCALAR},
 }
 
