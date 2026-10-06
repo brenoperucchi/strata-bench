@@ -20,3 +20,7 @@ python3 -m strata_bench validate results/*.result.json      # public-export gate
 - Flat `label` / `build_info` / `model_path` (file name only) / `n_ctx` at the top and `sizes{}` keep the `prompt_tps` / `decode_tps` / `prompt_ms` medians that existing dashboards read.
 
 Tests: `python3 -m unittest discover -s tests`
+
+The prompts are excerpts of the Strata source (https://github.com/Niko1221/Strata, MIT); see
+`strata_bench/prompts/README.md` for how each one was cut. This tool is not part of Strata and is not maintained by
+its author. License: MIT.

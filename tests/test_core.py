@@ -232,7 +232,7 @@ class CoreTest(unittest.TestCase):
                {"sizes": {"medium": {**d["sizes"]["medium"], "private_case": "P"}}},
                {"runs": [{**d["runs"][0], "timings": {"private_case": "P"}}]},
                {"protocol": {**d["protocol"], "sampling": {"private_case": "P"}}},
-               {"protocol": {**d["protocol"], "id": "private-mfc"}},
+               {"protocol": {**d["protocol"], "id": "private-x"}},
                {"protocol": {**d["protocol"], "prompt_sha256": {"medium.txt": H64}}},
                {"submission": {"label": "E:/strata-data/x"}}, {"model": {"file": "/opt/models/x.gguf"}},
                {"validity": {"status": "incomplete"}},
