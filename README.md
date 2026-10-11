@@ -3,6 +3,15 @@
 Community measurements of [Strata](https://github.com/Niko1221/Strata) servers with fixed public prompts, and a health view of the failures people run into.
 **Results and dashboard: https://brenoperucchi.github.io/strata-bench/**
 
+<p align="center">
+  <a href="https://brenoperucchi.github.io/strata-bench/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/img/dashboard-dark.png">
+      <img src="docs/img/dashboard.png" alt="The strata-bench dashboard: a table with one result, an RTX 5090 running Swift IQ3_XXS on Strata 0.1.42" width="900">
+    </picture>
+  </a>
+</p>
+
 strata-bench is an independent project. It is not part of Strata and is not maintained by its author. MIT licensed.
 
 ## What you get
