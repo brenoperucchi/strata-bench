@@ -42,6 +42,7 @@ class Site(unittest.TestCase):
         r = data["results"][0]
         self.assertEqual((r["status"], r["gpu"], r["engine"], r["model"], r["quant"]), ("ok", "RTX 5090", "0.1.40.2", "Swift", "IQ3_XXS"))
         self.assertEqual(r["sizes"]["medium"]["decode_tps"], 200.0)
+        self.assertEqual((r["by"], r["machine_id"]), (None, None))                   # optional fields stay empty unless declared
         self.assertEqual(r["id"], "results/good.result.json")
         self.assertRegex(r["config_id"], r"^[0-9a-f]{16}$")
         self.assertNotIn("runs", r)                                                  # per-request data stays in the result file, not on the page

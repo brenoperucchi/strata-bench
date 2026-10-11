@@ -41,6 +41,7 @@ def data() -> dict:
         "gprobe_chars": {str(k): v for k, v in core.GPROBE_CHARS.items()},
         "failure_kinds": list(schema.FAILURE_KINDS),
         "failure_where_re": schema.FAILURE_WHERE.pattern,
+        "id_re": schema.ID_RE.pattern,
         "leaks": [[rx.pattern, what] for rx, what in validate.LEAKS],
         "statuses": ["ok", "warnings", "failed"],
     }

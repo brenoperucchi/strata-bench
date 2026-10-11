@@ -48,6 +48,11 @@ def problems(doc: dict) -> list:
             out.append("failure.where is not one of the protocol's call names")
     elif failure is not None:
         out.append("failure is only allowed on a failed result")
+    for block, key in (("submission", "by"), ("machine", "machine_id")):      # declared names: short, no free text
+        section = doc.get(block)
+        if isinstance(section, dict) and section.get(key) is not None and not (
+                isinstance(section[key], str) and schema.ID_RE.fullmatch(section[key])):
+            out.append(f"{block}.{key} must be a short name (letters, digits, '.', '_' and '-')")
     text = json.dumps(doc)
     for rx, what in LEAKS:
         m = rx.search(text)

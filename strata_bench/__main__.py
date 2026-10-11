@@ -29,6 +29,7 @@ def main(argv=None) -> int:
     r.add_argument("--protocol", default=core.PROTOCOL, choices=[core.PROTOCOL])
     r.add_argument("--sizes", default="probe,medium,long,xlong")
     r.add_argument("--identity", type=Path)
+    r.add_argument("--by", help="optional public name to list the result under (for example your GitHub name); declared, not verified")
     r.add_argument("--probe-offset", type=int, default=0)
     r.add_argument("--api-key", default=os.environ.get("STRATA_API_KEY"), help="default $STRATA_API_KEY; never written")
     v = sub.add_parser("validate", help="check result files for public export")
@@ -42,7 +43,7 @@ def main(argv=None) -> int:
         cfg = json.loads(a.config.read_text(encoding="utf-8-sig"))
         ident = json.loads(a.identity.read_text(encoding="utf-8")) if a.identity else None
         return core.run(a.base.rstrip("/"), cfg, a.origin, sizes, a.label, a.out, ident,
-                        probe_offset=a.probe_offset, api_key=a.api_key)
+                        probe_offset=a.probe_offset, api_key=a.api_key, by=a.by)
     rc = 0
     for f in a.files:
         probs = validate.problems(json.loads(f.read_text(encoding="utf-8")))

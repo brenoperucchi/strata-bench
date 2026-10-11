@@ -1,6 +1,6 @@
 "use strict";
 (function () {
-  var state = { rows: [], filters: { gpu: "", model: "", engine: "", status: "" }, sort: { key: "date", dir: -1 } };
+  var state = { rows: [], filters: { gpu: "", model: "", engine: "", status: "", by: "", machine_id: "" }, sort: { key: "date", dir: -1 } };
   var $ = function (id) { return document.getElementById(id); };
   var fmt = function (v, d) { return v === null || v === undefined ? "–" : (typeof v === "number" ? v.toLocaleString(undefined, { maximumFractionDigits: d === undefined ? 1 : d }) : String(v)); };
   var esc = function (s) { return String(s === null || s === undefined ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
@@ -15,15 +15,28 @@
   }
 
   function filters(rows) {
-    var defs = [["gpu", "GPU"], ["model", "Model"], ["engine", "Engine"], ["status", "Status"]];
+    var defs = [["gpu", "GPU"], ["model", "Model"], ["engine", "Engine"], ["status", "Status"], ["by", "Submitted by"], ["machine_id", "Machine"]].filter(function (d) {
+      return d[0] === "status" || d[0] === "gpu" || d[0] === "model" || d[0] === "engine" || uniq(rows, d[0]).length > 0;   // the optional filters appear only when some result declares them
+    });
     $("filters").innerHTML = defs.map(function (d) {
       var opts = d[0] === "status" ? ["ok", "warnings"] : uniq(rows, d[0]);
       return '<label>' + d[1] + '<select data-key="' + d[0] + '"><option value="">All</option>' +
         opts.map(function (o) { return '<option value="' + esc(o) + '"' + (state.filters[d[0]] === o ? " selected" : "") + ">" + esc(o) + "</option>"; }).join("") + "</select></label>";
     }).join("");
     Array.prototype.forEach.call($("filters").querySelectorAll("select"), function (s) {
-      s.addEventListener("change", function () { state.filters[s.dataset.key] = s.value; drawPerf(); });
+      s.addEventListener("change", function () { state.filters[s.dataset.key] = s.value; shareLink(); drawPerf(); });
     });
+  }
+
+  // ?by=name and ?machine=id preselect a filter, so a link can point at one person's or one machine's results
+  function readLink() {
+    try { var q = new URLSearchParams(location.search); state.filters.by = q.get("by") || ""; state.filters.machine_id = q.get("machine") || ""; } catch (e) { /* no URL support */ }
+  }
+  function shareLink() {
+    try {
+      var q = new URLSearchParams(); if (state.filters.by) q.set("by", state.filters.by); if (state.filters.machine_id) q.set("machine", state.filters.machine_id);
+      history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : "") + location.hash);
+    } catch (e) { /* file:// */ }
   }
 
   function sortVal(r, key) {
@@ -36,23 +49,26 @@
   function drawPerf() {
     var rows = state.rows.filter(function (r) {
       return r.status !== "failed" && (!state.filters.gpu || r.gpu === state.filters.gpu) && (!state.filters.model || r.model === state.filters.model) &&
-        (!state.filters.engine || r.engine === state.filters.engine) && (!state.filters.status || r.status === state.filters.status);
+        (!state.filters.engine || r.engine === state.filters.engine) && (!state.filters.status || r.status === state.filters.status) &&
+        (!state.filters.by || r.by === state.filters.by) && (!state.filters.machine_id || r.machine_id === state.filters.machine_id);
     });
     rows.sort(function (a, b) { var x = sortVal(a, state.sort.key), y = sortVal(b, state.sort.key); return (x < y ? -1 : x > y ? 1 : 0) * state.sort.dir; });
     var maxDecode = Math.max.apply(null, rows.map(function (r) { return size(r, "medium", "decode_tps") || 0; }).concat([1]));
-    var head = [["gpu", "GPU"], ["model", "Model"], ["engine", "Engine"], ["config_id", "Config"], ["prompt_medium", "Prompt medium", 1], ["prompt_long", "Prompt long", 1], ["prompt_xlong", "Prompt xlong", 1], ["decode", "Decode", 1], ["date", "Date"]];
+    var hasBy = state.rows.some(function (r) { return r.by; });
+    var head = [["gpu", "GPU"], ["model", "Model"], ["engine", "Engine"]].concat(hasBy ? [["by", "By"]] : []).concat([["config_id", "Config"], ["prompt_medium", "Prompt medium", 1], ["prompt_long", "Prompt long", 1], ["prompt_xlong", "Prompt xlong", 1], ["decode", "Decode", 1], ["date", "Date"]]);
     var h = "<thead><tr>" + head.map(function (c) { return '<th data-key="' + c[0] + '"' + (c[2] ? ' class="num"' : "") + ">" + c[1] + (state.sort.key === c[0] ? (state.sort.dir > 0 ? " ▲" : " ▼") : "") + "</th>"; }).join("") + "</tr></thead>";
     var b = rows.map(function (r) {
       var dec = size(r, "medium", "decode_tps");
       var args = (r.args || []).join(" ");
       return "<tr><td>" + esc(r.gpu) + (r.vram_gb ? " <span class='hint'>" + esc(r.vram_gb) + " GB</span>" : "") + (r.gpu_count > 1 ? " <span class='hint'>×" + esc(r.gpu_count) + "</span>" : "") +
         "</td><td>" + esc(r.model) + (r.quant ? " <span class='hint'>" + esc(r.quant) + "</span>" : "") + "</td><td>" + esc(r.engine) + "</td>" +
+        (hasBy ? "<td>" + (r.by ? "<a href='?by=" + encodeURIComponent(r.by) + "'>" + esc(r.by) + "</a>" : "–") + "</td>" : "") +
         "<td><details><summary>" + esc(r.config_id) + '</summary><pre>' + esc(args) + "</pre><a href='../" + esc(r.id) + "'>result file</a>" +
         (r.status === "warnings" ? " <span class='pill warnings'>" + esc(r.warnings) + " warning(s)</span>" : "") + "</details></td>" +
         ["medium", "long", "xlong"].map(function (n) { return "<td class='num'>" + fmt(size(r, n, "prompt_tps"), 0) + "</td>"; }).join("") +
         "<td class='num'>" + (dec ? "<span class='bar' style='width:" + Math.round(60 * dec / maxDecode) + "px'></span>" : "") + fmt(dec) + "</td><td>" + esc((r.date || "").slice(0, 10)) + "</td></tr>";
     }).join("");
-    $("perf").innerHTML = h + "<tbody>" + (b || "<tr><td colspan='9'>No result matches the filters.</td></tr>") + "</tbody>";
+    $("perf").innerHTML = h + "<tbody>" + (b || "<tr><td colspan='" + head.length + "'>No result matches the filters.</td></tr>") + "</tbody>";
     Array.prototype.forEach.call($("perf").querySelectorAll("th"), function (th) {
       th.addEventListener("click", function () { var k = th.dataset.key; state.sort = { key: k, dir: state.sort.key === k ? -state.sort.dir : -1 }; drawPerf(); });
     });
@@ -91,6 +107,8 @@
     cards(state.rows);
     tabs();
     if (!state.rows.length) { $("empty").hidden = false; $("view-perf").hidden = true; $("view-health").hidden = true; document.querySelector(".tabs").hidden = true; return; }
+    readLink();
+    ["by", "machine_id"].forEach(function (k) { if (uniq(state.rows, k).indexOf(state.filters[k]) < 0) state.filters[k] = ""; });   // a link to an unknown name shows everything
     filters(state.rows); drawPerf(); drawHealth();
   }).catch(function () {
     $("cards").innerHTML = '<div class="card"><b>–</b><span>data.json could not be loaded</span></div>';

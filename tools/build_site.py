@@ -37,6 +37,7 @@ def row(rel: str, doc: dict) -> dict:
         "id": rel,
         "label": doc.get("label"),
         "date": (doc.get("submission") or {}).get("date"),
+        "by": (doc.get("submission") or {}).get("by"), "machine_id": m.get("machine_id"),
         "status": val.get("status"),
         "warnings": len(val.get("warnings") or []),
         "failure": val.get("failure"),

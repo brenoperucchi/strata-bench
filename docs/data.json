@@ -28,6 +28,7 @@
     "int8"
    ],
    "backend": null,
+   "by": null,
    "commit": "61b3fb5d",
    "config_id": "355c006bb87cd541",
    "config_origin": "setup-default",
@@ -40,6 +41,7 @@
    "gpu_count": 1,
    "id": "results/2026-10-11-ryzen9-5090-default-99366938.result.json",
    "label": "ryzen9-5090-default",
+   "machine_id": null,
    "model": "Swift",
    "n_ctx": 32768,
    "os": "Windows",

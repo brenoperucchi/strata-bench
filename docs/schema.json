@@ -14,6 +14,7 @@
  },
  "gprobe_system_sha256": "5530caa1b4d9f495fb591d3d309e1ab19ff4d1bc923dc09bb625427fc20ec43c",
  "hex_re": "^[0-9a-f]{8,64}$",
+ "id_re": "[A-Za-z0-9][A-Za-z0-9._-]{0,38}",
  "leaks": [
   [
    "\\b[A-Za-z]:[\\\\/]",
@@ -365,6 +366,7 @@
    },
    "submission": {
     "k": {
+     "by": "scalar",
      "date": "scalar",
      "label": "scalar"
     },

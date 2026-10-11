@@ -17,6 +17,13 @@ The benchmark attaches to a server that is already running; it does not start or
 
 Copy `examples/identity.example.json`, edit it to match your hardware, and pass it with `--identity`. These facts are declared by you, so they are shown as declared. Keys outside the public schema are dropped with a warning.
 
+Two optional names let the dashboard filter and group results. Leave them out and nobody is listed.
+
+- `submission.by`: a public name to list the result under, for example your GitHub name (or `--by your-name` on the command line). The dashboard gets a "Submitted by" filter, and `https://brenoperucchi.github.io/strata-bench/?by=your-name` links to your results. It is declared, not verified: anyone could write someone else's name, so treat it as a label.
+- `machine.machine_id`: any short name for your machine, to group runs of the same rig (before and after calibrating, for example). The dashboard gets a "Machine" filter.
+
+Both must be short names: letters, digits, `.`, `_` and `-`, up to 39 characters. The validator refuses anything else, so an email, a path or a sentence cannot slip in.
+
 ## 4. Run
 
 ```

@@ -100,8 +100,8 @@ class CoreTest(unittest.TestCase):
         self.srv.server_close()
         shutil.rmtree(self.tmp)
 
-    def go(self, sizes=("medium",), origin="setup-default", label="t", cfg=CFG, identity=None, api_key=None):
-        return core.run(self.base, cfg, origin, list(sizes), label, self.tmp, identity, api_key=api_key,
+    def go(self, sizes=("medium",), origin="setup-default", label="t", cfg=CFG, identity=None, api_key=None, by=None):
+        return core.run(self.base, cfg, origin, list(sizes), label, self.tmp, identity, api_key=api_key, by=by,
                         log=lambda *a: None)
 
     def doc(self, label="t"):
@@ -126,6 +126,29 @@ class CoreTest(unittest.TestCase):
         self.assertNotIn("private_case", d["runs"][0]["timings"])                   # unknown timing key pruned
         self.assertEqual(d["validity"]["status"], "ok")                             # a normal probe is not "reused"
         self.assertEqual(validate.problems(d), [])
+
+    def test_the_public_name_and_machine_id_are_optional_declared_and_validated(self):
+        self.assertEqual(self.go(), 0)                                               # nobody is listed unless they ask
+        self.assertNotIn("by", self.doc()["submission"])
+        self.assertEqual(self.go(label="a", identity={"submission": {"by": "from-identity"}, "machine": {"machine_id": "rig-1"}}), 0)
+        d = self.doc("a")
+        self.assertEqual((d["submission"]["by"], d["machine"]["machine_id"]), ("from-identity", "rig-1"))
+        self.assertEqual(validate.problems(d), [])
+        self.assertEqual(self.go(label="b", by="cli-name", identity={"submission": {"by": "from-identity"}}), 0)
+        self.assertEqual(self.doc("b")["submission"]["by"], "cli-name")              # --by wins over the identity file
+        for bad in ("two words", "a" * 40, "/etc/passwd", "name@mail.com", "-leading", ""):
+            with self.assertRaises(SystemExit, msg=bad):
+                self.go(label="x", by=bad)
+        with self.assertRaises(SystemExit):
+            self.go(label="x", identity={"machine": {"machine_id": "my rig"}})
+        d = self.doc("a")
+        for block, key, value in (("submission", "by", "has space"), ("submission", "by", 5), ("submission", "by", ["x"]),
+                                  ("machine", "machine_id", "x" * 40), ("machine", "machine_id", "a/b")):
+            e = json.loads(json.dumps(d))
+            e[block][key] = value
+            self.assertIn(f"{block}.{key} must be a short name (letters, digits, '.', '_' and '-')", validate.problems(e), (key, value))
+        self.assertEqual(self.go(label="c", identity={"submission": {"by": "n", "email": "x@y.z"}}), 0)
+        self.assertNotIn("email", self.doc("c")["submission"])                       # keys outside the schema never get in
 
     def test_gprobe_three_sizes_distinct_excerpts_and_export(self):
         self.assertEqual(self.go(("gprobe",)), 0)

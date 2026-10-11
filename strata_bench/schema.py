@@ -50,7 +50,9 @@ IDENTITY = {
     "calibration": {"ran": SCALAR, "kept_params": Map(r"^--?[\w-]+$", SCALAR), "pool_workers_asked": SCALAR,
                     "pool_workers_resolved": SCALAR, "sweep_summary": SCALAR, "state": SCALAR},
     "config": {"origin_verified": SCALAR},
+    "submission": {"by": SCALAR},
 }
+ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,38}")   # submission.by and machine.machine_id: a short name, never free text
 OBSERVED = {"engine": {"build_info"}, "model": {"file", "n_ctx"}}
 
 FAILURE_KINDS = ("crash", "oom", "garbage", "hang", "server_error")        # the health view: only catastrophic failures, a closed list
@@ -63,7 +65,7 @@ RUN = {"size": SCALAR, "kind": SCALAR, "index": SCALAR, "request_sha256": HEX, "
 PUBLIC = {
     "schema": SCALAR, "label": SCALAR, "build_info": SCALAR, "model_path": SCALAR, "n_ctx": SCALAR,
     "runner": {"name": SCALAR, "version": SCALAR, "commit": SCALAR},
-    "submission": {"label": SCALAR, "date": SCALAR},
+    "submission": {"label": SCALAR, "date": SCALAR, "by": SCALAR},
     "machine": IDENTITY["machine"],
     "engine": IDENTITY["engine"],
     "model": IDENTITY["model"],

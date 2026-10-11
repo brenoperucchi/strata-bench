@@ -71,6 +71,10 @@ export function problems(doc, data) {
     if (!isObj(failure) || !data.failure_kinds.includes(failure.kind)) out.push("a failed result needs failure.kind from " + data.failure_kinds.join(", "));
     else if (!(typeof failure.where === "string" && new RegExp(data.failure_where_re).test(failure.where))) out.push("failure.where is not one of the protocol's call names");
   } else if (failure !== undefined && failure !== null) out.push("failure is only allowed on a failed result");
+  for (const [block, key] of [["submission", "by"], ["machine", "machine_id"]]) {   // declared names: short, no free text
+    const section = doc[block];
+    if (isObj(section) && section[key] !== undefined && section[key] !== null && !(typeof section[key] === "string" && new RegExp("^(?:" + data.id_re + ")$").test(section[key]))) out.push(`${block}.${key} must be a short name (letters, digits, '.', '_' and '-')`);
+  }
   const text = JSON.stringify(doc);
   for (const [re, what] of data.leaks) {
     const m = new RegExp(re).exec(text);

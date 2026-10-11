@@ -7,8 +7,10 @@
     "ram_speed_mts": 3200,
     "os": "Windows 11",
     "driver": "595.99",
-    "cuda": "13.4"
+    "cuda": "13.4",
+    "machine_id": "my-rig"
   },
+  "submission": {"by": "your-github-name"},
   "engine": {"version": "0.1.42", "commit": "61b3fb5d", "backend": "cuda"},
   "model": {"family": "Swift", "quant": "IQ3_XXS", "repo": "example/model-name"}
 }

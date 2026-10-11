@@ -47,6 +47,15 @@ class JsParity(unittest.TestCase):
             d = copy.deepcopy(base)
             fn(d)
             out[name] = d
+        mut("by set", lambda d: d["submission"].update(by="breno-p"))
+        mut("by with space", lambda d: d["submission"].update(by="two words"))
+        mut("by a number", lambda d: d["submission"].update(by=5))
+        mut("by a list", lambda d: d["submission"].update(by=["x"]))
+        mut("by too long", lambda d: d["submission"].update(by="a" * 40))
+        mut("by 39 chars", lambda d: d["submission"].update(by="a" * 39))
+        mut("by an email", lambda d: d["submission"].update(by="me@example.com"))
+        mut("machine id set", lambda d: d["machine"].update(machine_id="rig-1"))
+        mut("machine id bad", lambda d: d["machine"].update(machine_id="my rig"))
         mut("unknown top key", lambda d: d.update(hostname="my-box"))
         mut("unknown nested key", lambda d: d["machine"].update(serial="123"))
         mut("scalar where object", lambda d: d.update(machine="x"))
@@ -102,7 +111,7 @@ class JsParity(unittest.TestCase):
         for c, got in zip(cases, js):
             self.assertEqual(got, validate.problems(c["doc"]), c["name"])
         self.assertGreater(sum(1 for c in cases if validate.problems(c["doc"])), 30)        # the tampering cases really are rejected
-        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
+        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "by set", "by 39 chars", "machine id set", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
 
     def test_the_schema_data_file_is_current(self):
         import sys

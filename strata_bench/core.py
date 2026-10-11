@@ -17,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import SCHEMA, VERSION
-from .schema import FAILURE_KINDS, IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS, SHARED_KEYS, STANDARD_V1_PROMPTS, prune
+from .schema import FAILURE_KINDS, ID_RE, IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS, SHARED_KEYS, STANDARD_V1_PROMPTS, prune
 
 PROMPTS = Path(__file__).parent / "prompts"
 SIZES = ("short", "medium", "long", "xlong")
@@ -295,7 +295,7 @@ class Result:
 
 
 def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Path, identity=None,
-        runs_n=3, warmup=1, max_tokens=256, probe_offset=0, api_key=None, log=print) -> int:
+        runs_n=3, warmup=1, max_tokens=256, probe_offset=0, api_key=None, by=None, log=print) -> int:
     if not re.fullmatch(r"setup-default|custom-\d+", origin):
         raise SystemExit("--origin must be setup-default or custom-N")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -311,6 +311,10 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
         log(f"preflight refused: {e}")
         return 2
     ident = identity or {}
+    by = by if by is not None else (ident.get("submission") or {}).get("by")
+    for what, v in (("--by", by), ("machine.machine_id", (ident.get("machine") or {}).get("machine_id"))):
+        if v is not None and not (isinstance(v, str) and ID_RE.fullmatch(v)):
+            raise SystemExit(f"{what} must be a short name: letters, digits, '.', '_' and '-' (up to 39 characters)")
     verified = bool((ident.get("config") or {}).get("origin_verified")) and origin == "setup-default"
     res = Result(path, {
         "schema": SCHEMA,
@@ -318,7 +322,8 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
         "label": label, "build_info": server["build_info"], "model_path": server["model_file"],
         "n_ctx": server["n_ctx"],
         "runner": {"name": "strata-bench", "version": VERSION, "commit": core_commit()},
-        "submission": {"label": label, "date": datetime.now().astimezone().isoformat(timespec="seconds")},
+        "submission": {"label": label, "date": datetime.now().astimezone().isoformat(timespec="seconds"),
+                       **({"by": by} if by else {})},
         "machine": merge_identity("machine", {}, ident, warnings),
         "engine": merge_identity("engine", {"build_info": server["build_info"]}, ident, warnings),
         "model": merge_identity("model", {"file": server["model_file"], "n_ctx": server["n_ctx"]}, ident, warnings),
