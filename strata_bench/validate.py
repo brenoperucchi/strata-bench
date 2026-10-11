@@ -35,8 +35,17 @@ def problems(doc: dict) -> list:
     if gp and (gp.get("system_sha256") != sha256(GPROBE_SYSTEM.encode())
                or gp.get("chars") != {str(k): v for k, v in GPROBE_CHARS.items()}):
         out.append("gprobe is not standard-v1's")
-    if (doc.get("validity") or {}).get("status") not in ("ok", "warnings"):
-        out.append(f"result is not complete (status {(doc.get('validity') or {}).get('status')!r})")
+    validity = doc.get("validity") or {}
+    status, failure = validity.get("status"), validity.get("failure")
+    if status not in ("ok", "warnings", "failed"):
+        out.append(f"result is not complete (status {status!r})")
+    if status == "failed":                       # the health view: a catastrophic failure with a closed kind and a closed place
+        if not isinstance(failure, dict) or failure.get("kind") not in schema.FAILURE_KINDS:
+            out.append("a failed result needs failure.kind from " + ", ".join(schema.FAILURE_KINDS))
+        elif not (isinstance(failure.get("where"), str) and schema.FAILURE_WHERE.match(failure["where"])):
+            out.append("failure.where is not one of the protocol's call names")
+    elif failure is not None:
+        out.append("failure is only allowed on a failed result")
     text = json.dumps(doc)
     for rx, what in LEAKS:
         m = rx.search(text)

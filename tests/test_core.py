@@ -26,7 +26,7 @@ class Fake(BaseHTTPRequestHandler):
     def reset(cls):
         cls.st = {"model": MODEL, "n_ctx": 32768, "build": "Strata 0.1.39", "reused": 0, "probe_read": 20,
                   "probe_reused": 400, "fail_after": None, "no_timings": False, "calls": [], "shared": {},
-                  "settings": True, "api_key": None}
+                  "settings": True, "api_key": None, "mode": None, "mode_after": 0}
 
     def log_message(self, *a):
         pass
@@ -66,12 +66,22 @@ class Fake(BaseHTTPRequestHandler):
         s["calls"].append(body)
         if s["fail_after"] is not None and len(s["calls"]) > s["fail_after"]:
             return self.reply({}, 500)
+        mode = s["mode"] if len(s["calls"]) > s["mode_after"] else None
+        if mode == "crash":                      # the server dies: the connection is closed without any answer
+            self.close_connection = True
+            return
+        if mode == "oom":
+            return self.reply({"error": {"message": "CUDA error: out of memory at E:\\\\private\\\\kernel.cu:12"}}, 500)
+        if mode == "bad_request":
+            return self.reply({"error": "bad request"}, 400)
         msg = {"choices": [{"message": {"content": "SAFE", "reasoning_content": "hmm"}, "finish_reason": "stop"}],
                "usage": {"completion_tokens": 1, "secret_extra": "x"}}
         if s["no_timings"]:
             return self.reply(msg)
         probe = body["messages"][0]["role"] == "system"
         read, reused = (s["probe_read"], s["probe_reused"]) if probe else (100, s["reused"])
+        if mode == "garbage":
+            msg["choices"][0]["message"]["content"] = "tok " * 120
         msg["timings"] = {"prompt_n": read, "cache_n": reused, "prompt_ms": 50.0, "prompt_per_second": 2000.0,
                           "predicted_n": 1, "predicted_ms": 5.0, "predicted_per_second": 200.0, "private_case": "X"}
         self.reply(msg)
@@ -175,8 +185,117 @@ class CoreTest(unittest.TestCase):
         Fake.st["fail_after"] = 2
         self.assertEqual(self.go(), 3)
         d = self.doc()
-        self.assertEqual(d["validity"]["status"], "incomplete")
+        self.assertEqual(d["validity"]["status"], "failed")                 # a 5xx from the server is a health failure
+        self.assertEqual(d["validity"]["failure"], {"kind": "server_error", "where": "medium run 2", "http_status": 500})
         self.assertEqual(len(d["runs"]), 2)
+
+    # --- the health view: catastrophic failures are exported as `failed`, with a closed kind and place
+    def test_a_server_that_dies_mid_run_is_a_crash_and_keeps_what_was_measured(self):
+        Fake.st["mode"], Fake.st["mode_after"] = "crash", 2
+        self.assertEqual(self.go(), 3)
+        d = self.doc()
+        self.assertEqual((d["validity"]["status"], d["validity"]["failure"]["kind"], d["validity"]["failure"]["where"]), ("failed", "crash", "medium run 2"))
+        self.assertEqual(len(d["runs"]), 2)
+        self.assertEqual(validate.problems(d), [])                          # exportable as a health result
+
+    def test_an_out_of_memory_answer_is_oom_and_the_servers_own_words_never_reach_the_result(self):
+        Fake.st["mode"], Fake.st["mode_after"] = "oom", 1
+        self.assertEqual(self.go(), 3)
+        d = self.doc()
+        f = d["validity"]["failure"]
+        self.assertEqual((d["validity"]["status"], f["kind"], f["http_status"], f["where"]), ("failed", "oom", 500, "medium run 1"))
+        self.assertNotIn("private", json.dumps(d))                          # the path in the server's message is not copied
+        self.assertEqual(d["validity"]["error"], core.FAILURE_TEXT["oom"])
+        self.assertEqual(validate.problems(d), [])
+
+    def test_degenerate_output_is_garbage_and_the_run_that_produced_it_is_kept(self):
+        Fake.st["mode"], Fake.st["mode_after"] = "garbage", 1
+        self.assertEqual(self.go(), 3)
+        d = self.doc()
+        self.assertEqual((d["validity"]["status"], d["validity"]["failure"]["kind"]), ("failed", "garbage"))
+        self.assertEqual(d["runs"][-1]["output_check"], "garbage")
+        self.assertEqual(d["runs"][-2]["output_check"], "ok")
+        self.assertEqual(validate.problems(d), [])
+
+    def test_a_client_side_http_error_is_incomplete_not_a_health_failure(self):
+        Fake.st["mode"], Fake.st["mode_after"] = "bad_request", 1
+        self.assertEqual(self.go(), 3)
+        self.assertEqual(self.doc()["validity"]["status"], "incomplete")
+        self.assertTrue(validate.problems(self.doc()))                       # and it is not exportable
+
+    def test_a_normal_run_marks_every_output_ok_and_has_no_failure(self):
+        self.go()
+        d = self.doc()
+        self.assertEqual(d["validity"]["status"], "ok")
+        self.assertNotIn("failure", d["validity"])
+        self.assertTrue(all(r["output_check"] == "ok" for r in d["runs"]))
+
+    def test_classification_of_exceptions(self):
+        import http.client
+        import socket
+        import urllib.error
+        c = core.classify_failure
+        self.assertEqual(c(socket.timeout()), ("hang", None))
+        self.assertEqual(c(TimeoutError()), ("hang", None))
+        self.assertEqual(c(urllib.error.URLError(socket.timeout())), ("hang", None))
+        self.assertEqual(c(urllib.error.URLError(ConnectionRefusedError())), ("crash", None))
+        self.assertEqual(c(ConnectionResetError()), ("crash", None))
+        self.assertEqual(c(http.client.RemoteDisconnected("x")), ("crash", None))
+        self.assertEqual(c(http.client.IncompleteRead(b"x")), ("crash", None))
+        self.assertEqual(c(core.MeasureFailure("garbage", "medium run 1")), ("garbage", None))
+        self.assertEqual(c(core.MeasureError("no timings")), (None, None))
+        self.assertEqual(c(ValueError("x")), (None, None))
+        self.assertEqual(c(KeyError("x")), (None, None))
+
+    def test_garbage_detector(self):
+        g = core.looks_like_garbage
+        self.assertTrue(g("tok " * 120))
+        self.assertTrue(g("!!! ??? ... " * 10))
+        self.assertFalse(g("def f(x):\n    return x + 1\n" * 3))              # repeated code lines are not degenerate: too few words
+        self.assertFalse(g("The quick brown fox jumps over the lazy dog " * 6 + "and then some more varied words appear here"))
+        self.assertFalse(g(""))
+        self.assertFalse(g("ok"))
+
+    def test_the_validator_gates_failed_results(self):
+        Fake.st["mode"], Fake.st["mode_after"] = "crash", 1
+        self.go()
+        d = self.doc()
+        self.assertEqual(validate.problems(d), [])
+        bad = json.loads(json.dumps(d))
+        bad["validity"]["failure"]["kind"] = "meltdown"
+        self.assertTrue(any("failure.kind" in x for x in validate.problems(bad)))
+        bad = json.loads(json.dumps(d))
+        del bad["validity"]["failure"]
+        self.assertTrue(any("failure.kind" in x for x in validate.problems(bad)))
+        bad = json.loads(json.dumps(d))
+        bad["validity"]["failure"]["where"] = "E:\\private\\x"
+        self.assertTrue(validate.problems(bad))
+        bad = json.loads(json.dumps(d))
+        bad["validity"]["failure"]["where"] = "medium run 1; rm"
+        self.assertTrue(any("failure.where" in x for x in validate.problems(bad)))
+        ok = json.loads(json.dumps(d))
+        ok["validity"].update(status="ok")
+        self.assertTrue(any("only allowed on a failed" in x for x in validate.problems(ok)))
+        inc = json.loads(json.dumps(d))
+        inc["validity"].update(status="incomplete")
+        self.assertTrue(any("not complete" in x for x in validate.problems(inc)))
+
+    def test_ctrl_c_keeps_the_partial_result_marked_incomplete_not_running(self):
+        Fake.st["fail_after"] = 2
+        real = core.call
+        calls = []
+
+        def call(*a, **k):
+            calls.append(1)
+            if len(calls) == 3:
+                raise KeyboardInterrupt
+            return real(*a, **k)
+        with mock.patch.object(core, "call", call):
+            self.assertEqual(self.go(), 3)
+        d = self.doc()
+        self.assertEqual(d["validity"]["status"], "incomplete")        # never left as "running"
+        self.assertIn("interrupted", d["validity"]["error"])
+        self.assertEqual(len(d["runs"]), 2)                           # what was measured before the interrupt is kept
 
     def test_missing_timings_is_incomplete(self):
         Fake.st["no_timings"] = True

@@ -53,9 +53,12 @@ IDENTITY = {
 }
 OBSERVED = {"engine": {"build_info"}, "model": {"file", "n_ctx"}}
 
+FAILURE_KINDS = ("crash", "oom", "garbage", "hang", "server_error")        # the health view: only catastrophic failures, a closed list
+FAILURE_WHERE = re.compile(r"^((short|medium|long|xlong) (warmup|run) \d{1,3}|(probe|gprobe(150|300|450)) \d{1,3})$")
+
 RUN = {"size": SCALAR, "kind": SCALAR, "index": SCALAR, "request_sha256": HEX, "wall_ms": SCALAR, "timings": TIMINGS,
        "usage": USAGE, "tokens": {"prompt": SCALAR, "reused": SCALAR, "generated": SCALAR},
-       "reasoning_chars": SCALAR, "content_chars": SCALAR, "finish_reason": SCALAR, "output_sha256": HEX}
+       "reasoning_chars": SCALAR, "content_chars": SCALAR, "finish_reason": SCALAR, "output_sha256": HEX, "output_check": SCALAR}
 
 PUBLIC = {
     "schema": SCALAR, "label": SCALAR, "build_info": SCALAR, "model_path": SCALAR, "n_ctx": SCALAR,
@@ -82,7 +85,8 @@ PUBLIC = {
     "sizes": Map(r"^(short|medium|long|xlong|probe|gprobe150|gprobe300|gprobe450)$",
                  {"prompt_tps": SUMMARY, "decode_tps": SUMMARY, "prompt_ms": SUMMARY, "wall_ms": SUMMARY,
                   "reused_median": SCALAR, "read_median": SCALAR}),
-    "validity": {"status": SCALAR, "warnings": [SCALAR], "error": SCALAR},
+    "validity": {"status": SCALAR, "warnings": [SCALAR], "error": SCALAR,
+                 "failure": {"kind": SCALAR, "where": SCALAR, "http_status": SCALAR}},
 }
 
 _HEX = re.compile(r"^[0-9a-f]{8,64}$")

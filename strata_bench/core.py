@@ -3,9 +3,11 @@
 Attach mode only: the caller starts and stops the server. Standard library only.
 """
 import hashlib
+import http.client
 import json
 import os
 import re
+import socket
 import statistics
 import subprocess
 import time
@@ -15,7 +17,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import SCHEMA, VERSION
-from .schema import IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS, SHARED_KEYS, STANDARD_V1_PROMPTS, prune
+from .schema import FAILURE_KINDS, IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS, SHARED_KEYS, STANDARD_V1_PROMPTS, prune
 
 PROMPTS = Path(__file__).parent / "prompts"
 SIZES = ("short", "medium", "long", "xlong")
@@ -50,6 +52,51 @@ GPROBE_CHARS = {150: 525, 300: 1050, 450: 1575}   # ~3.5 characters per token fo
 
 class PreflightError(Exception):
     pass
+
+
+class MeasureFailure(Exception):
+    """A catastrophic failure of the SERVER during a measurement (health view): kind is one of schema.FAILURE_KINDS."""
+
+    def __init__(self, kind: str, where=None, http_status=None):
+        super().__init__(kind)
+        self.kind, self.where, self.http_status = kind, where, http_status
+
+
+FAILURE_TEXT = {"crash": "the server closed or refused the connection during the run",
+                "oom": "the server reported that it ran out of memory",
+                "garbage": "the server returned degenerate output (a single repeated token, or no letters or digits)",
+                "hang": "a request did not finish in time",
+                "server_error": "the server answered with an HTTP 5xx error"}
+OOM_RX = re.compile(r"out of memory|\boom\b|cudamalloc|failed to allocate|allocation failed|cannot allocate", re.I)
+
+
+def classify_failure(e: BaseException) -> tuple:
+    """(kind, http_status) for an exception raised by a call, or (None, status) when it is not a server health failure (a client-side problem, a missing field, ...)."""
+    if isinstance(e, MeasureFailure):
+        return e.kind, e.http_status
+    if isinstance(e, urllib.error.HTTPError):
+        try:
+            body = e.read(2048).decode("utf-8", "replace")
+        except Exception:
+            body = ""
+        if OOM_RX.search(body):
+            return "oom", e.code
+        return ("server_error", e.code) if e.code >= 500 else (None, e.code)
+    if isinstance(e, (socket.timeout, TimeoutError)):
+        return "hang", None
+    if isinstance(e, urllib.error.URLError):
+        return (("hang" if isinstance(e.reason, (socket.timeout, TimeoutError)) else "crash" if isinstance(e.reason, (ConnectionError, OSError)) else None), None)
+    if isinstance(e, (ConnectionError, http.client.RemoteDisconnected, http.client.IncompleteRead, http.client.BadStatusLine)):
+        return "crash", None
+    return None, None
+
+
+def looks_like_garbage(text: str) -> bool:
+    """Degenerate output: at least 40 words of which under 5% are distinct, or a long text with no letter or digit at all."""
+    words = text.split()
+    if len(words) >= 40 and len(set(words)) / len(words) < 0.05:
+        return True
+    return len(text) >= 80 and not any(c.isalnum() for c in text)
 
 
 class MeasureError(Exception):
@@ -189,6 +236,7 @@ def call(base: str, messages: list, max_tokens: int, extra=None) -> dict:
             "tokens": {"prompt": t.get("prompt_n"), "reused": t.get("cache_n"), "generated": t.get("predicted_n")},
             "reasoning_chars": len(msg.get("reasoning_content") or ""), "content_chars": len(msg.get("content") or ""),
             "finish_reason": finish,
+            "output_check": "garbage" if looks_like_garbage((msg.get("reasoning_content") or "") + " " + (msg.get("content") or "")) else "ok",
             "output_sha256": sha256(json.dumps([msg.get("reasoning_content") or "", msg.get("content") or "",
                                                 finish]).encode())}
 
@@ -238,7 +286,7 @@ class Result:
     """The result.json, rewritten after every call (atomic replace), so a failure keeps what was measured."""
 
     def __init__(self, path: Path, doc: dict):
-        self.path, self.doc = path, doc
+        self.path, self.doc, self.where = path, doc, None         # `where` = the call in flight (failure.where, if it fails)
 
     def save(self):
         tmp = self.path.with_suffix(".tmp")
@@ -305,10 +353,13 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
             for kind, n in (("warmup", warmup), ("run", runs_n)):
                 for i in range(1, n + 1):
                     msg = [{"role": "user", "content": f"[strata-bench {size} {kind} {i}]\n" + text}]
+                    res.where = f"{size} {kind} {i}"
                     r = {"size": size, "kind": kind, "index": i,
                          **call(base, msg, max_tokens, {"cache_prompt": False})}
                     d["runs"].append(r)
                     res.save()
+                    if r.get("output_check") == "garbage":
+                        raise MeasureFailure("garbage", res.where)
                     if kind != "run":
                         continue
                     require(r, ("prompt_n", "prompt_ms", "prompt_per_second", "predicted_n", "predicted_per_second"),
@@ -328,7 +379,19 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
                                 "decode_tps": summary(done, "predicted_per_second"),
                                 "prompt_ms": summary(done, "prompt_ms")}
             res.save()
+    except KeyboardInterrupt:                   # Ctrl+C keeps the partial result too, and never leaves it as "running"
+        d["validity"].update(status="incomplete", error="interrupted by the user")
+        res.save()
+        log("incomplete: interrupted by the user")
+        return 3
     except Exception as e:                      # keep what was measured, say why it stopped
+        kind, http_status = classify_failure(e)
+        if kind in FAILURE_KINDS:               # the SERVER failed (health view): a closed kind, a closed place, a fixed text (never the server's own words)
+            d["validity"].update(status="failed", error=FAILURE_TEXT[kind],
+                                 failure={"kind": kind, "where": getattr(e, "where", None) or res.where, "http_status": http_status})
+            res.save()
+            log(f"failed ({kind}) at {d['validity']['failure']['where']}")
+            return 3
         d["validity"].update(status="incomplete", error=f"{type(e).__name__}: {e}"[:300])
         res.save()
         log(f"incomplete: {e}")
@@ -347,6 +410,7 @@ def measure_probe(base: str, res: Result, offset: int, log):
     rows = []
     for i in range(PROBE_CALLS):
         msg = [{"role": "system", "content": PROBE_SYSTEM}, {"role": "user", "content": lines[(offset + i) % len(lines)]}]
+        res.where = f"probe {i + 1}"
         r = {"size": "probe", "kind": "warmup" if i < PROBE_SKIP else "run", "index": i + 1,
              **call(base, msg, 1, {"chat_template_kwargs": {"enable_thinking": False}})}
         d["runs"].append(r)
@@ -381,6 +445,7 @@ def measure_gprobe(base: str, res: Result, log):
         rows = []
         for i in range(PROBE_CALLS):
             msg = [{"role": "system", "content": GPROBE_SYSTEM}, {"role": "user", "content": gprobe_excerpt(code, size, i)}]
+            res.where = f"gprobe{size} {i + 1}"
             r = {"size": f"gprobe{size}", "kind": "warmup" if i < PROBE_SKIP else "run", "index": i + 1,
                  **call(base, msg, 1, {"chat_template_kwargs": {"enable_thinking": False}})}
             d["runs"].append(r)
