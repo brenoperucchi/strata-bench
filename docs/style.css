@@ -60,3 +60,14 @@ svg.chart .axis-title { fill: var(--fg); font-size: 11px; }
 label.inline { display: inline-flex; flex-direction: row; align-items: center; gap: 8px; margin: 8px 0; color: var(--muted); font-size: .9rem; }
 .warnlist { margin: 4px 0; padding-left: 20px; color: var(--warn); }
 .card .pill { font-size: 1rem; }
+table.compare { min-width: 520px; }
+table.compare th.colhead { white-space: normal; min-width: 170px; cursor: default; vertical-align: bottom; }
+table.compare th.rowhead { font-weight: 500; color: var(--fg); cursor: default; white-space: nowrap; }
+table.compare tr.group td { background: var(--bg); color: var(--muted); font-weight: 600; font-size: .85rem; border-bottom: 1px solid var(--line); padding-top: 14px; }
+table.compare td.best { color: var(--good); font-weight: 600; }
+table.compare .delta { color: var(--muted); font-weight: 400; font-size: .8rem; }
+table.compare a.remove { font-size: .8rem; }
+.compare-bar { display: flex; align-items: center; gap: 12px; margin: 0 0 10px; color: var(--muted); font-size: .9rem; }
+.compare-bar .button[aria-disabled="true"] { opacity: .45; pointer-events: none; }
+td.pick-cell, th.pick-cell { width: 28px; padding-right: 0; }
+table.compare td.num { text-align: left; }

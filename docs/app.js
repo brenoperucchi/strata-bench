@@ -1,6 +1,6 @@
 "use strict";
 (function () {
-  var state = { rows: [], filters: { gpu: "", model: "", engine: "", status: "", by: "", machine_id: "" }, sort: { key: "date", dir: -1 } };
+  var state = { rows: [], filters: { gpu: "", model: "", engine: "", status: "", by: "", machine_id: "" }, selected: [], sort: { key: "date", dir: -1 } };
   var $ = function (id) { return document.getElementById(id); };
   var fmt = function (v, d) { return v === null || v === undefined ? "–" : (typeof v === "number" ? v.toLocaleString(undefined, { maximumFractionDigits: d === undefined ? 1 : d }) : String(v)); };
   var esc = function (s) { return String(s === null || s === undefined ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
@@ -55,12 +55,12 @@
     rows.sort(function (a, b) { var x = sortVal(a, state.sort.key), y = sortVal(b, state.sort.key); return (x < y ? -1 : x > y ? 1 : 0) * state.sort.dir; });
     var maxDecode = Math.max.apply(null, rows.map(function (r) { return size(r, "medium", "decode_tps") || 0; }).concat([1]));
     var hasBy = state.rows.some(function (r) { return r.by; });
-    var head = [["gpu", "GPU"], ["model", "Model"], ["engine", "Engine"]].concat(hasBy ? [["by", "By"]] : []).concat([["config_id", "Config"], ["prompt_medium", "Prompt medium", 1], ["prompt_long", "Prompt long", 1], ["prompt_xlong", "Prompt xlong", 1], ["decode", "Decode", 1], ["date", "Date"]]);
+    var head = [["select", ""], ["gpu", "GPU"], ["model", "Model"], ["engine", "Engine"]].concat(hasBy ? [["by", "By"]] : []).concat([["config_id", "Config"], ["prompt_medium", "Prompt medium", 1], ["prompt_long", "Prompt long", 1], ["prompt_xlong", "Prompt xlong", 1], ["decode", "Decode", 1], ["date", "Date"]]);
     var h = "<thead><tr>" + head.map(function (c) { return '<th data-key="' + c[0] + '"' + (c[2] ? ' class="num"' : "") + ">" + c[1] + (state.sort.key === c[0] ? (state.sort.dir > 0 ? " ▲" : " ▼") : "") + "</th>"; }).join("") + "</tr></thead>";
     var b = rows.map(function (r) {
       var dec = size(r, "medium", "decode_tps");
       var args = (r.args || []).join(" ");
-      return "<tr><td>" + esc(r.gpu) + (r.vram_gb ? " <span class='hint'>" + esc(r.vram_gb) + " GB</span>" : "") + (r.gpu_count > 1 ? " <span class='hint'>×" + esc(r.gpu_count) + "</span>" : "") +
+      return "<tr><td class='pick-cell'><input type='checkbox' class='pick' data-id='" + esc(r.id) + "' aria-label='Select for comparison'" + (state.selected.indexOf(r.id) >= 0 ? " checked" : "") + "></td><td>" + esc(r.gpu) + (r.vram_gb ? " <span class='hint'>" + esc(r.vram_gb) + " GB</span>" : "") + (r.gpu_count > 1 ? " <span class='hint'>×" + esc(r.gpu_count) + "</span>" : "") +
         "</td><td>" + esc(r.model) + (r.quant ? " <span class='hint'>" + esc(r.quant) + "</span>" : "") + "</td><td>" + esc(r.engine) + "</td>" +
         (hasBy ? "<td>" + (r.by ? "<a href='?by=" + encodeURIComponent(r.by) + "'>" + esc(r.by) + "</a>" : "–") + "</td>" : "") +
         "<td><details><summary>" + esc(r.config_id) + '</summary><pre>' + esc(args) + "</pre><a href='result.html?id=" + encodeURIComponent(r.id) + "'>details</a> · <a href='" + esc(r.id) + "'>raw file</a>" +
@@ -69,9 +69,32 @@
         "<td class='num'>" + (dec ? "<span class='bar' style='width:" + Math.round(60 * dec / maxDecode) + "px'></span>" : "") + fmt(dec) + "</td><td>" + esc((r.date || "").slice(0, 10)) + "</td></tr>";
     }).join("");
     $("perf").innerHTML = h + "<tbody>" + (b || "<tr><td colspan='" + head.length + "'>No result matches the filters.</td></tr>") + "</tbody>";
+    wirePicks();
     Array.prototype.forEach.call($("perf").querySelectorAll("th"), function (th) {
+      if (th.dataset.key === "select") return;
       th.addEventListener("click", function () { var k = th.dataset.key; state.sort = { key: k, dir: state.sort.key === k ? -state.sort.dir : -1 }; drawPerf(); });
     });
+  }
+
+  var MAX_COMPARE = 3;
+  function updateCompare() {
+    var n = state.selected.length;
+    $("compare-count").textContent = n ? n + " selected" + (n === 1 ? ", tick one more" : "") + (n >= MAX_COMPARE ? " (the most that fit)" : "") : "Tick two or three rows to compare them.";
+    var go = $("compare-go");
+    go.setAttribute("aria-disabled", n < 2 ? "true" : "false");
+    go.href = n < 2 ? "#" : "compare.html?ids=" + state.selected.map(encodeURIComponent).join(",");
+    Array.prototype.forEach.call($("perf").querySelectorAll("input.pick"), function (c) { c.disabled = !c.checked && n >= MAX_COMPARE; });
+  }
+  function wirePicks() {
+    Array.prototype.forEach.call($("perf").querySelectorAll("input.pick"), function (c) {
+      c.addEventListener("change", function () {
+        var i = state.selected.indexOf(c.dataset.id);
+        if (c.checked && i < 0 && state.selected.length < MAX_COMPARE) state.selected.push(c.dataset.id);
+        if (!c.checked && i >= 0) state.selected.splice(i, 1);
+        updateCompare();
+      });
+    });
+    updateCompare();
   }
 
   function drawHealth() {

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compare strata-bench results</title>
+<meta name="description" content="Up to three strata-bench results side by side: one column per result, one row per metric.">
+<link rel="stylesheet" href="style.css">
+<script src="theme.js"></script>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Compare results</h1>
+    <p class="lede" id="subtitle">Loading the result files.</p>
+    <nav>
+      <a href="index.html">Dashboard</a>
+      <a href="https://github.com/brenoperucchi/strata-bench/blob/main/docs/PROTOCOL.md">Protocol</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+  <p class="note" id="status" role="status"></p>
+  <div id="verdict"></div>
+  <label class="inline" id="diff-toggle" hidden><input type="checkbox" id="only-diff"> Show only the rows that differ</label>
+  <div class="scroll" id="table-wrap"></div>
+  <p class="hint" id="legend" hidden>The first column is the baseline: the percentages show how each other column differs from it. The best value in a row is marked. For speeds higher is better; for times lower is better. Hardware fields are declared by whoever ran the benchmark.</p>
+</main>
+<footer class="wrap">
+  <p>Everything on this page is read from result files in <code>results/</code> that passed the public validator.</p>
+</footer>
+<script src="compare.js"></script>
+</body>
+</html>
