@@ -1,0 +1,14 @@
+{
+  "machine": {
+    "gpus": [{"name": "RTX 5090", "vram_gb": 32, "arch": "sm_120", "pcie": "5.0 x16"}],
+    "cpu": "AMD Ryzen 9 5950X",
+    "ram_gb": 96,
+    "ram_type": "DDR4",
+    "ram_speed_mts": 3200,
+    "os": "Windows 11",
+    "driver": "595.99",
+    "cuda": "13.4"
+  },
+  "engine": {"version": "0.1.42", "commit": "61b3fb5d", "backend": "cuda"},
+  "model": {"family": "Swift", "quant": "IQ3_XXS", "repo": "example/model-name"}
+}

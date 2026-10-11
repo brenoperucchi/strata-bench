@@ -1,0 +1,25 @@
+name: site
+on:
+  push:
+    branches: [main]
+    paths: ["results/**", "tools/**", "strata_bench/**"]
+permissions:
+  contents: write
+jobs:
+  data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python tools/build_site.py
+      - name: commit docs/data.json when it changed
+        run: |
+          if ! git diff --quiet -- docs/data.json; then
+            git config user.name "strata-bench site"
+            git config user.email "noreply@users.noreply.github.com"
+            git add docs/data.json
+            git commit -m "site: rebuild docs/data.json"
+            git push
+          fi

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>strata-bench community results</title>
+<meta name="description" content="Community measurements of Strata servers with fixed public prompts, plus a health view of catastrophic failures.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>strata-bench</h1>
+    <p class="lede">Community measurements of <a href="https://github.com/Niko1221/Strata">Strata</a> servers with fixed public prompts. Every result passes the same validator before it appears here.</p>
+    <nav>
+      <a href="https://github.com/brenoperucchi/strata-bench#readme">Run it</a>
+      <a href="https://github.com/brenoperucchi/strata-bench/blob/main/docs/SUBMIT.md">Submit a result</a>
+      <a href="https://github.com/brenoperucchi/strata-bench/blob/main/docs/PROTOCOL.md">Protocol</a>
+      <a href="https://github.com/brenoperucchi/strata-bench">Source</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+  <p class="note" id="independence">strata-bench is an independent project. It is not part of Strata and is not maintained by its author.</p>
+  <section id="cards" class="cards" aria-label="Summary"></section>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-perf" aria-selected="true" aria-controls="view-perf">Performance</button>
+    <button role="tab" id="tab-health" aria-selected="false" aria-controls="view-health">Health</button>
+  </div>
+  <section id="view-perf" role="tabpanel" aria-labelledby="tab-perf">
+    <div class="filters" id="filters"></div>
+    <div class="scroll"><table id="perf"></table></div>
+    <p class="hint">Speeds are the engine's own timings, median of the measured runs (tokens per second, higher is better). Prompt speed is shown for the medium, long and xlong prompts; decode speed is the medium prompt's. Results with a different <code>config</code> or engine are different measurements: compare rows that share the same model and config.</p>
+  </section>
+  <section id="view-health" role="tabpanel" aria-labelledby="tab-health" hidden>
+    <div id="health-summary" class="cards"></div>
+    <div class="scroll"><table id="health"></table></div>
+    <p class="hint">The health view lists only catastrophic failures that the runner recorded: the server crashed, ran out of memory, returned degenerate output, hung, or answered with a 5xx error. A client-side problem or an interrupted run is never published.</p>
+  </section>
+  <section id="empty" class="empty" hidden>
+    <h2>No results yet</h2>
+    <p>Be the first. Run the benchmark against your own Strata server and send the result file in a pull request; the guide takes about ten minutes.</p>
+    <p><a class="button" href="https://github.com/brenoperucchi/strata-bench/blob/main/docs/SUBMIT.md">How to submit a result</a></p>
+  </section>
+  <noscript><p class="note">This page needs JavaScript to draw the tables. The data is plain JSON in <a href="data.json">data.json</a>.</p></noscript>
+</main>
+<footer class="wrap">
+  <p>Data: <a href="data.json">data.json</a>, built from <code>results/</code> by <code>tools/build_site.py</code>. MIT licensed.</p>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>

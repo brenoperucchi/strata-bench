@@ -1,30 +1,44 @@
-# strata-bench (core)
+# strata-bench
 
-Measures a running Strata server with fixed public prompts and writes one `result.json` (schema `strata-bench/v1`)
-per configuration. Standard library only, Python 3.10+.
+Community measurements of [Strata](https://github.com/Niko1221/Strata) servers with fixed public prompts, and a health view of the failures people run into.
+**Results and dashboard: https://brenoperucchi.github.io/strata-bench/**
+
+strata-bench is an independent project. It is not part of Strata and is not maintained by its author. MIT licensed.
+
+## What you get
+
+- A runner that measures a Strata server you already run and writes one `result.json` (schema `strata-bench/v1`) per configuration.
+- A validator that is the public-export gate: it accepts only results of the public protocol and refuses anything that looks like a local path, a private address or a secret.
+- A dashboard with two views. Performance shows prompt and decode speeds side by side for the same model and config. Health lists the catastrophic failures that runs recorded: crash, out of memory, degenerate output, hang, server error.
+
+## Run it
+
+You need Python 3.10 or newer (standard library only) and a running Strata server.
 
 ```
-python3 -m strata_bench run --base http://127.0.0.1:18299 --config strata-swift.json \
-    --origin setup-default --label 0139-swift-default --out results/ [--sizes probe,medium,long,xlong]
-python3 -m strata_bench validate results/*.result.json      # public-export gate
+python3 -m strata_bench run --base http://127.0.0.1:18299 --config strata-yourmodel.json \
+    --origin setup-default --label myrig-0142-default --out results/ --identity my-identity.json
+python3 -m strata_bench validate results/*.result.json
 ```
 
-- Attach mode: the caller starts and stops the server. The core refuses to measure if the server's model file or
-  context differs from the config's (exit 2), never overwrites a result, and saves after every call (exit 3 keeps a
-  partial, marked incomplete).
-- `--origin` is `setup-default` (the config the release's setup writes) or `custom-N`; the config's `args`/`env` are
-  stored with paths replaced by roles (`<pack>`, `<native>` ...) and hashed into `config_id`.
-- Protocol `standard-v1`: prompts in `strata_bench/prompts` (hashes in `SHA256SUMS`), temperature 0, seed 42,
-  256-token cap, 1 warm-up + 3 runs, a constant first line per (size, run); probes: fixed system prompt, 30 one-token
-  calls, the first 2 skipped.
-- `gprobe` (opt-in, add it to `--sizes`): 30 calls at each of ~150/300/450 tokens shaped like an agent's classifier
-  request - a short fixed system prompt and a different excerpt of `xlong.txt` per call, 1 token out, the first 2
-  skipped. It measures the prompt path below Strata's 1024-token streamed walk, which the line probes barely touch.
-  Results go to `sizes.gprobe150/300/450` (`prompt_ms`, `wall_ms`, `read_median`, `reused_median`).
-- Flat `label` / `build_info` / `model_path` (file name only) / `n_ctx` at the top and `sizes{}` keep the `prompt_tps` / `decode_tps` / `prompt_ms` medians that existing dashboards read.
+Then add the file under `results/` in a pull request. The step-by-step guide, with the identity file and what each status means, is in [docs/SUBMIT.md](docs/SUBMIT.md). What exactly is sent and recorded is in [docs/PROTOCOL.md](docs/PROTOCOL.md).
 
-Tests: `python3 -m unittest discover -s tests`
+## How it behaves
 
-The prompts are excerpts of the Strata source (https://github.com/Niko1221/Strata, MIT); see
-`strata_bench/prompts/README.md` for how each one was cut. This tool is not part of Strata and is not maintained by
-its author. License: MIT.
+- Attach mode: you start and stop the server. The runner refuses to measure (exit 2) if the server's model file or context differs from the config's, if a prompt file was modified, or if the result file already exists. It never overwrites a result.
+- It saves after every call. A run that stops early keeps what it measured: exit 3, with status `failed` when the server failed (crash, out of memory, degenerate output, hang, 5xx) or `incomplete` for anything else, such as Ctrl+C. Only `ok`, `warnings` and `failed` results can be published.
+- `--origin` is `setup-default` (the config the release's setup writes) or `custom-N`. The config's `args` and `env` are stored with paths replaced by roles (`<pack>`, `<native>`, ...) and hashed into `config_id`.
+- Protocol `standard-v1`: prompts in `strata_bench/prompts` (hashes in `SHA256SUMS`), temperature 0, seed 42, 256-token cap, 1 warm-up and 3 measured runs, a constant first line per (size, run). The probes use a fixed system prompt and 30 one-token calls, the first 2 skipped.
+- `gprobe` (opt-in, add it to `--sizes`): 30 calls at each of about 150, 300 and 450 tokens shaped like an agent's classifier request. It measures the prompt path below Strata's 1024-token streamed walk, which the line probes barely touch. Results go to `sizes.gprobe150/300/450`.
+- The top level keeps flat `label`, `build_info`, `model_path` (file name only) and `n_ctx`, and `sizes{}` keeps the `prompt_tps`, `decode_tps` and `prompt_ms` medians that existing dashboards read.
+
+## Develop
+
+```
+python3 -m unittest discover -s tests
+python3 tools/build_site.py          # rebuild docs/data.json from results/ (CI does this after each merge)
+```
+
+The page in `docs/` is static: plain HTML, CSS and JavaScript reading `docs/data.json`, served by GitHub Pages from `main` and `/docs`.
+
+The prompts are excerpts of the Strata source (https://github.com/Niko1221/Strata, MIT); see `strata_bench/prompts/README.md` for how each one was cut.
