@@ -1,0 +1,401 @@
+{
+ "failure_kinds": [
+  "crash",
+  "oom",
+  "garbage",
+  "hang",
+  "server_error"
+ ],
+ "failure_where_re": "^((short|medium|long|xlong) (warmup|run) \\d{1,3}|(probe|gprobe(150|300|450)) \\d{1,3})$",
+ "gprobe_chars": {
+  "150": 525,
+  "300": 1050,
+  "450": 1575
+ },
+ "gprobe_system_sha256": "5530caa1b4d9f495fb591d3d309e1ab19ff4d1bc923dc09bb625427fc20ec43c",
+ "hex_re": "^[0-9a-f]{8,64}$",
+ "leaks": [
+  [
+   "\\b[A-Za-z]:[\\\\/]",
+   "a Windows path"
+  ],
+  [
+   "(?<![<\\w.:/])/[A-Za-z0-9_.-]+/",
+   "an absolute path"
+  ],
+  [
+   "\\b(10|127)(\\.\\d{1,3}){3}\\b|\\b192\\.168(\\.\\d{1,3}){2}\\b|\\b172\\.(1[6-9]|2\\d|3[01])(\\.\\d{1,3}){2}\\b",
+   "a private network address"
+  ],
+  [
+   "\\\\\\\\[\\w.-]+\\\\",
+   "a network share"
+  ],
+  [
+   "\\b(sk-[A-Za-z0-9_-]{8,}|hf_[A-Za-z0-9]{8,}|gh[pousr]_[A-Za-z0-9]{8,})",
+   "a token"
+  ]
+ ],
+ "probe_system_sha256": "8e80a560647327c04a13869cddac8ab889256730b3af0dd2f6b019b058ba7c44",
+ "prompts": {
+  "long.txt": "2b54045914a7bd362c93587902dc16af4d589cea3493cd0301a116df8495844a",
+  "medium.txt": "e4c2b6ad18b235d3f0466f0aeb1256612c533188c75b2c5c6741ea6e5463b1c6",
+  "probe_lines.txt": "dfa9547550e81cca80b085f57ceb4614fe0c4fba040ddf96fe8d70bb68dde2db",
+  "short.txt": "2cd69728112a942401591b3d19141361105a8b2e9195ae19c007b593d70e9402",
+  "xlong.txt": "acf504f5230c14fdb6e6ca5d8125a9dabd4176d8f5d09882b5a3aed4eee98b83"
+ },
+ "protocol_id": "standard-v1",
+ "public": {
+  "k": {
+   "build_info": "scalar",
+   "config": {
+    "k": {
+     "args": {
+      "s": "scalar",
+      "t": "list"
+     },
+     "calibration": {
+      "k": {
+       "kept_params": {
+        "re": "^--?[\\w-]+$",
+        "s": "scalar",
+        "t": "map"
+       },
+       "pool_workers_asked": "scalar",
+       "pool_workers_resolved": "scalar",
+       "ran": "scalar",
+       "state": "scalar",
+       "sweep_summary": "scalar"
+      },
+      "t": "obj"
+     },
+     "config_id": "hex",
+     "config_origin": "scalar",
+     "config_origin_verified": "scalar",
+     "env": {
+      "re": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "s": "scalar",
+      "t": "map"
+     },
+     "server": {
+      "k": {
+       "draft_vocab": "scalar",
+       "fit_max_tokens": "scalar",
+       "gpu": "scalar",
+       "layer_split": {
+        "s": "scalar",
+        "t": "list"
+       },
+       "reasoning_budget_tokens": "scalar",
+       "sampling": {
+        "k": {
+         "max_tokens": "scalar",
+         "min_p": "scalar",
+         "presence_penalty": "scalar",
+         "repeat_penalty": "scalar",
+         "seed": "scalar",
+         "temperature": "scalar",
+         "top_k": "scalar",
+         "top_p": "scalar"
+        },
+        "t": "obj"
+       }
+      },
+      "t": "obj"
+     },
+     "server_shared": {
+      "k": {
+       "experimental_speed_projection": "scalar",
+       "max_tokens": "scalar",
+       "reasoning_effort": "scalar",
+       "seed": "scalar",
+       "temperature": "scalar",
+       "top_k": "scalar",
+       "top_p": "scalar"
+      },
+      "t": "obj"
+     }
+    },
+    "t": "obj"
+   },
+   "engine": {
+    "k": {
+     "backend": "scalar",
+     "binary_sha256": "hex",
+     "build_info": "scalar",
+     "build_options": {
+      "s": "scalar",
+      "t": "list"
+     },
+     "commit": "scalar",
+     "server_py_version": "scalar",
+     "source": "scalar",
+     "version": "scalar"
+    },
+    "t": "obj"
+   },
+   "label": "scalar",
+   "machine": {
+    "k": {
+     "container": "scalar",
+     "cores": "scalar",
+     "cpu": "scalar",
+     "cpu_isa": "scalar",
+     "cpu_isa_used": "scalar",
+     "cuda": "scalar",
+     "driver": "scalar",
+     "gpus": {
+      "s": {
+       "k": {
+        "arch": "scalar",
+        "display": "scalar",
+        "name": "scalar",
+        "pcie": "scalar",
+        "power_limit_w": "scalar",
+        "role": "scalar",
+        "vram_gb": "scalar"
+       },
+       "t": "obj"
+      },
+      "t": "list"
+     },
+     "hardware_hash": "hex",
+     "hip": "scalar",
+     "machine_id": "scalar",
+     "os": "scalar",
+     "ram_gb": "scalar",
+     "ram_speed_mts": "scalar",
+     "ram_type": "scalar",
+     "wsl": "scalar"
+    },
+    "t": "obj"
+   },
+   "model": {
+    "k": {
+     "draft_vocab": "scalar",
+     "expert_profile": "scalar",
+     "family": "scalar",
+     "file": "scalar",
+     "files_sha256": {
+      "re": "^[\\w.-]+$",
+      "s": "hex",
+      "t": "map"
+     },
+     "hashes_verified_on_server": "scalar",
+     "mtp": "scalar",
+     "n_ctx": "scalar",
+     "quant": "scalar",
+     "repo": "scalar",
+     "revision": "scalar",
+     "storage": "scalar"
+    },
+    "t": "obj"
+   },
+   "model_path": "scalar",
+   "n_ctx": "scalar",
+   "protocol": {
+    "k": {
+     "gprobe": {
+      "k": {
+       "calls": "scalar",
+       "chars": {
+        "re": "^(150|300|450)$",
+        "s": "scalar",
+        "t": "map"
+       },
+       "max_tokens": "scalar",
+       "skip_first": "scalar",
+       "source": "scalar",
+       "system_sha256": "hex"
+      },
+      "t": "obj"
+     },
+     "id": "scalar",
+     "max_tokens": "scalar",
+     "probe": {
+      "k": {
+       "cache_prompt": "scalar",
+       "calls": "scalar",
+       "max_tokens": "scalar",
+       "offset": "scalar",
+       "skip_first": "scalar"
+      },
+      "t": "obj"
+     },
+     "probe_system_sha256": "hex",
+     "prompt_sha256": {
+      "re": "^[\\w.-]+\\.txt$",
+      "s": "hex",
+      "t": "map"
+     },
+     "reasoning_sent": {
+      "k": {
+       "probe": "scalar",
+       "sizes": "scalar"
+      },
+      "t": "obj"
+     },
+     "runs": "scalar",
+     "sampling": {
+      "k": {
+       "cache_prompt": "scalar",
+       "seed": "scalar",
+       "temperature": "scalar"
+      },
+      "t": "obj"
+     },
+     "unique_line": "scalar",
+     "warmup": "scalar"
+    },
+    "t": "obj"
+   },
+   "runner": {
+    "k": {
+     "commit": "scalar",
+     "name": "scalar",
+     "version": "scalar"
+    },
+    "t": "obj"
+   },
+   "runs": {
+    "s": {
+     "k": {
+      "content_chars": "scalar",
+      "finish_reason": "scalar",
+      "index": "scalar",
+      "kind": "scalar",
+      "output_check": "scalar",
+      "output_sha256": "hex",
+      "reasoning_chars": "scalar",
+      "request_sha256": "hex",
+      "size": "scalar",
+      "timings": {
+       "k": {
+        "cache_n": "scalar",
+        "draft_n": "scalar",
+        "draft_n_accepted": "scalar",
+        "predicted_ms": "scalar",
+        "predicted_n": "scalar",
+        "predicted_per_second": "scalar",
+        "predicted_per_token_ms": "scalar",
+        "prompt_ms": "scalar",
+        "prompt_n": "scalar",
+        "prompt_per_second": "scalar",
+        "prompt_per_token_ms": "scalar"
+       },
+       "t": "obj"
+      },
+      "tokens": {
+       "k": {
+        "generated": "scalar",
+        "prompt": "scalar",
+        "reused": "scalar"
+       },
+       "t": "obj"
+      },
+      "usage": {
+       "k": {
+        "completion_tokens": "scalar",
+        "completion_tokens_details": {
+         "k": {
+          "reasoning_tokens": "scalar"
+         },
+         "t": "obj"
+        },
+        "prompt_tokens": "scalar",
+        "prompt_tokens_details": {
+         "k": {
+          "cached_tokens": "scalar"
+         },
+         "t": "obj"
+        },
+        "total_tokens": "scalar"
+       },
+       "t": "obj"
+      },
+      "wall_ms": "scalar"
+     },
+     "t": "obj"
+    },
+    "t": "list"
+   },
+   "schema": "scalar",
+   "sizes": {
+    "re": "^(short|medium|long|xlong|probe|gprobe150|gprobe300|gprobe450)$",
+    "s": {
+     "k": {
+      "decode_tps": {
+       "k": {
+        "max": "scalar",
+        "median": "scalar",
+        "min": "scalar"
+       },
+       "t": "obj"
+      },
+      "prompt_ms": {
+       "k": {
+        "max": "scalar",
+        "median": "scalar",
+        "min": "scalar"
+       },
+       "t": "obj"
+      },
+      "prompt_tps": {
+       "k": {
+        "max": "scalar",
+        "median": "scalar",
+        "min": "scalar"
+       },
+       "t": "obj"
+      },
+      "read_median": "scalar",
+      "reused_median": "scalar",
+      "wall_ms": {
+       "k": {
+        "max": "scalar",
+        "median": "scalar",
+        "min": "scalar"
+       },
+       "t": "obj"
+      }
+     },
+     "t": "obj"
+    },
+    "t": "map"
+   },
+   "submission": {
+    "k": {
+     "date": "scalar",
+     "label": "scalar"
+    },
+    "t": "obj"
+   },
+   "validity": {
+    "k": {
+     "error": "scalar",
+     "failure": {
+      "k": {
+       "http_status": "scalar",
+       "kind": "scalar",
+       "where": "scalar"
+      },
+      "t": "obj"
+     },
+     "status": "scalar",
+     "warnings": {
+      "s": "scalar",
+      "t": "list"
+     }
+    },
+    "t": "obj"
+   }
+  },
+  "t": "obj"
+ },
+ "schema_id": "strata-bench/v1",
+ "statuses": [
+  "ok",
+  "warnings",
+  "failed"
+ ]
+}

@@ -19,6 +19,8 @@ LEAKS = [
 
 def problems(doc: dict) -> list:
     out = schema.check(doc, schema.PUBLIC)
+    if not isinstance(doc, dict):
+        return out
     if doc.get("schema") != "strata-bench/v1":
         out.append("schema is not strata-bench/v1")
     proto = doc.get("protocol") or {}

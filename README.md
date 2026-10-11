@@ -21,7 +21,7 @@ python3 -m strata_bench run --base http://127.0.0.1:18299 --config strata-yourmo
 python3 -m strata_bench validate results/*.result.json
 ```
 
-Then add the file under `results/` in a pull request. The step-by-step guide, with the identity file and what each status means, is in [docs/SUBMIT.md](docs/SUBMIT.md). What exactly is sent and recorded is in [docs/PROTOCOL.md](docs/PROTOCOL.md).
+Then send the file with the [upload page](https://brenoperucchi.github.io/strata-bench/submit.html), a pull request that adds it under `results/`, or a "Submit a result" issue. The step-by-step guide, with the identity file and what each status means, is in [docs/SUBMIT.md](docs/SUBMIT.md). What exactly is sent and recorded is in [docs/PROTOCOL.md](docs/PROTOCOL.md).
 
 ## How it behaves
 

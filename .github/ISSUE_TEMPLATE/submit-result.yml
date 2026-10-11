@@ -1,0 +1,29 @@
+name: Submit a result
+description: Send a result.json from `python3 -m strata_bench run` without opening a pull request
+title: "Result: "
+labels: ["result"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for measuring. Before you send it, run `python3 -m strata_bench validate FILE.result.json` and make sure it says OK. The file becomes public.
+        Only the `*.result.json` file is needed. [How to run the benchmark](https://github.com/brenoperucchi/strata-bench/blob/main/docs/SUBMIT.md).
+  - type: textarea
+    id: file
+    attributes:
+      label: result.json
+      description: Drag the file into this box, or paste its contents inside a code block.
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: Anything a maintainer should know (optional)
+      description: For example that the GPU is overclocked or the model files are modified.
+  - type: checkboxes
+    id: ok
+    attributes:
+      label: Confirmation
+      options:
+        - label: I read the file and it contains nothing I do not want to publish.
+          required: true

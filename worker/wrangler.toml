@@ -1,0 +1,13 @@
+name = "strata-bench-submit"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGIN = "https://brenoperucchi.github.io"
+GITHUB_REPO = "brenoperucchi/strata-bench"
+BASE_BRANCH = "main"
+
+# Secrets, set with `npx wrangler secret put <NAME>` (they are never written to this file):
+#   GITHUB_TOKEN     fine-grained token limited to brenoperucchi/strata-bench: Contents and Pull requests, read and write
+#   TURNSTILE_SECRET the secret key of the Turnstile widget used by the upload page

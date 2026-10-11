@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Upload a result in your browser
+    url: https://brenoperucchi.github.io/strata-bench/submit.html
+    about: Check your result.json against the public validator and send it for review.

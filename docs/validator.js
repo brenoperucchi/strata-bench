@@ -1,0 +1,80 @@
+// The public-export gate in JavaScript. A thin interpreter of docs/schema.json, which tools/build_validator_data.py writes from the Python
+// validator (strata_bench.validate). tests/test_js_validator.py checks that both return EXACTLY the same problems. No dependencies, no I/O:
+// it runs in the browser (upload page), in the Cloudflare Worker and under Node.
+
+const isScalar = (v) => v === null || ["string", "number", "boolean"].includes(typeof v);
+const isObj = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+
+function check(value, spec, where, problems, data) {
+  const hex = new RegExp(data.hex_re);
+  if (spec === "scalar") {
+    if (!isScalar(value)) problems.push(`${where}: not a scalar`);
+  } else if (spec === "hex") {
+    if (!(typeof value === "string" && hex.test(value))) problems.push(`${where}: not a hex digest`);
+  } else if (spec.t === "list") {
+    if (!Array.isArray(value)) problems.push(`${where}: not a list`);
+    else value.forEach((v, i) => check(v, spec.s, `${where}[${i}]`, problems, data));
+  } else if (spec.t === "map") {
+    if (!isObj(value)) problems.push(`${where}: not an object`);
+    else {
+      const key = new RegExp(spec.re);
+      for (const [k, v] of Object.entries(value)) {
+        if (!key.test(String(k))) problems.push(`${where}.${k}: key not allowed`);
+        else check(v, spec.s, `${where}.${k}`, problems, data);
+      }
+    }
+  } else if (spec.t === "obj") {
+    if (!isObj(value)) problems.push(`${where}: not an object`);
+    else {
+      for (const [k, v] of Object.entries(value)) {
+        if (!(k in spec.k)) problems.push(`${where}.${k}: not in the public schema`.replace(/^\./, ""));
+        else check(v, spec.k[k], `${where}.${k}`.replace(/^\./, ""), problems, data);
+      }
+    }
+  }
+  return problems;
+}
+
+// Python's repr() for the values that appear in the messages (None, booleans, numbers, short strings).
+function pyRepr(v) {
+  if (v === undefined || v === null) return "None";
+  if (v === true) return "True";
+  if (v === false) return "False";
+  if (typeof v === "number") return String(v);
+  const s = String(v);
+  const esc = s.replace(/\\/g, "\\\\");
+  if (s.includes("'") && !s.includes('"')) return `"${esc}"`;
+  return `'${esc.replace(/'/g, "\\'")}'`;
+}
+
+export function problems(doc, data) {
+  const out = check(doc, data.public, "", [], data);
+  if (!isObj(doc)) return out;
+  if (doc.schema !== data.schema_id) out.push("schema is not strata-bench/v1");
+  const proto = isObj(doc.protocol) ? doc.protocol : {};
+  if (proto.id !== data.protocol_id) out.push(`protocol ${pyRepr(proto.id)} is not public`);
+  if (isObj(proto.prompt_sha256)) {
+    for (const [name, h] of Object.entries(proto.prompt_sha256)) if (data.prompts[name] !== h) out.push(`prompt ${name} is not standard-v1's`);
+  }
+  if (proto.probe_system_sha256 !== undefined && proto.probe_system_sha256 !== null && proto.probe_system_sha256 !== data.probe_system_sha256) out.push("probe system prompt is not standard-v1's");
+  const gp = isObj(proto.gprobe) ? proto.gprobe : {};
+  if (Object.keys(gp).length) {
+    const chars = isObj(gp.chars) ? gp.chars : null;
+    const same = chars && Object.keys(chars).length === Object.keys(data.gprobe_chars).length && Object.entries(data.gprobe_chars).every(([k, v]) => chars[k] === v);
+    if (gp.system_sha256 !== data.gprobe_system_sha256 || !same) out.push("gprobe is not standard-v1's");
+  }
+  const validity = isObj(doc.validity) ? doc.validity : {};
+  const status = validity.status;
+  const failure = validity.failure;
+  if (!data.statuses.includes(status)) out.push(`result is not complete (status ${pyRepr(status)})`);
+  if (status === "failed") {
+    if (!isObj(failure) || !data.failure_kinds.includes(failure.kind)) out.push("a failed result needs failure.kind from " + data.failure_kinds.join(", "));
+    else if (!(typeof failure.where === "string" && new RegExp(data.failure_where_re).test(failure.where))) out.push("failure.where is not one of the protocol's call names");
+  } else if (failure !== undefined && failure !== null) out.push("failure is only allowed on a failed result");
+  const text = JSON.stringify(doc);
+  for (const [re, what] of data.leaks) {
+    const m = new RegExp(re).exec(text);
+    if (m) out.push(`contains ${what}: ${pyRepr(m[0])}`);
+  }
+  return out;
+}

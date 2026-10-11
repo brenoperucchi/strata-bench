@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Submit a strata-bench result</title>
+<meta name="description" content="Check a result.json in your browser and send it for the strata-bench dashboard.">
+<link rel="stylesheet" href="style.css">
+<style>
+  .drop { border: 2px dashed var(--line); border-radius: 10px; padding: 28px 16px; text-align: center; background: var(--card); }
+  .drop.over { border-color: var(--accent); }
+  .drop input { display: none; }
+  .drop label.button { cursor: pointer; }
+  textarea { width: 100%; min-height: 110px; background: var(--card); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 8px; font: .85rem ui-monospace, monospace; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin: 14px 0; }
+  .panel h2 { margin: 0 0 6px; font-size: 1.05rem; }
+  .problems { margin: 6px 0 0; padding-left: 18px; font-size: .9rem; color: var(--bad); }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 14px; margin: 6px 0 0; }
+  dt { color: var(--muted); }
+  button.button { border: 0; cursor: pointer; font: inherit; }
+  button[disabled] { opacity: .45; cursor: not-allowed; }
+  .msg { margin: 10px 0; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Submit a result</h1>
+    <p class="lede">Pick the <code>*.result.json</code> your run produced. It is checked here, in your browser, with the same rules as the public validator. Nothing is sent until you press the button.</p>
+    <nav><a href="index.html">Dashboard</a><a href="https://github.com/brenoperucchi/strata-bench/blob/main/docs/SUBMIT.md">Run the benchmark</a></nav>
+  </div>
+</header>
+<main class="wrap">
+  <div class="drop" id="drop">
+    <p>Drop the file here</p>
+    <label class="button" for="file">Choose a file</label>
+    <input type="file" id="file" accept=".json,application/json">
+    <p class="hint">Only the <code>.result.json</code> file is needed, up to 1 MB.</p>
+  </div>
+  <details class="panel"><summary>Or paste the contents</summary><textarea id="paste" spellcheck="false" aria-label="result.json contents"></textarea></details>
+  <section id="report" class="panel" hidden></section>
+  <section id="send" class="panel" hidden>
+    <h2>Send it</h2>
+    <p>The result becomes public. It is added to the dashboard through a pull request that is checked again by CI and merged by a maintainer, so it can take a little while to appear.</p>
+    <div id="challenge"></div>
+    <p><button class="button" id="submit" disabled>Send for review</button></p>
+    <p class="msg" id="outcome" role="status"></p>
+  </section>
+  <section id="other" class="panel" hidden>
+    <h2>Other ways to submit</h2>
+    <p>One-click upload is not enabled on this page yet. Your file is valid, so you can send it either way:</p>
+    <ul>
+      <li>Open a pull request that adds it under <code>results/</code> (<a href="https://github.com/brenoperucchi/strata-bench/blob/main/docs/SUBMIT.md#6-submit">guide</a>).</li>
+      <li>Or <a href="https://github.com/brenoperucchi/strata-bench/issues/new?template=submit-result.yml">open an issue</a> and attach the file.</li>
+    </ul>
+  </section>
+</main>
+<footer class="wrap"><p>The check runs entirely in this page; the file leaves your browser only when you press the send button.</p></footer>
+<script type="module" src="submit.js"></script>
+</body>
+</html>

@@ -46,7 +46,13 @@ The validator is the same gate the dashboard uses. It rejects anything outside t
 
 ## 6. Submit
 
-Fork the repository, add your `*.result.json` under `results/`, and open a pull request. Only the result file is needed. After the merge the dashboard data is rebuilt automatically.
+Only the `*.result.json` file is needed. There are three ways to send it:
+
+1. **Upload page** (no GitHub account needed): open [the upload page](https://brenoperucchi.github.io/strata-bench/submit.html), pick the file, and it is checked in your browser with the same rules as CI. Once the page shows the one-click button, sending opens a pull request for you.
+2. **Pull request**: fork the repository, add the file under `results/`, and open a pull request. A template lists what to check.
+3. **Issue**: open a "Submit a result" issue and attach the file, for people who cannot open a pull request.
+
+In every case a maintainer reviews it, CI validates it again, and after the merge the dashboard data is rebuilt automatically.
 
 ## What the status means
 
