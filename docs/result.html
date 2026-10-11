@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>strata-bench result</title>
+<meta name="description" content="Every number one strata-bench result recorded: speeds with their ranges, latency by prompt length, speculative decoding, each request, and the configuration.">
+<link rel="stylesheet" href="style.css">
+<script src="theme.js"></script>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1 id="title">Result</h1>
+    <p class="lede" id="subtitle">Loading the result file.</p>
+    <nav>
+      <a href="index.html">Dashboard</a>
+      <a id="raw" href="index.html">Raw file</a>
+      <a href="https://github.com/brenoperucchi/strata-bench/blob/main/docs/PROTOCOL.md">Protocol</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap" id="main">
+  <p class="note" id="status" role="status"></p>
+  <section id="cards" class="cards" aria-label="Summary"></section>
+  <div id="sections"></div>
+</main>
+<footer class="wrap">
+  <p>Everything on this page is read from the result file in <code>results/</code>, which passed the public validator before it was published. Hardware fields are declared by the person who ran the benchmark, not verified.</p>
+</footer>
+<script src="result.js"></script>
+</body>
+</html>

@@ -101,6 +101,30 @@ class Site(unittest.TestCase):
         out.write_text(out.read_text().replace('"count": 1', '"count": 2'))
         self.assertEqual(build_site.main(args + ["--check"]), 1)                    # stale
 
+    def test_the_validated_files_are_copied_for_the_detail_page_and_kept_in_sync(self):
+        self.make("one", identity=self.IDENT)
+        out = self.tmp / "docs" / "data.json"
+        out.parent.mkdir()
+        args = ["--results", str(self.tmp / "results"), "--out", str(out)]
+        copy = self.tmp / "docs" / "results" / "one.result.json"
+        self.assertEqual(build_site.main(args), 0)
+        self.assertEqual(copy.read_text(), (self.tmp / "results" / "one.result.json").read_text())
+        self.assertEqual(build_site.main(args + ["--check"]), 0)
+        copy.write_text("{}")                                                        # a stale copy is caught, and the build repairs it
+        self.assertEqual(build_site.main(args + ["--check"]), 1)
+        self.assertEqual(build_site.main(args), 0)
+        self.assertEqual(build_site.main(args + ["--check"]), 0)
+        (self.tmp / "docs" / "results" / "gone.result.json").write_text("{}")        # a copy whose source was removed is caught and removed
+        self.assertEqual(build_site.main(args + ["--check"]), 1)
+        self.assertEqual(build_site.main(args), 0)
+        self.assertFalse((self.tmp / "docs" / "results" / "gone.result.json").exists())
+        self.assertEqual(build_site.main(args + ["--check"]), 0)
+
+    def test_every_result_row_has_its_copy_in_docs(self):
+        d = json.loads((ROOT / "docs" / "data.json").read_text())
+        for r in d["results"]:
+            self.assertTrue((ROOT / "docs" / r["id"]).exists(), r["id"])             # the page links docs/<id>; Pages publishes only docs/
+
     def test_the_committed_data_file_is_well_formed(self):
         d = json.loads((ROOT / "docs" / "data.json").read_text())                  # rebuilt by CI after each merge; here only its shape
         self.assertEqual((d["protocol"], d["count"]), ("standard-v1", len(d["results"])))

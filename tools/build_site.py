@@ -51,7 +51,9 @@ def row(rel: str, doc: dict) -> dict:
     }
 
 
-def build(results_dir: Path = ROOT / "results") -> dict:
+def build(results_dir: Path = ROOT / "results", copies: dict = None) -> dict:
+    """`copies`, when given, is filled with {path relative to the results folder: the validated file's text}: the detail
+    page reads these copies, because GitHub Pages publishes only docs/."""
     rows, bad = [], []
     for path in sorted(results_dir.rglob("*.result.json")):
         rel = path.relative_to(results_dir.parent).as_posix()
@@ -65,6 +67,8 @@ def build(results_dir: Path = ROOT / "results") -> dict:
             bad.extend(f"{rel}: {p}" for p in probs)
             continue
         rows.append(row(rel, doc))
+        if copies is not None:
+            copies[path.relative_to(results_dir).as_posix()] = path.read_text(encoding="utf-8")
     if bad:
         raise SystemExit("These results do not pass the public-export gate, so the page was not built:\n  " + "\n  ".join(bad))
     rows.sort(key=lambda r: (r["date"] or "", r["id"]), reverse=True)
@@ -75,21 +79,46 @@ def dump(data: dict) -> str:
     return json.dumps(data, indent=1, sort_keys=True, ensure_ascii=False) + "\n"
 
 
+def sync_copies(copies: dict, dest: Path, check: bool) -> list:
+    """Makes dest hold exactly the validated result files (and nothing else named *.result.json). Returns what was off."""
+    off = []
+    for rel, text in sorted(copies.items()):
+        f = dest / rel
+        if not f.exists() or f.read_text(encoding="utf-8") != text:
+            off.append(f"{f} is missing or stale")
+            if not check:
+                f.parent.mkdir(parents=True, exist_ok=True)
+                f.write_text(text, encoding="utf-8")
+    if dest.exists():
+        for f in sorted(dest.rglob("*.result.json")):
+            if f.relative_to(dest).as_posix() not in copies:
+                off.append(f"{f} has no source in results/")
+                if not check:
+                    f.unlink()
+    return off
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--results", type=Path, default=ROOT / "results")
     ap.add_argument("--out", type=Path, default=ROOT / "docs" / "data.json")
     a = ap.parse_args(argv)
-    text = dump(build(a.results))
+    copies = {}
+    text = dump(build(a.results, copies))
+    dest = a.out.parent / "results"                                              # docs/results/: the validated files the detail page reads
     if a.check:
+        off = sync_copies(copies, dest, True)
         if not a.out.exists() or a.out.read_text(encoding="utf-8") != text:
-            print(f"{a.out} is out of date: run `python3 tools/build_site.py` and commit it")
+            off.insert(0, f"{a.out} is out of date")
+        if off:
+            print("\n".join(off) + "\nrun `python3 tools/build_site.py` and commit the result")
             return 1
-        print(f"{a.out} is up to date")
+        print(f"{a.out} and {dest} are up to date")
         return 0
     a.out.write_text(text, encoding="utf-8")
-    print(f"wrote {a.out} ({json.loads(text)['count']} results)")
+    sync_copies(copies, dest, False)
+    print(f"wrote {a.out} ({json.loads(text)['count']} results) and {len(copies)} file(s) in {dest}")
     return 0
 
 

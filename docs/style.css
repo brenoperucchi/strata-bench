@@ -41,3 +41,22 @@ details summary { cursor: pointer; color: var(--accent); }
 details pre { white-space: pre-wrap; word-break: break-all; font-size: .8rem; margin: 6px 0 0; }
 footer { color: var(--muted); font-size: .85rem; padding: 24px 16px 40px; }
 @media (max-width: 600px) { .lede { font-size: .95rem; } th, td { padding: 6px 8px; } }
+.block { margin: 28px 0; }
+.block h2 { font-size: 1.2rem; margin: 0 0 4px; }
+.block h3 { font-size: 1rem; margin: 16px 0 6px; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px 24px; }
+dl.kv { display: grid; grid-template-columns: max-content 1fr; gap: 3px 14px; margin: 6px 0; font-size: .92rem; }
+dl.kv dt { color: var(--muted); }
+dl.kv dd { margin: 0; overflow-wrap: anywhere; }
+pre { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; font-size: .82rem; margin: 6px 0; }
+.chart-wrap { max-width: 640px; }
+svg.chart { width: 100%; height: auto; font: 11px system-ui, sans-serif; }
+svg.chart text { fill: var(--muted); }
+svg.chart .grid { stroke: var(--line); stroke-width: 1; }
+svg.chart .ln { stroke: var(--accent); stroke-width: 2; }
+svg.chart .whisker { stroke: var(--accent); stroke-width: 2; opacity: .45; }
+svg.chart .pt { fill: var(--accent); stroke: var(--bg); stroke-width: 1.5; }
+svg.chart .axis-title { fill: var(--fg); font-size: 11px; }
+label.inline { display: inline-flex; flex-direction: row; align-items: center; gap: 8px; margin: 8px 0; color: var(--muted); font-size: .9rem; }
+.warnlist { margin: 4px 0; padding-left: 20px; color: var(--warn); }
+.card .pill { font-size: 1rem; }

@@ -63,7 +63,7 @@
       return "<tr><td>" + esc(r.gpu) + (r.vram_gb ? " <span class='hint'>" + esc(r.vram_gb) + " GB</span>" : "") + (r.gpu_count > 1 ? " <span class='hint'>×" + esc(r.gpu_count) + "</span>" : "") +
         "</td><td>" + esc(r.model) + (r.quant ? " <span class='hint'>" + esc(r.quant) + "</span>" : "") + "</td><td>" + esc(r.engine) + "</td>" +
         (hasBy ? "<td>" + (r.by ? "<a href='?by=" + encodeURIComponent(r.by) + "'>" + esc(r.by) + "</a>" : "–") + "</td>" : "") +
-        "<td><details><summary>" + esc(r.config_id) + '</summary><pre>' + esc(args) + "</pre><a href='../" + esc(r.id) + "'>result file</a>" +
+        "<td><details><summary>" + esc(r.config_id) + '</summary><pre>' + esc(args) + "</pre><a href='result.html?id=" + encodeURIComponent(r.id) + "'>details</a> · <a href='" + esc(r.id) + "'>raw file</a>" +
         (r.status === "warnings" ? " <span class='pill warnings'>" + esc(r.warnings) + " warning(s)</span>" : "") + "</details></td>" +
         ["medium", "long", "xlong"].map(function (n) { return "<td class='num'>" + fmt(size(r, n, "prompt_tps"), 0) + "</td>"; }).join("") +
         "<td class='num'>" + (dec ? "<span class='bar' style='width:" + Math.round(60 * dec / maxDecode) + "px'></span>" : "") + fmt(dec) + "</td><td>" + esc((r.date || "").slice(0, 10)) + "</td></tr>";
@@ -83,7 +83,7 @@
     $("health-summary").innerHTML = cardsHtml || '<div class="card"><b>0</b><span>failures recorded</span></div>';
     var rowsHtml = failed.map(function (r) {
       return "<tr><td><span class='pill failed'>" + esc(r.failure && r.failure.kind) + "</span></td><td>" + esc(r.failure && r.failure.where) + "</td><td>" + esc(r.gpu) + "</td><td>" + esc(r.model) +
-        "</td><td>" + esc(r.engine) + "</td><td>" + esc(r.config_id) + "</td><td>" + esc((r.date || "").slice(0, 10)) + "</td><td><a href='../" + esc(r.id) + "'>file</a></td></tr>";
+        "</td><td>" + esc(r.engine) + "</td><td>" + esc(r.config_id) + "</td><td>" + esc((r.date || "").slice(0, 10)) + "</td><td><a href='result.html?id=" + encodeURIComponent(r.id) + "'>details</a></td></tr>";
     }).join("");
     var eng = Object.keys(byEngine).sort().map(function (e) { return "<tr><td>" + esc(e) + "</td><td class='num'>" + byEngine[e].total + "</td><td class='num'>" + byEngine[e].failed + "</td></tr>"; }).join("");
     $("health").innerHTML = "<thead><tr><th>Failure</th><th>Where</th><th>GPU</th><th>Model</th><th>Engine</th><th>Config</th><th>Date</th><th></th></tr></thead><tbody>" +
