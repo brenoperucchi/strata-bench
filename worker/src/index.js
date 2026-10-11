@@ -54,6 +54,7 @@ async function gh(env, method, path, body) {
   });
   let data = null;
   try { data = await r.json(); } catch { /* no body */ }
+  if (r.status >= 400) console.log(`github ${method} ${path.replace(/\/contents\/.*/, "/contents/...")} -> ${r.status} ${String(data?.message ?? "").slice(0, 120)}`);   // our logs only, never in the response
   return { status: r.status, data };
 }
 

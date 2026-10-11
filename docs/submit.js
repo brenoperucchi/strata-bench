@@ -76,7 +76,7 @@ async function init() {
         const a = el("a", d.pull_request); a.href = d.pull_request; a.rel = "noopener";
         out.replaceChildren(el("span", "Sent. A pull request was opened: "), a);
       } else {
-        const why = { already_submitted: "This exact result was already submitted.", challenge_failed: "The check against automated use failed. Reload the page and try again.", too_large: "The file is too large.", rate_limited: "Too many submissions from your network. Try again later.", not_valid: "The server's validator rejected the file." }[d.error] || "The upload failed. Use the pull request or issue route instead.";
+        const why = { already_submitted: "This exact result was already submitted.", challenge_failed: "The check against automated use failed. Reload the page and try again.", too_large: "The file is too large.", rate_limited: "Too many submissions from your network. Try again later.", not_valid: "The server's validator rejected the file." }[d.error] || "The upload failed. Use the pull request or issue route instead." + (d.step ? ` (${String(d.step).slice(0, 20)} ${Number(d.status) || ""})` : "");
         out.replaceChildren(el("span", why));
       }
     } catch { out.replaceChildren(el("span", "Could not reach the upload service. Use the pull request or issue route instead.")); }
