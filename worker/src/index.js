@@ -61,9 +61,10 @@ async function verifyTurnstile(env, token, ip) {
   const form = new URLSearchParams({ secret: env.TURNSTILE_SECRET, response: String(token || "") });
   if (ip) form.set("remoteip", ip);
   const r = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", { method: "POST", body: form });
-  if (!r.ok) return false;
-  const d = await r.json().catch(() => null);
-  return !!(d && d.success === true);
+  const d = await r.json().catch(() => null);                              // a 400 still carries the error codes
+  if (r.ok && d && d.success === true) return { ok: true, codes: [] };
+  const codes = Array.isArray(d?.["error-codes"]) ? d["error-codes"].filter((x) => typeof x === "string" && /^[a-z0-9-]{1,40}$/.test(x)).slice(0, 5) : [];
+  return { ok: false, codes: codes.length ? codes : [`http-${r.status}`] };                                             // Cloudflare's closed error codes only, never free text
 }
 
 export default {
@@ -90,7 +91,8 @@ export default {
       const { success } = await env.LIMITER.limit({ key: ip || "unknown" });
       if (!success) return json(429, { ok: false, error: "rate_limited" }, c.headers);
     }
-    if (!(await verifyTurnstile(env, body.turnstile, ip))) return json(403, { ok: false, error: "challenge_failed" }, c.headers);
+    const ts = await verifyTurnstile(env, body.turnstile, ip);
+    if (!ts.ok) return json(403, { ok: false, error: "challenge_failed", codes: ts.codes }, c.headers);
 
     const doc = body.result;
     const probs = problems(doc, schema);

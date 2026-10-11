@@ -100,8 +100,10 @@ test("bad JSON and a malformed request body", async () => {
 });
 
 test("a failed turnstile challenge stops before validation or GitHub", async () => {
-  const calls = mockFetch([["siteverify", { body: { success: false } }]]);
-  assert.equal((await submit()).status, 403);
+  const calls = mockFetch([["siteverify", { body: { success: false, "error-codes": ["invalid-input-secret", "Bad Value: <x>"] } }]]);
+  const refused = await submit();
+  assert.equal(refused.status, 403);
+  assert.deepEqual((await refused.json()).codes, ["invalid-input-secret"]);   // closed codes pass through, anything else is dropped
   assert.equal(calls.length, 1);
   const calls2 = mockFetch([["siteverify", { status: 500, body: {} }]]);
   assert.equal((await submit()).status, 403);
