@@ -62,7 +62,7 @@ async function init() {
     const s = document.createElement("script");
     s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
     s.async = true;
-    s.onload = () => window.turnstile.render("#challenge", { sitekey: config.turnstileSiteKey, callback: (t) => { state.token = t; update(); }, "expired-callback": () => { state.token = ""; update(); } });
+    s.onload = () => window.turnstile.render("#challenge", { sitekey: config.turnstileSiteKey, theme: document.documentElement.dataset.theme || "light", callback: (t) => { state.token = t; update(); }, "expired-callback": () => { state.token = ""; update(); } });
     document.head.append(s);
   }
   $("submit").addEventListener("click", async () => {

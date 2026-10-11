@@ -36,7 +36,7 @@ class Page(unittest.TestCase):
 
     def test_the_page_loads_only_its_own_scripts_and_the_turnstile_script(self):
         html = (ROOT / "docs" / "submit.html").read_text()
-        self.assertEqual(re.findall(r'<script[^>]*src="([^"]+)"', html), ["submit.js"])
+        self.assertEqual(re.findall(r'<script[^>]*src="([^"]+)"', html), ["theme.js", "submit.js"])
         js = (ROOT / "docs" / "submit.js").read_text()
         self.assertEqual(re.findall(r"https://[a-z.]+/[^\"' ]*\.js[^\"' ]*", js), ["https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"])
 
