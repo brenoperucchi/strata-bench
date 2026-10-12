@@ -1,0 +1,10 @@
+{
+ "template": "File {n} of 5:\n\n{doc}\n\n{question}",
+ "questions": [
+  "In two sentences, what is this file responsible for?",
+  "Which part of this file deals with memory or buffers, and how does its role differ from the first file's?",
+  "What could go wrong in this file if an input is larger than expected? Name the place that would break first.",
+  "Which of the three files so far would you read first to understand how work is scheduled, and why?",
+  "Looking at all five files, which one is most likely to be a performance bottleneck, and what is your evidence?"
+ ]
+}

@@ -43,7 +43,10 @@ class JsParity(unittest.TestCase):
         inc = real(tmp, "inc", mode="bad_request")
         v2 = real(tmp, "v2", sizes=("medium", "probe"), run_kw={"protocol": core.PROTOCOL_V2})
         v2_failed = real(tmp, "v2failed", mode="crash", sizes=("medium",), run_kw={"protocol": core.PROTOCOL_V2})
-        out = {"ok": ok, "failed": failed, "warnings": warn, "v2 ok": v2, "v2 failed": v2_failed, "incomplete": inc, "empty": {}}
+        agent = real(tmp, "agent", sizes=("agent",), run_kw={"protocol": core.PROTOCOL_V2})
+        agent_failed = real(tmp, "agentfail", mode="oom", sizes=("agent",), run_kw={"protocol": core.PROTOCOL_V2})
+        out = {"ok": ok, "failed": failed, "warnings": warn, "v2 ok": v2, "v2 failed": v2_failed, "v2 agent ok": agent,
+               "v2 agent failed": agent_failed, "incomplete": inc, "empty": {}}
 
         def mut(name, fn, base=ok):
             d = copy.deepcopy(base)
@@ -115,7 +118,7 @@ class JsParity(unittest.TestCase):
         mut("blocks bad", lambda d: d["protocol"].update(blocks=["first-token", "free-text"]), v2)
         mut("blocks a string", lambda d: d["protocol"].update(blocks="first-token"), v2)
         mut("blocks nested", lambda d: d["protocol"].update(blocks=[["first-token"]]), v2)
-        mut("blocks several", lambda d: d["protocol"].update(blocks=["first-token", "chat", "agent"]), v2)
+        mut("blocks several", lambda d: d["protocol"].update(blocks=["first-token", "chat"]), v2)
         mut("stream extra key", lambda d: d["runs"][0]["stream"].update(note="x"), v2)
         mut("stream gap extra key", lambda d: d["runs"][0]["stream"].update(gap_ms={"p50": 1, "p99": 2}), v2)
         mut("stream ttft a list", lambda d: d["runs"][0]["stream"].update(ttft_ms=[1]), v2)
@@ -126,6 +129,43 @@ class JsParity(unittest.TestCase):
         mut("v1 with blocks", lambda d: d["protocol"].update(blocks=["first-token"]))
         mut("v1 with stream", lambda d: d["runs"][0].update(stream={"ttft_ms": 1}))
         mut("v1 with size ttft", lambda d: d["sizes"]["medium"].update(ttft_ms={"median": 1}))
+        def skip_agent(d):
+            d.pop("agent")
+            d["protocol"].pop("agent")
+            d["protocol"]["skipped"] = [{"block": "agent", "reason": "context_too_small"}]
+            d["runs"] = []
+        mut("agent skipped", skip_agent, agent)
+        mut("agent skipped with data", lambda d: (skip_agent(d), d.update(agent={"sessions": [{"index": 1}]}))[0], agent)
+        mut("agent data missing", lambda d: d.pop("agent"), agent)
+        mut("agent sessions empty", lambda d: d["agent"].update(sessions=[]), agent)
+        mut("agent sessions a string", lambda d: d["agent"].update(sessions="x"), agent)
+        mut("agent not in blocks", lambda d: d["protocol"].update(blocks=["first-token"]), agent)
+        mut("agent run in a first-token result", lambda d: d["runs"][0].update(size="agent"), v2)
+        mut("agent data in a first-token result", lambda d: d.update(agent=copy.deepcopy(agent["agent"])), v2)
+        mut("protocol agent turns", lambda d: d["protocol"]["agent"].update(turns=4), agent)
+        mut("protocol agent warmup true", lambda d: d["protocol"]["agent"].update(warmup=True), agent)
+        mut("protocol agent missing", lambda d: d["protocol"].pop("agent"), agent)
+        mut("protocol agent extra", lambda d: d["protocol"]["agent"].update(x=1), agent)
+        mut("protocol agent a string", lambda d: d["protocol"].update(agent="x"), agent)
+        mut("skipped bad reason", lambda d: d["protocol"].update(skipped=[{"block": "agent", "reason": "slow"}]), agent)
+        mut("skipped bad block", lambda d: d["protocol"].update(skipped=[{"block": "chat", "reason": "context_too_small"}]), agent)
+        mut("skipped not a list", lambda d: d["protocol"].update(skipped="agent"), agent)
+        mut("skipped entry a string", lambda d: d["protocol"].update(skipped=["agent"]), agent)
+        mut("skipped free text", lambda d: d["protocol"].update(skipped=[{"block": "agent", "reason": "context_too_small", "note": "x"}]), agent)
+        mut("agent extra key", lambda d: d["agent"].update(note="x"), agent)
+        mut("agent session extra key", lambda d: d["agent"]["sessions"][0].update(text="x"), agent)
+        mut("agent turn six", lambda d: d["agent"]["turns"].update({"6": {}}), agent)
+        mut("agent hit pct a list", lambda d: d["agent"]["sessions"][0].update(hit_pct=[1]), agent)
+        mut("agent run turn extra", lambda d: d["runs"][0].update(turn=[1]), agent)
+        mut("agent prompt hash", lambda d: d["protocol"]["prompt_sha256"].update({"agent_doc_1.txt": "0" * 64}), agent)
+        mut("agent prompt unknown", lambda d: d["protocol"]["prompt_sha256"].update({"agent_doc_9.txt": "0" * 64}), agent)
+        mut("agent prompt in v1", lambda d: (d.update(schema="strata-bench/v1"), d["protocol"].update(id="standard-v1")), agent)
+        mut("v1 with agent", lambda d: d.update(agent={"sessions": [{"index": 1}]}))
+        mut("v1 with skipped", lambda d: d["protocol"].update(skipped=[]))
+        mut("v1 with protocol agent", lambda d: d["protocol"].update(agent={"turns": 5}))
+        mut("v1 with turn", lambda d: d["runs"][0].update(turn=1))
+        for where in ("agent run 2 turn 3", "agent warmup 1 turn 5", "agent run 2 turn 6", "agent run 2", "agent run x turn 1", "agent run 1 turn 1; rm"):
+            mut(f"where {where}", lambda d, w=where: d["validity"].update(status="failed", failure={"kind": "crash", "where": w}), agent)
         mut("v2 prompt hash", lambda d: d["protocol"]["prompt_sha256"].update({"medium.txt": "0" * 64}), v2)
         mut("unicode label", lambda d: d.update(label="résultat ✓ 测试"))
         mut("quote in label with leak", lambda d: d.update(label="it's /usr/local/x"))
@@ -142,7 +182,7 @@ class JsParity(unittest.TestCase):
         for c, got in zip(cases, js):
             self.assertEqual(got, validate.problems(c["doc"]), c["name"])
         self.assertGreater(sum(1 for c in cases if validate.problems(c["doc"])), 30)        # the tampering cases really are rejected
-        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "v2 ok", "v2 failed", "by set", "by 39 chars", "machine id set", "host relation lan", "blocks several", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
+        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "v2 ok", "v2 failed", "v2 agent ok", "v2 agent failed", "by set", "by 39 chars", "machine id set", "host relation lan", "blocks several", "agent skipped", "where agent run 2 turn 3", "where agent warmup 1 turn 5", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
 
     def test_the_schema_data_file_is_current(self):
         import sys

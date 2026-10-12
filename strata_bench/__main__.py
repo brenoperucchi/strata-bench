@@ -1,7 +1,7 @@
 """strata-bench command line.
 
   python3 -m strata_bench run --base URL --config RUN-CONFIG.json --origin setup-default|custom-N
-                              --label LABEL --out DIR [--sizes probe,medium,long,xlong[,gprobe]] [--identity IDENTITY.json]
+                              --label LABEL --out DIR [--sizes probe,medium,long,xlong[,gprobe][,agent]] [--identity IDENTITY.json]
   python3 -m strata_bench validate RESULT.json [...]
 
 Exit codes of run: 0 done, 2 preflight refused (nothing measured), 3 incomplete (partial result kept).
@@ -40,7 +40,7 @@ def main(argv=None) -> int:
     a = p.parse_args(argv)
     if a.cmd == "run":
         sizes = [s for s in a.sizes.split(",") if s]
-        bad = [s for s in sizes if s not in ("probe", "gprobe") and s not in core.SIZES]
+        bad = [s for s in sizes if s not in ("probe", "gprobe", "agent") and s not in core.SIZES]
         if bad:
             p.error(f"unknown sizes: {bad}")
         cfg = json.loads(a.config.read_text(encoding="utf-8-sig"))

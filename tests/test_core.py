@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import tempfile
 import threading
@@ -28,7 +29,7 @@ class Fake(BaseHTTPRequestHandler):
         cls.st = {"model": MODEL, "n_ctx": 32768, "build": "Strata 0.1.39", "reused": 0, "probe_read": 20,
                   "probe_reused": 400, "fail_after": None, "no_timings": False, "calls": [], "shared": {},
                   "settings": True, "api_key": None, "mode": None, "mode_after": 0,
-                  "sse": {}}
+                  "sse": {}, "last_render": "", "agent_cache": True}
 
     def log_message(self, *a):
         pass
@@ -126,6 +127,11 @@ class Fake(BaseHTTPRequestHandler):
             send({"choices": [{"delta": {"content": text, "reasoning_content": None}}]})
         s = Fake.st
         read, reused = (s["probe_read"], s["probe_reused"]) if probe else (100, s["reused"])
+        if body.get("tools"):                                # an agent turn: the cache keeps the longest common prefix of the last conversation
+            render = json.dumps(body["messages"])
+            total = len(render) // 4
+            reused = len(os.path.commonprefix([s["last_render"], render])) // 4 if body.get("cache_prompt") and s["agent_cache"] else 0
+            read, s["last_render"] = total - reused, render
         send({"choices": [{"delta": {}, "finish_reason": "stop"}]})
         send({"choices": [], "usage": {"completion_tokens": pieces, "secret_extra": "x"},
               **({} if o.get("no_timings") else {"timings": {"prompt_n": read, "cache_n": reused, "prompt_ms": 50.0,

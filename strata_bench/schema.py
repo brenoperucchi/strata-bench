@@ -21,6 +21,19 @@ STANDARD_V1_PROMPTS = {
     "short.txt": "2cd69728112a942401591b3d19141361105a8b2e9195ae19c007b593d70e9402",
     "probe_lines.txt": "dfa9547550e81cca80b085f57ceb4614fe0c4fba040ddf96fe8d70bb68dde2db",
 }
+STANDARD_V2_PROMPTS = {         # added by standard-v2 (the agent block); a v2 result may also carry the v1 files' hashes
+    "agent_system.txt": "2a421b20eb39a451d56c527c522ad10e1bf05e4e61cec0d195505ad7e38b5bd1",
+    "agent_tools.json": "8da51a73ff458b4192d4efd8ea02af2ae8a348583f1f263edfae7dd37fd67584",
+    "agent_turns.json": "d842028f1316dc5102b118cb31cbebe2a784d2405b1bce3d1f2d81d8f8c4d108",
+    "agent_doc_1.txt": "a6706fef11f389df044a12aba50bf38094712cdf09e29f6b157bbb54a62f7fbb",
+    "agent_doc_2.txt": "63fd5d78ab583752286c511534acbef1dae6f73c21a6aff0a470370e2f2d7fb6",
+    "agent_doc_3.txt": "a4e9d5a5ebae46b6d04eeffa3737e2217a538906fa16a07ee39ff732d59c3176",
+    "agent_doc_4.txt": "21166adfd6dcaab1958814092627ddef3f552d53552d9f00f3263e427ba48ad4",
+    "agent_doc_5.txt": "1c4262f60af888cc4cdbc4e5315dda7e09ed9aa99b68bc753a118a534d99fe6b",
+}
+AGENT_PROTOCOL = {"turns": 5, "sessions": 3, "warmup": 1, "max_tokens": 256, "cache_prompt": "true", "tool_choice": "none"}
+AGENT_MIN_CTX = 16384            # the five documents, the answers and the tool text need about 14K tokens: a smaller context skips the block
+SKIP_REASONS = ("context_too_small", "no_parallel_slots", "no_stream_timings")
 SERVER_FIELDS = ("reasoning_budget_tokens", "sampling", "draft_vocab", "fit_max_tokens", "gpu", "layer_split")
 SHARED_KEYS = ("reasoning_effort", "temperature", "top_p", "top_k", "seed", "max_tokens",
                "experimental_speed_projection")
@@ -61,11 +74,15 @@ SUITES = ("custom", "quick", "standard", "full")      # v2: which profile of blo
 BLOCKS = ("first-token", "chat", "agent", "clients", "decode-curve")
 
 FAILURE_KINDS = ("crash", "oom", "garbage", "hang", "server_error")        # the health view: only catastrophic failures, a closed list
-FAILURE_WHERE = re.compile(r"^((short|medium|long|xlong) (warmup|run) \d{1,3}|(probe|gprobe(150|300|450)) \d{1,3})$")
+FAILURE_WHERE = re.compile(r"^((short|medium|long|xlong) (warmup|run) \d{1,3}|(probe|gprobe(150|300|450)) \d{1,3}|agent (warmup|run) \d{1,3} turn [1-5])$")
+
+AGENT_TURN_SUMMARY = {k: SUMMARY for k in ("prompt_n", "cache_n", "predicted_n", "ttft_ms", "prompt_ms", "decode_tps")}
+AGENT = {"sessions": [{"index": SCALAR, "hit_pct": SCALAR, "reread_tokens": SCALAR, "new_tokens": SCALAR}],
+         "hit_pct": SUMMARY, "reread_tokens": SUMMARY, "turns": Map(r"^[1-5]$", AGENT_TURN_SUMMARY)}
 
 STREAM = {"ttft_ms": SCALAR, "total_ms": SCALAR, "pieces": SCALAR, "gap_ms": {"p50": SCALAR, "p95": SCALAR, "max": SCALAR}}
 
-RUN = {"size": SCALAR, "kind": SCALAR, "index": SCALAR, "request_sha256": HEX, "wall_ms": SCALAR, "timings": TIMINGS,
+RUN = {"size": SCALAR, "kind": SCALAR, "index": SCALAR, "turn": SCALAR, "request_sha256": HEX, "wall_ms": SCALAR, "timings": TIMINGS,
        "usage": USAGE, "tokens": {"prompt": SCALAR, "reused": SCALAR, "generated": SCALAR},
        "reasoning_chars": SCALAR, "content_chars": SCALAR, "finish_reason": SCALAR, "output_sha256": HEX, "output_check": SCALAR,
        "stream": STREAM}
@@ -83,7 +100,7 @@ PUBLIC = {
                "server_shared": {k: SCALAR for k in SHARED_KEYS},
                "config_id": HEX, "config_origin": SCALAR, "config_origin_verified": SCALAR,
                "calibration": IDENTITY["calibration"]},
-    "protocol": {"id": SCALAR, "prompt_sha256": Map(r"^[\w.-]+\.txt$", HEX), "probe_system_sha256": HEX,
+    "protocol": {"id": SCALAR, "prompt_sha256": Map(r"^[\w.-]+\.(txt|json)$", HEX), "probe_system_sha256": HEX,
                  "sampling": {"temperature": SCALAR, "seed": SCALAR, "cache_prompt": SCALAR},
                  "max_tokens": SCALAR, "warmup": SCALAR, "runs": SCALAR,
                  "probe": {"calls": SCALAR, "skip_first": SCALAR, "max_tokens": SCALAR, "offset": SCALAR,
@@ -91,8 +108,10 @@ PUBLIC = {
                  "gprobe": {"system_sha256": HEX, "chars": Map(r"^(150|300|450)$", SCALAR), "source": SCALAR,
                             "calls": SCALAR, "skip_first": SCALAR, "max_tokens": SCALAR},
                  "reasoning_sent": {"sizes": SCALAR, "probe": SCALAR}, "unique_line": SCALAR,
-                 "suite": SCALAR, "blocks": [SCALAR]},
+                 "suite": SCALAR, "blocks": [SCALAR], "skipped": [{"block": SCALAR, "reason": SCALAR}],
+                 "agent": {k: SCALAR for k in AGENT_PROTOCOL}},
     "runs": [RUN],
+    "agent": AGENT,
     "sizes": Map(r"^(short|medium|long|xlong|probe|gprobe150|gprobe300|gprobe450)$",
                  {"prompt_tps": SUMMARY, "decode_tps": SUMMARY, "prompt_ms": SUMMARY, "wall_ms": SUMMARY, "ttft_ms": SUMMARY,
                   "reused_median": SCALAR, "read_median": SCALAR}),

@@ -17,6 +17,12 @@ LEAKS = [
 ]
 
 
+def same_flat(a, b) -> bool:
+    """Two flat objects with equal values; a boolean never equals a number (Python's True == 1 would, JavaScript's does not)."""
+    return (isinstance(a, dict) and set(a) == set(b)
+            and all(a[k] == b[k] and isinstance(a[k], bool) == isinstance(b[k], bool) for k in b))
+
+
 def version_problems(doc: dict, proto: dict) -> list:
     """v2 adds first-token timing, the suite and the host relation; v1 results must not carry them, and a v2 result must
     declare the closed ones."""
@@ -27,7 +33,9 @@ def version_problems(doc: dict, proto: dict) -> list:
     runs = [r for r in doc.get("runs") or [] if isinstance(r, dict)] if isinstance(doc.get("runs"), list) else []
     if not v2:
         for path, present in (("runner.host_relation", "host_relation" in runner), ("protocol.suite", "suite" in proto),
-                              ("protocol.blocks", "blocks" in proto), ("runs[].stream", any("stream" in r for r in runs)),
+                              ("protocol.blocks", "blocks" in proto), ("protocol.skipped", "skipped" in proto),
+                              ("protocol.agent", "agent" in proto), ("agent", "agent" in doc),
+                              ("runs[].stream", any("stream" in r for r in runs)), ("runs[].turn", any("turn" in r for r in runs)),
                               ("sizes.*.ttft_ms", any(isinstance(s, dict) and "ttft_ms" in s for s in sizes.values()))):
             if present:
                 out.append(f"{path} is only allowed in strata-bench/v2")
@@ -39,6 +47,23 @@ def version_problems(doc: dict, proto: dict) -> list:
     blocks = proto.get("blocks")
     if not (isinstance(blocks, list) and blocks and all(b in schema.BLOCKS for b in blocks)):
         out.append("protocol.blocks must be a list of " + ", ".join(schema.BLOCKS))
+        return out
+    skipped = proto.get("skipped")
+    if skipped is not None and not (isinstance(skipped, list) and all(
+            isinstance(k, dict) and k.get("block") in blocks and k.get("reason") in schema.SKIP_REASONS for k in skipped)):
+        out.append("protocol.skipped must list blocks of this result with a reason from " + ", ".join(schema.SKIP_REASONS))
+        skipped = []
+    skipped_blocks = [k.get("block") for k in skipped or []]
+    ran_agent = "agent" in blocks and "agent" not in skipped_blocks
+    has_agent = "agent" in doc or "agent" in proto or any(r.get("size") == "agent" for r in runs)
+    validity = doc.get("validity") if isinstance(doc.get("validity"), dict) else {}
+    if ran_agent and validity.get("status") != "failed" and not (
+            isinstance(doc.get("agent"), dict) and isinstance(doc["agent"].get("sessions"), list) and len(doc["agent"]["sessions"]) > 0):
+        out.append("a result with the agent block needs agent.sessions")
+    elif not ran_agent and has_agent:
+        out.append("agent data is only allowed when the agent block ran")
+    if ran_agent and not same_flat(proto.get("agent"), schema.AGENT_PROTOCOL):
+        out.append("protocol.agent is not standard-v2's")
     return out
 
 
@@ -55,9 +80,10 @@ def problems(doc: dict) -> list:
     elif doc.get("schema") in schema.SCHEMA_IDS.values() and schema.SCHEMA_IDS[pid] != doc["schema"]:
         out.append(f"protocol {pid} is written in {schema.SCHEMA_IDS[pid]}, not {doc['schema']}")
     out.extend(version_problems(doc, proto))
+    known = {**schema.STANDARD_V1_PROMPTS, **(schema.STANDARD_V2_PROMPTS if pid == "standard-v2" else {})}
     for name, h in (proto.get("prompt_sha256") or {}).items():
-        if schema.STANDARD_V1_PROMPTS.get(name) != h:
-            out.append(f"prompt {name} is not standard-v1's")
+        if known.get(name) != h:
+            out.append(f"prompt {name} is not {pid}'s")
     from .core import PROBE_SYSTEM, sha256          # the canonical probe system prompt
     if proto.get("probe_system_sha256") not in (None, sha256(PROBE_SYSTEM.encode())):
         out.append("probe system prompt is not standard-v1's")

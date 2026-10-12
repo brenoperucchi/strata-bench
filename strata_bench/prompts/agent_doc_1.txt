@@ -1,0 +1,131 @@
+#endif
+
+#include <cuda_runtime.h>
+
+#include <array>
+#include <chrono>
+#include <algorithm>
+#include <iostream>
+#include <thread>
+#include <atomic>
+#include <condition_variable>
+#include <deque>
+#include <map>
+#include <mutex>
+#include <optional>
+#include <new>
+#include <charconv>
+#include <cmath>
+#include <limits>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <set>
+#include <vector>
+
+namespace {
+// Windows' WDDM driver model: native Windows, or WSL2 (its GPU goes through /dev/dxg to the Windows driver).  There,
+// pinning a large arena into two CUDA contexts leaves WDDM refusing every later allocation (the 5080 + 3090 rig);
+// a Linux driver has no such limit (#253: the 8 GiB cap cost a 4090 + 3060 split 3x of its prompt speed).
+bool under_wddm() {
+#ifdef _WIN32
+    return true;
+#else
+    static const bool dxg = std::filesystem::exists("/dev/dxg");
+    return dxg;
+#endif
+}
+
+// perf-review D-4: the lent slots are refilled with queued copies and one wait; STRATA_REFILL_BLOCKING=1 waits on each
+bool refill_blocking() {
+    static const bool v = std::getenv("STRATA_REFILL_BLOCKING") != nullptr;
+    return v;
+}
+
+using Clock = std::chrono::steady_clock;
+
+// The resident RAM mode and the adaptive tier.  A swap copies `in` (held in RAM) into the slot of `out` (held only
+// by that slot).  Before the slot is overwritten, `out`'s bytes are copied back from it into an exchange buffer, so
+// the CPU computes `out` from RAM while the swap is in flight; when the swap has landed, `commit_exchanges` moves
+// them into `in`'s place in RAM.  The RAM copy then again holds exactly the experts no core slot does, and no swap
+// reads the file.  Swaps that need no exchange (`out` in the lend region is held in RAM already; or `in` is not) go
+// on as before; ones beyond the buffers' room wait for a later round.  Runs on the adaptive tier's thread while the
+// GPU commits and drafts: the copies back are on its stream, and waited for before the refills are queued.
+template <class Swap>
+bool resident_stage_swaps(strata::core::FileExpertSource& src, strata::core::ExpertCache& cache,
+                          const std::vector<int32_t>& host_res, int64_t n_expert, std::vector<Swap>& swaps,
+                          cudaStream_t stream) {
+    if (!src.complement_ready() || swaps.empty()) return true;
+    struct Staged { int32_t layer, in, out; int64_t q; };
+    std::vector<Staged> staged;
+    std::vector<Swap> kept;
+    kept.reserve(swaps.size());
+    for (const Swap& s : swaps) {
+        if (!src.has_resident(s.layer, s.in) || src.has_resident(s.layer, s.out)) { kept.push_back(s); continue; }
+        const int64_t q = (int64_t) staged.size();
+        if (q >= src.exchange_capacity()) continue;
+        const int32_t slot = host_res[(size_t) s.layer * (size_t) n_expert + (size_t) s.out];
+        if (slot < 0) continue;
+        if (cudaMemcpyAsync(src.exchange_buffer(q), cache.device_slot(slot),
+                            (size_t) strata::kernels::cpu::expert_layout().blob_bytes(s.layer), cudaMemcpyDeviceToHost,
+                            stream) != cudaSuccess)
+            return false;
+        staged.push_back({s.layer, s.in, s.out, q});
+        kept.push_back(s);
+    }
+    if (!staged.empty()) {
+        if (cudaStreamSynchronize(stream) != cudaSuccess) return false;
+        for (const Staged& x : staged)
+            if (!src.stage_exchange(x.layer, x.in, x.out, x.q)) return false;
+    }
+    swaps.swap(kept);
+    return true;
+}
+
+struct Options {
+    std::string pack = "pack/full";
+    std::vector<int64_t> tokens;      // the prompt, PRE-TOKENIZED
+    int64_t max_new = 16;
+    int64_t max_context = 4096;
+    bool greedy = true;
+    uint64_t seed = 0;
+    int top_k = 20;
+    float top_p = 0.95f;
+    float temperature = 1.0f;
+    std::string dump_logits;          // one line of logits per generated position
+    int64_t logits_stride = 1;        // storage selection; all prompt tokens remain conditioned
+    /// **THE RESIDUAL, SO THE HEAD CAN BE CHECKED WITHOUT THE LAYERS.**
+    ///
+    /// C1 fails (LEDGER L116) and the pipeline is `embed -> 48 layers -> head`.  Dumping `R` splits it in half:
+    /// the head is one norm, two bf16 projections and one 794 MB GEMV, all of which can be recomputed in Python
+    /// from the manifest.  If Python agrees with the engine on the same `R`, the head is right and the layers
+    /// are wrong; if it disagrees, the head is wrong.  Nothing else in the engine can be split that cheaply.
+    std::string ple_gguf;              // the ORIGINAL second GGUF shard: the PLE table is not in the pack
+    bool no_ple = false;              // explicit diagnostic ablation; never a normal inference default
+    bool stream_token = false;        // R2.6 experiment: ordered work on the session stream
+    bool check_logits = false;        // optional full-vocabulary finite scan
+    bool gr_fp32_activations = false;  // pinned CUDA single-token BF16 activation contract
+    bool gr_native_mmvf = false;       // pinned projection reduction tree as well as FP32 inputs
+    bool native_bf16 = false;          // SSM gates, router and indexer projections only
+    bool native_bf16_extra = false;    // PLE value and shared expert scalar gate
+    bool native_ple_key = false;       // unchanged Q2_0 key and CUDA Q8_1 activations
+    bool native_moe_combine = false;   // pinned fused CUDA weighted reduction
+    bool native_gdn = false;          // pinned CUDA recurrence and preprocessing
+    bool native_flash_attn_short = false; // diagnostic pinned attention, context <=256
+    bool native_qsa_indexer = false;  // pinned F16 key cache and F32 pooling
+    bool native_qsa = false;          // pinned F32 QSA norms and gate
+    /// THE CONTEXT EXTENSION (rope scaling, rope_scaling.hpp).  These knobs resolve to ONE process config,
+    /// set once before `session_init` builds the rope table and the graphs capture the kernels.  There is
+    /// deliberately no per-request form: K sits in the cache POST-RoPE, so one cache must never mix two
+    /// scalings.  Precedence: an EXPLICIT flag over the model file's rope keys over the struct defaults -
+    /// `none` and `1` are explicit values (the opt-outs), the absent flag is not.
+    std::string rope_scaling;           ///< --rope-scaling none|linear|yarn (llama.cpp's names); empty = the flag is absent
+    double rope_scale = 0;              ///< --rope-scale F: the extension factor; 0 = the flag is absent (the model file's, else 1 = off)
+    double rope_freq_base = 0;          ///< --rope-freq-base N: 0 = the model's (1e7)
+    double rope_freq_scale = 0;         ///< --rope-freq-scale F: the raw ggml knob; 0 = 1/--rope-scale
+    double yarn_orig_ctx = 0;           ///< --yarn-orig-ctx N: 0 = the model's, else 262144
+    double yarn_ext_factor = -1.0;      ///< --yarn-ext-factor F: <0 = auto (1 for yarn, 0 otherwise)

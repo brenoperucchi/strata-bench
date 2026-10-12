@@ -57,14 +57,35 @@ function versionProblems(doc, proto, data, out) {
   const runs = Array.isArray(doc.runs) ? doc.runs.filter(isObj) : [];
   if (!v2) {
     const present = [["runner.host_relation", "host_relation" in runner], ["protocol.suite", "suite" in proto], ["protocol.blocks", "blocks" in proto],
-      ["runs[].stream", runs.some((r) => "stream" in r)], ["sizes.*.ttft_ms", Object.values(sizes).some((s) => isObj(s) && "ttft_ms" in s)]];
+      ["protocol.skipped", "skipped" in proto], ["protocol.agent", "agent" in proto], ["agent", "agent" in doc],
+      ["runs[].stream", runs.some((r) => "stream" in r)], ["runs[].turn", runs.some((r) => "turn" in r)], ["sizes.*.ttft_ms", Object.values(sizes).some((s) => isObj(s) && "ttft_ms" in s)]];
     for (const [path, here] of present) if (here) out.push(`${path} is only allowed in strata-bench/v2`);
     return;
   }
   if (!data.host_relations.includes(runner.host_relation)) out.push("runner.host_relation must be one of " + data.host_relations.join(", "));
   if (!data.suites.includes(proto.suite)) out.push("protocol.suite must be one of " + data.suites.join(", "));
   const blocks = proto.blocks;
-  if (!(Array.isArray(blocks) && blocks.length > 0 && blocks.every((b) => data.blocks.includes(b)))) out.push("protocol.blocks must be a list of " + data.blocks.join(", "));
+  if (!(Array.isArray(blocks) && blocks.length > 0 && blocks.every((b) => data.blocks.includes(b)))) {
+    out.push("protocol.blocks must be a list of " + data.blocks.join(", "));
+    return;
+  }
+  let skipped = proto.skipped;
+  if (skipped !== undefined && skipped !== null && !(Array.isArray(skipped) && skipped.every((k) => isObj(k) && blocks.includes(k.block) && data.skip_reasons.includes(k.reason)))) {
+    out.push("protocol.skipped must list blocks of this result with a reason from " + data.skip_reasons.join(", "));
+    skipped = [];
+  }
+  const skippedBlocks = (Array.isArray(skipped) ? skipped : []).map((k) => (isObj(k) ? k.block : undefined));
+  const ranAgent = blocks.includes("agent") && !skippedBlocks.includes("agent");
+  const hasAgent = "agent" in doc || "agent" in proto || runs.some((r) => r.size === "agent");
+  const status = isObj(doc.validity) ? doc.validity.status : undefined;
+  if (ranAgent && status !== "failed" && !(isObj(doc.agent) && Array.isArray(doc.agent.sessions) && doc.agent.sessions.length > 0)) out.push("a result with the agent block needs agent.sessions");
+  else if (!ranAgent && hasAgent) out.push("agent data is only allowed when the agent block ran");
+  if (ranAgent && !sameFlat(proto.agent, data.agent_protocol)) out.push("protocol.agent is not standard-v2's");
+}
+
+// Two flat objects with equal values; a boolean never equals a number (Python's True == 1 would, JavaScript's does not).
+function sameFlat(a, b) {
+  return isObj(a) && Object.keys(a).length === Object.keys(b).length && Object.keys(b).every((k) => k in a && a[k] === b[k]);
 }
 
 export function problems(doc, data) {
@@ -79,7 +100,8 @@ export function problems(doc, data) {
   else if (schemaKnown && schemaIds[pid] !== doc.schema) out.push(`protocol ${pid} is written in ${schemaIds[pid]}, not ${doc.schema}`);
   versionProblems(doc, proto, data, out);
   if (isObj(proto.prompt_sha256)) {
-    for (const [name, h] of Object.entries(proto.prompt_sha256)) if (data.prompts[name] !== h) out.push(`prompt ${name} is not standard-v1's`);
+    const known = pid === "standard-v2" ? { ...data.prompts, ...data.prompts_v2 } : data.prompts;
+    for (const [name, h] of Object.entries(proto.prompt_sha256)) if (!Object.prototype.hasOwnProperty.call(known, name) || known[name] !== h) out.push(`prompt ${name} is not ${typeof pid === "string" ? pid : pyRepr(pid)}'s`);
   }
   if (proto.probe_system_sha256 !== undefined && proto.probe_system_sha256 !== null && proto.probe_system_sha256 !== data.probe_system_sha256) out.push("probe system prompt is not standard-v1's");
   const gp = isObj(proto.gprobe) ? proto.gprobe : {};

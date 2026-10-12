@@ -19,7 +19,8 @@ from datetime import datetime
 from pathlib import Path
 
 from . import SCHEMA, SCHEMA_V2, VERSION
-from .schema import FAILURE_KINDS, HOST_RELATIONS, ID_RE, IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS, SHARED_KEYS, STANDARD_V1_PROMPTS, prune
+from .schema import (AGENT_MIN_CTX, AGENT_PROTOCOL, FAILURE_KINDS, HOST_RELATIONS, ID_RE, IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS,
+                     SHARED_KEYS, STANDARD_V1_PROMPTS, STANDARD_V2_PROMPTS, prune)
 
 PROMPTS = Path(__file__).parent / "prompts"
 SIZES = ("short", "medium", "long", "xlong")
@@ -215,14 +216,14 @@ def preflight(base: str, cfg: dict) -> tuple:
     return {"build_info": props.get("build_info"), "model_file": served, "n_ctx": n_ctx, "shared": shared}, warnings
 
 
-def check_prompts() -> dict:
+def check_prompts(v2=False) -> dict:
     """Every prompt file must match SHA256SUMS byte for byte (a CRLF checkout or an edit is a different protocol)."""
-    sums = dict(STANDARD_V1_PROMPTS)           # pinned in the code: an edited SHA256SUMS does not change the protocol
+    sums = {**STANDARD_V1_PROMPTS, **(STANDARD_V2_PROMPTS if v2 else {})}   # pinned in the code: an edited SHA256SUMS does not change the protocol
     for name, h in sums.items():
         got = sha256((PROMPTS / name).read_bytes())
         if got != h:
             raise PreflightError(f"prompt {name} does not match SHA256SUMS ({got[:12]} != {h[:12]}): "
-                                 "not standard-v1 (a CRLF checkout?)")
+                                 f"not {PROTOCOL_V2 if v2 else PROTOCOL} (a CRLF checkout?)")
     return sums
 
 
@@ -254,10 +255,11 @@ def stream_error_kind(ev: dict) -> str:
     return "oom" if OOM_RX.search(json.dumps(ev.get("error"))[:2048]) else "server_error"
 
 
-def call_stream(base: str, messages: list, max_tokens: int, extra=None) -> dict:
+def call_stream(base: str, messages: list, max_tokens: int, extra=None, sink=None) -> dict:
     """standard-v2 request: the same body as call() but streamed (SSE). Time to first token runs from just before the
     request is sent to the first non-empty piece of content or reasoning_content (keep-alives and empty deltas do not
-    count), so it includes the network. Speeds still come from the engine's own `timings` in the stream's last chunk."""
+    count), so it includes the network. Speeds still come from the engine's own `timings` in the stream's last chunk.
+    `sink`, when given, receives the answer text (sink["content"]) for a caller that must send it back; it is never written to a result."""
     body = {"messages": messages, "temperature": 0, "seed": 42, "max_tokens": max_tokens, "stream": True,
             "stream_options": {"include_usage": True}, "reasoning_effort": "none",
             "chat_template_kwargs": {"enable_thinking": False}, **(extra or {})}
@@ -298,6 +300,8 @@ def call_stream(base: str, messages: list, max_tokens: int, extra=None) -> dict:
     if not done and finish is None:                    # the stream ended with no finish_reason and no [DONE]: the server died
         raise MeasureFailure("crash")
     text, rtext = "".join(content), "".join(reasoning)
+    if sink is not None:
+        sink["content"] = text
     gaps = sorted(round((b - a) * 1000, 1) for a, b in zip(stamps, stamps[1:]))
     stream = {"ttft_ms": round((stamps[0] - t0) * 1000, 1) if stamps else None, "total_ms": round(wall * 1000, 1),
               "pieces": len(stamps),
@@ -325,6 +329,27 @@ def require(r: dict, keys: tuple, what: str):
 def summary(runs: list, key: str):
     v = [r["timings"][key] for r in runs if isinstance(r["timings"].get(key), (int, float))]
     return {"median": statistics.median(v), "min": min(v), "max": max(v)} if v else None
+
+
+def spread(values: list):
+    v = [x for x in values if isinstance(x, (int, float)) and not isinstance(x, bool)]
+    return {"median": statistics.median(v), "min": min(v), "max": max(v)} if v else None
+
+
+def session_stats(index: int, rows: list) -> dict:
+    """What the cache saved over one agent session. Before turn t the server has seen `prior` tokens (the turn before it plus
+    its answer); `cache_n` of them should come back from the cache, so `prior - cache_n` were read again. Turn 1 has no past."""
+    prior = hit = seen = reread = new = 0
+    for t, r in enumerate(rows, 1):
+        read, cache = r["tokens"]["prompt"] or 0, r["tokens"]["reused"] or 0
+        total = read + cache
+        if t > 1:
+            hit += min(cache, prior)
+            seen += prior
+            reread += max(0, prior - cache)
+            new += max(0, total - prior)
+        prior = total + (r["tokens"]["generated"] or 0)
+    return {"index": index, "hit_pct": round(100 * hit / seen, 1) if seen else None, "reread_tokens": reread, "new_tokens": new}
 
 
 def stream_summary(runs: list, key: str):
@@ -397,6 +422,10 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
             raise SystemExit("--host-relation " + "|".join(HOST_RELATIONS) + " is required with standard-v2 when --base is not a loopback address")
     elif host_relation is not None:
         raise SystemExit("--host-relation is only for standard-v2")
+    if "agent" in sizes and not v2:
+        raise SystemExit("the agent block is only for --protocol standard-v2")
+    if v2 and not any(x in SIZES or x == "agent" for x in sizes):
+        raise SystemExit("--protocol standard-v2 needs at least one text size (" + ", ".join(SIZES) + ") or agent in --sizes")
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"{label}.result.json"
     if path.exists():
@@ -404,11 +433,25 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
         return 2
     API_KEY["value"] = api_key
     try:
-        sums = check_prompts()
+        sums = check_prompts(v2)
         server, warnings = preflight(base, cfg)
     except (PreflightError, OSError) as e:
         log(f"preflight refused: {e}")
         return 2
+    requested, skipped = list(sizes), []
+    if "agent" in sizes:                        # a block the server cannot run is skipped with a closed reason, not failed
+        try:
+            small = int(server["n_ctx"]) < AGENT_MIN_CTX
+        except (TypeError, ValueError):
+            small = True
+        if small:
+            skipped.append({"block": "agent", "reason": "context_too_small"})
+            sizes = [x for x in sizes if x != "agent"]
+            log(f"agent skipped: the server context {server['n_ctx']!r} is under {AGENT_MIN_CTX} tokens")
+            if not any(x in SIZES for x in sizes):
+                log("nothing left to measure")
+                return 2
+    blocks = ((["first-token"] if any(x in SIZES for x in requested) else []) + (["agent"] if "agent" in requested else []))
     ident = identity or {}
     by = by if by is not None else (ident.get("submission") or {}).get("by")
     for what, v in (("--by", by), ("machine.machine_id", (ident.get("machine") or {}).get("machine_id"))):
@@ -438,7 +481,8 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
                      "reasoning_sent": {"sizes": "off (reasoning_effort none, enable_thinking false)" if v2 else "server default",
                                         "probe": "enable_thinking false"},
                      "unique_line": "[strata-bench <size> <warmup|run> <i>]",
-                     **({"suite": "custom", "blocks": ["first-token"]} if v2 else {})},
+                     **({"suite": "custom", "blocks": blocks, **({"skipped": skipped} if skipped else {}),
+                         **({"agent": dict(AGENT_PROTOCOL)} if "agent" in sizes else {})} if v2 else {})},
         "runs": [], "sizes": {},
         "validity": {"status": "running", "warnings": warnings},
     })
@@ -448,6 +492,9 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
         for size in sizes:
             if size == "probe":
                 measure_probe(base, res, probe_offset, log)
+                continue
+            if size == "agent":
+                measure_agent(base, res, log)
                 continue
             if size == "gprobe":
                 d["protocol"]["gprobe"] = {"system_sha256": sha256(GPROBE_SYSTEM.encode()), "chars": GPROBE_CHARS,
@@ -537,6 +584,57 @@ def measure_probe(base: str, res: Result, offset: int, log):
                            "reused_median": statistics.median(reused) if reused else None}
     s = d["sizes"]["probe"]
     log(f"probe: prompt_ms median {s['prompt_ms']['median']}, reused median {s['reused_median']}")
+
+
+def measure_agent(base: str, res: Result, log):
+    """standard-v2 agent block: one conversation of AGENT_PROTOCOL["turns"] turns. Each turn adds one public source file and a question to the
+    history (system text and four tool definitions first), the server's own answer goes back into the history, and the server's prompt cache is
+    on, so every turn after the first should read only what is new. One warm-up session, then AGENT_PROTOCOL["sessions"] measured ones; each
+    session starts with its own marker line so sessions never share a cache. Tools are offered with tool_choice none and never executed."""
+    d, P = res.doc, AGENT_PROTOCOL
+    system = (PROMPTS / "agent_system.txt").read_text(encoding="utf-8")
+    tools = json.loads((PROMPTS / "agent_tools.json").read_text(encoding="utf-8"))
+    script = json.loads((PROMPTS / "agent_turns.json").read_text(encoding="utf-8"))
+    docs = [(PROMPTS / f"agent_doc_{i}.txt").read_text(encoding="utf-8") for i in range(1, P["turns"] + 1)]
+    sessions = []
+    for kind, n in (("warmup", P["warmup"]), ("run", P["sessions"])):
+        for i in range(1, n + 1):
+            messages, rows = [{"role": "system", "content": f"[strata-bench agent {kind} {i}]\n" + system}], []
+            for t in range(1, P["turns"] + 1):
+                messages.append({"role": "user", "content": script["template"].format(
+                    n=t, doc=docs[t - 1], question=script["questions"][t - 1])})
+                res.where = f"agent {kind} {i} turn {t}"
+                sink = {}
+                r = {"size": "agent", "kind": kind, "index": i, "turn": t,
+                     **call_stream(base, messages, P["max_tokens"], {"cache_prompt": True, "tools": tools, "tool_choice": "none"}, sink)}
+                d["runs"].append(r)
+                res.save()
+                if r.get("output_check") == "garbage":
+                    raise MeasureFailure("garbage", res.where)
+                if kind == "run":
+                    require(r, ("prompt_n", "cache_n", "prompt_ms", "prompt_per_second", "predicted_n", "predicted_per_second"), res.where)
+                messages.append({"role": "assistant", "content": sink.get("content", "")})
+                rows.append(r)
+                tk = r["tokens"]
+                log(f"agent {kind} {i} turn {t}: read {tk['prompt']} (+{tk['reused']} from cache), first token {r['stream']['ttft_ms']} ms, "
+                    f"decode {r['timings'].get('predicted_per_second')} tok/s")
+            if kind == "run":
+                st = session_stats(i, rows)
+                sessions.append(st)
+                if st["hit_pct"] is not None and st["hit_pct"] < 50:
+                    d["validity"]["warnings"].append(f"agent run {i}: only {st['hit_pct']}% of the earlier conversation came from the cache")
+                log(f"agent session {i}: cache hit {st['hit_pct']}%, {st['reread_tokens']} tokens read again")
+    measured = [r for r in d["runs"] if r["size"] == "agent" and r["kind"] == "run"]
+    turns = {}
+    for t in range(1, P["turns"] + 1):
+        rs = [r for r in measured if r["turn"] == t]
+        turns[str(t)] = {"prompt_n": spread([r["tokens"]["prompt"] for r in rs]), "cache_n": spread([r["tokens"]["reused"] for r in rs]),
+                         "predicted_n": spread([r["tokens"]["generated"] for r in rs]),
+                         "ttft_ms": spread([r["stream"]["ttft_ms"] for r in rs]), "prompt_ms": spread([r["timings"].get("prompt_ms") for r in rs]),
+                         "decode_tps": spread([r["timings"].get("predicted_per_second") for r in rs])}
+    d["agent"] = {"sessions": sessions, "hit_pct": spread([x["hit_pct"] for x in sessions]),
+                  "reread_tokens": spread([x["reread_tokens"] for x in sessions]), "turns": turns}
+    res.save()
 
 
 def gprobe_excerpt(code: str, size: int, i: int) -> str:
