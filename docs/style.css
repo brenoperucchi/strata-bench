@@ -71,3 +71,4 @@ table.compare a.remove { font-size: .8rem; }
 .compare-bar .button[aria-disabled="true"] { opacity: .45; pointer-events: none; }
 td.pick-cell, th.pick-cell { width: 28px; padding-right: 0; }
 table.compare td.num { text-align: left; }
+td.nowrap { white-space: nowrap; }
