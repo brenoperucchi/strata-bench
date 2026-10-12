@@ -950,8 +950,12 @@ class ScoutTests(V2Run):
             leaf = leaf["x"]
         d["unexpected"] = node
         self.assertEqual(validate.problems(d), [f"nested more than {schema.MAX_DEPTH} levels deep"])
-        deep = schema.strict_loads('{"a":' * 5000 + "1" + "}" * 5000)                    # reading it is fine (or a ValueError), and the gate refuses it
-        self.assertEqual(validate.problems(deep), [f"nested more than {schema.MAX_DEPTH} levels deep"])
+        try:                                                                              # reading it either works (newer Pythons) or is a ValueError (older ones hit their stack): never anything else
+            deep = schema.strict_loads('{"a":' * 5000 + "1" + "}" * 5000)
+        except ValueError:
+            pass
+        else:
+            self.assertEqual(validate.problems(deep), [f"nested more than {schema.MAX_DEPTH} levels deep"])
 
     def test_numbers_outside_what_javascript_reads_are_refused_not_a_crash(self):
         self.assertEqual(self.go(("medium",), label="s"), 0)
