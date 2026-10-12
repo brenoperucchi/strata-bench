@@ -1,9 +1,119 @@
 {
- "count": 1,
+ "count": 2,
  "protocols": [
   "standard-v1"
  ],
  "results": [
+  {
+   "agent": null,
+   "args": [
+    "--pack",
+    "<pack>",
+    "--native",
+    "<native>",
+    "--ple-gguf",
+    "<ple-gguf>",
+    "--expert-profile",
+    "<expert-profile>",
+    "--mtp",
+    "<mtp>",
+    "--expert-cache",
+    "auto",
+    "--prefill",
+    "auto",
+    "--spec",
+    "4",
+    "--spec-min-p",
+    "0.5",
+    "--max-context",
+    "32768",
+    "--kv",
+    "int8"
+   ],
+   "backend": "CUDA",
+   "by": null,
+   "clients": null,
+   "commit": "a0116b2782a5b82622358c04a06496485d12b2d6",
+   "config_id": "355c006bb87cd541",
+   "config_origin": "custom-1",
+   "cpu": "AMD Ryzen 9 5950X",
+   "date": "2026-10-12T16:59:06-03:00",
+   "driver": "616.64",
+   "engine": "0.1.43.1",
+   "failure": null,
+   "gpu": "NVIDIA GeForce RTX 5090",
+   "gpu_count": 1,
+   "host_relation": null,
+   "id": "results/2026-10-12-ryzen9-5090-0143-1-v1-f33dcc54.result.json",
+   "label": "ryzen9-5090-0143-1-v1",
+   "machine_id": "ryzen9-5090",
+   "model": "Swift Qwen3.8 Flash Next",
+   "n_ctx": 32768,
+   "os": "Windows",
+   "protocol": "standard-v1",
+   "quant": "IQ3_XXS",
+   "ram_gb": 96,
+   "sizes": {
+    "gprobe150": {
+     "decode_tps": null,
+     "prompt_ms": 388.6,
+     "prompt_tps": null,
+     "read_median": 227,
+     "reused_median": 0,
+     "ttft_ms": null,
+     "wall_ms": 439.79999999999995
+    },
+    "gprobe300": {
+     "decode_tps": null,
+     "prompt_ms": 459.29999999999995,
+     "prompt_tps": null,
+     "read_median": 384,
+     "reused_median": 0,
+     "ttft_ms": null,
+     "wall_ms": 510.29999999999995
+    },
+    "gprobe450": {
+     "decode_tps": null,
+     "prompt_ms": 506.8,
+     "prompt_tps": null,
+     "read_median": 521,
+     "reused_median": 0,
+     "ttft_ms": null,
+     "wall_ms": 558.15
+    },
+    "long": {
+     "decode_tps": 208.8,
+     "prompt_ms": 2558.6,
+     "prompt_tps": 5729.3,
+     "read_median": null,
+     "reused_median": null,
+     "ttft_ms": null,
+     "wall_ms": null
+    },
+    "medium": {
+     "decode_tps": 240.7,
+     "prompt_ms": 860.1,
+     "prompt_tps": 3085.7,
+     "read_median": null,
+     "reused_median": null,
+     "ttft_ms": null,
+     "wall_ms": null
+    },
+    "probe": {
+     "decode_tps": null,
+     "prompt_ms": 417.79999999999995,
+     "prompt_tps": null,
+     "read_median": null,
+     "reused_median": 0,
+     "ttft_ms": null,
+     "wall_ms": 469.65
+    }
+   },
+   "status": "ok",
+   "suite": null,
+   "vram_gb": 32,
+   "warnings": 0
+  },
   {
    "agent": null,
    "args": [
