@@ -70,6 +70,8 @@ function versionProblems(doc, proto, data, out) {
     out.push("protocol.blocks must be a list of " + data.blocks.join(", "));
     return;
   }
+  const suiteBlocks = typeof proto.suite === "string" && Object.prototype.hasOwnProperty.call(data.suite_blocks, proto.suite) ? data.suite_blocks[proto.suite] : null;
+  if (suiteBlocks && !(blocks.length === suiteBlocks.length && blocks.every((b, i) => b === suiteBlocks[i]))) out.push(`protocol.suite ${proto.suite} lists the blocks ` + suiteBlocks.join(", "));
   let skipped = proto.skipped;
   if (skipped !== undefined && skipped !== null && !(Array.isArray(skipped) && skipped.every((k) => isObj(k) && blocks.includes(k.block) && data.skip_reasons.includes(k.reason)))) {
     out.push("protocol.skipped must list blocks of this result with a reason from " + data.skip_reasons.join(", "));

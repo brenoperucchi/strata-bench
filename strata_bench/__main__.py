@@ -12,7 +12,7 @@ import os
 import sys
 from pathlib import Path
 
-from . import VERSION, core, validate
+from . import VERSION, core, schema, validate
 
 
 def main(argv=None) -> int:
@@ -30,7 +30,9 @@ def main(argv=None) -> int:
                    help="standard-v1 (default) or standard-v2: streamed requests, adds the time to the first token")
     r.add_argument("--host-relation", choices=list(core.HOST_RELATIONS),
                    help="standard-v2: where this machine runs relative to the server (default same-host for a loopback --base)")
-    r.add_argument("--sizes", default="probe,medium,long,xlong")
+    r.add_argument("--sizes", help="what to measure (default probe,medium,long,xlong; with standard-v2 and no --suite, the standard suite)")
+    r.add_argument("--suite", choices=list(schema.SUITE_SIZES),
+                   help="standard-v2 profile: quick (chat, medium, long), standard (adds xlong and the agent block) or full (adds clients); replaces --sizes")
     r.add_argument("--identity", type=Path)
     r.add_argument("--by", help="optional public name to list the result under (for example your GitHub name); declared, not verified")
     r.add_argument("--probe-offset", type=int, default=0)
@@ -39,7 +41,12 @@ def main(argv=None) -> int:
     v.add_argument("files", nargs="+", type=Path)
     a = p.parse_args(argv)
     if a.cmd == "run":
-        sizes = [s for s in a.sizes.split(",") if s]
+        if a.suite and a.sizes:
+            p.error("--suite and --sizes cannot be used together: a suite is its own list of blocks")
+        if a.suite and a.protocol != core.PROTOCOL_V2:
+            p.error("--suite needs --protocol standard-v2")
+        suite = a.suite or ("standard" if a.protocol == core.PROTOCOL_V2 and not a.sizes else "custom")
+        sizes = [s for s in (a.sizes or "probe,medium,long,xlong").split(",") if s]
         bad = [s for s in sizes if s not in ("probe", "gprobe") and s not in core.MEASURED]
         if bad:
             p.error(f"unknown sizes: {bad}")
@@ -47,7 +54,7 @@ def main(argv=None) -> int:
         ident = json.loads(a.identity.read_text(encoding="utf-8")) if a.identity else None
         return core.run(a.base.rstrip("/"), cfg, a.origin, sizes, a.label, a.out, ident,
                         probe_offset=a.probe_offset, api_key=a.api_key, by=a.by, protocol=a.protocol,
-                        host_relation=a.host_relation)
+                        host_relation=a.host_relation, suite=suite)
     rc = 0
     for f in a.files:
         probs = validate.problems(json.loads(f.read_text(encoding="utf-8")))

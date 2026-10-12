@@ -20,7 +20,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import SCHEMA, SCHEMA_V2, VERSION
-from .schema import (AGENT_MIN_CTX, AGENT_PROTOCOL, BLOCK_PROTOCOLS, BUSY_STATUS, CHAT_PROTOCOL, CLIENTS_PROTOCOL, FAILURE_KINDS, HOST_RELATIONS, ID_RE, IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS,
+from .schema import (AGENT_MIN_CTX, AGENT_PROTOCOL, BLOCK_PROTOCOLS, SUITE_SIZES, BUSY_STATUS, CHAT_PROTOCOL, CLIENTS_PROTOCOL, FAILURE_KINDS, HOST_RELATIONS, ID_RE, IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS,
                      SHARED_KEYS, STANDARD_V1_PROMPTS, STANDARD_V2_PROMPTS, prune)
 
 PROMPTS = Path(__file__).parent / "prompts"
@@ -411,9 +411,17 @@ class Result:
         os.replace(tmp, self.path)
 
 
+def planned_requests(sizes: list, warmup: int, runs_n: int) -> int:
+    """How many requests a run will send, so the person can judge how long it takes (it depends on the machine)."""
+    per = {"probe": PROBE_CALLS, "gprobe": 3 * PROBE_CALLS, "chat": CHAT_PROTOCOL["warmup"] + CHAT_PROTOCOL["runs"],
+           "agent": (AGENT_PROTOCOL["warmup"] + AGENT_PROTOCOL["sessions"]) * AGENT_PROTOCOL["turns"],
+           "clients": sum(int(n) for n in CLIENTS_PROTOCOL["counts"].split(",")) * (CLIENTS_PROTOCOL["warmup"] + CLIENTS_PROTOCOL["rounds"])}
+    return sum(per.get(x, warmup + runs_n) for x in sizes)
+
+
 def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Path, identity=None,
         runs_n=3, warmup=1, max_tokens=256, probe_offset=0, api_key=None, by=None, protocol=PROTOCOL,
-        host_relation=None, log=print) -> int:
+        host_relation=None, suite="custom", log=print) -> int:
     if not re.fullmatch(r"setup-default|custom-\d+", origin):
         raise SystemExit("--origin must be setup-default or custom-N")
     v2 = protocol == PROTOCOL_V2
@@ -426,6 +434,12 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
             raise SystemExit("--host-relation " + "|".join(HOST_RELATIONS) + " is required with standard-v2 when --base is not a loopback address")
     elif host_relation is not None:
         raise SystemExit("--host-relation is only for standard-v2")
+    if suite != "custom" and not v2:
+        raise SystemExit("--suite is only for --protocol standard-v2")
+    if suite != "custom" and suite not in SUITE_SIZES:
+        raise SystemExit("--suite must be one of " + ", ".join(SUITE_SIZES))
+    if suite != "custom":                       # a profile is its list of blocks; --sizes would change what the name promises
+        sizes = list(SUITE_SIZES[suite])
     if not v2 and any(x in sizes for x in ("chat", "agent", "clients")):
         raise SystemExit("the chat, agent and clients blocks are only for --protocol standard-v2")
     if v2 and not any(x in MEASURED for x in sizes):
@@ -460,6 +474,7 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
         log("nothing left to measure")
         return 2
     blocks = (["first-token"] if any(x in SIZES for x in requested) else []) + [b for b in ("chat", "agent", "clients") if b in requested]
+    log(f"{label}: " + (f"suite {suite}: " if suite != "custom" else "") + ", ".join(sizes) + f" - about {planned_requests(sizes, warmup, runs_n)} requests")
     ident = identity or {}
     by = by if by is not None else (ident.get("submission") or {}).get("by")
     for what, v in (("--by", by), ("machine.machine_id", (ident.get("machine") or {}).get("machine_id"))):
@@ -489,7 +504,7 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
                      "reasoning_sent": {"sizes": "off (reasoning_effort none, enable_thinking false)" if v2 else "server default",
                                         "probe": "enable_thinking false"},
                      "unique_line": "[strata-bench <size> <warmup|run> <i>]",
-                     **({"suite": "custom", "blocks": blocks, **({"skipped": skipped} if skipped else {}),
+                     **({"suite": suite, "blocks": blocks, **({"skipped": skipped} if skipped else {}),
                          **{b: dict(BLOCK_PROTOCOLS[b]) for b in BLOCK_PROTOCOLS if b in sizes}} if v2 else {})},
         "runs": [], "sizes": {},
         "validity": {"status": "running", "warnings": warnings},

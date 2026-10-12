@@ -37,7 +37,7 @@ The hardware description is declared by the submitter. The runner checks the mod
 - **Per request:** `runs[].stream` has `ttft_ms`, `total_ms`, `pieces` and `gap_ms` (p50, p95 and max of the time between pieces, null with fewer than two pieces). Per size: `sizes.<size>.ttft_ms` with median, min and max.
 - **Speeds are still the engine's own** `timings`, read from the last chunk of the stream. A server that sends none gives an `incomplete` result (`no_stream_timings`), not a guess.
 - **Failures:** a connection that closes before the stream finishes is a `crash`; an error event in the stream is `oom` or `server_error`. The server's own words are never kept. `failure.where` names are the same as in v1.
-- `protocol.suite` is `custom` for now (the sizes you picked with `--sizes`) and `protocol.blocks` is `["first-token"]`. The names `quick`, `standard`, `full` and the blocks `chat`, `agent`, `clients`, `decode-curve` are reserved for the next phases and are not produced yet.
+- `protocol.suite` names the profile that was run (see Suites below) or `custom`, and `protocol.blocks` lists the blocks that were asked for, in the order `first-token`, `chat`, `agent`, `clients`. `decode-curve` is reserved and not produced yet.
 
 ### The agent block (`--sizes ...,agent`)
 
@@ -65,3 +65,15 @@ Several clients at once, as when a team or a few agents share one server. For N 
 - **Every request turned away** for an N leaves that row's numbers empty (null) and adds a warning.
 - **Skipped, not failed:** a server that reports `total_slots` under 2 in `/props` cannot serve clients at once, so the block is recorded in `protocol.skipped` with `no_parallel_slots`. A server that does not report slots is run anyway. More clients than slots simply queue, which is part of what the block measures.
 - `protocol.clients` repeats the fixed settings (counts `2,4,8`, 2 rounds, 1 warm-up round, 128 tokens) and the validator rejects any other values.
+
+### Suites (`--suite`)
+
+`--protocol standard-v2` with no `--sizes` and no `--suite` runs the `standard` suite. A suite is its own fixed list of blocks, so `--suite` and `--sizes` cannot be combined (`--sizes` still gives a `custom` result, and may add `probe` and `gprobe`).
+
+| Suite | Runs | Blocks listed |
+|---|---|---|
+| `quick` | chat, medium, long | `first-token`, `chat` |
+| `standard` | chat, medium, long, xlong, agent | `first-token`, `chat`, `agent` |
+| `full` | standard plus clients | `first-token`, `chat`, `agent`, `clients` |
+
+A block the server cannot run is skipped with its closed reason and still listed in `protocol.blocks`; the suite keeps its name. The validator ties each suite name to exactly its list of blocks. Before anything is measured the run prints how many requests it will send, because how long that takes depends on the machine (the `standard` suite can take 30 to 60 minutes on a slow GPU). Ctrl+C keeps what was measured as an `incomplete` result.

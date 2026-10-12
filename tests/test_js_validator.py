@@ -49,9 +49,11 @@ class JsParity(unittest.TestCase):
         clients = real(tmp, "clients", sizes=("clients",), run_kw={"protocol": core.PROTOCOL_V2})
         busy = real(tmp, "busy", sizes=("clients",), run_kw={"protocol": core.PROTOCOL_V2}, busy_client="2")
         clients_failed = real(tmp, "clientsfail", mode="oom", sizes=("clients",), run_kw={"protocol": core.PROTOCOL_V2})
+        quick = real(tmp, "quick", sizes=("medium",), run_kw={"protocol": core.PROTOCOL_V2, "suite": "quick"})
+        full = real(tmp, "full", sizes=("medium",), run_kw={"protocol": core.PROTOCOL_V2, "suite": "full"})
         out = {"ok": ok, "failed": failed, "warnings": warn, "v2 ok": v2, "v2 failed": v2_failed, "v2 agent ok": agent,
                "v2 agent failed": agent_failed, "v2 chat ok": chat, "v2 clients ok": clients, "v2 clients busy": busy,
-               "v2 clients failed": clients_failed, "incomplete": inc, "empty": {}}
+               "v2 clients failed": clients_failed, "v2 quick": quick, "v2 full": full, "incomplete": inc, "empty": {}}
 
         def mut(name, fn, base=ok):
             d = copy.deepcopy(base)
@@ -209,6 +211,13 @@ class JsParity(unittest.TestCase):
         mut("v1 with run error status", lambda d: d["runs"][0].update(error_status=503))
         for where in ("clients 4 round 2", "clients 8 warmup 1", "chat run 9", "chat warmup 1", "clients round 2", "clients 4 round", "chat run", "clients 4 turn 2", "clients 1000 round 1"):
             mut(f"where {where}", lambda d, w=where: d["validity"].update(status="failed", failure={"kind": "crash", "where": w}), clients)
+        mut("quick with the standard blocks", lambda d: d["protocol"].update(blocks=["first-token", "chat", "agent"]), quick)
+        mut("quick with the blocks reordered", lambda d: d["protocol"].update(blocks=["chat", "first-token"]), quick)
+        mut("full with the quick blocks", lambda d: d["protocol"].update(blocks=["first-token", "chat"]), full)
+        mut("custom with the quick blocks", lambda d: d["protocol"].update(suite="custom"), quick)
+        mut("suite a list", lambda d: d["protocol"].update(suite=["quick"]), quick)
+        mut("suite an object", lambda d: d["protocol"].update(suite={"quick": 1}), quick)
+        mut("suite unknown", lambda d: d["protocol"].update(suite="huge"), quick)
         mut("v2 prompt hash", lambda d: d["protocol"]["prompt_sha256"].update({"medium.txt": "0" * 64}), v2)
         mut("unicode label", lambda d: d.update(label="résultat ✓ 测试"))
         mut("quote in label with leak", lambda d: d.update(label="it's /usr/local/x"))
@@ -225,7 +234,7 @@ class JsParity(unittest.TestCase):
         for c, got in zip(cases, js):
             self.assertEqual(got, validate.problems(c["doc"]), c["name"])
         self.assertGreater(sum(1 for c in cases if validate.problems(c["doc"])), 30)        # the tampering cases really are rejected
-        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "v2 ok", "v2 failed", "v2 agent ok", "v2 agent failed", "v2 chat ok", "v2 clients ok", "v2 clients busy", "v2 clients failed", "by set", "by 39 chars", "machine id set", "host relation lan", "blocks several", "agent skipped", "where agent run 2 turn 3", "where agent warmup 1 turn 5", "clients skipped", "where clients 4 round 2", "where clients 8 warmup 1", "where chat run 9", "where chat warmup 1", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
+        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "v2 ok", "v2 failed", "v2 agent ok", "v2 agent failed", "v2 chat ok", "v2 clients ok", "v2 clients busy", "v2 clients failed", "v2 quick", "v2 full", "by set", "by 39 chars", "machine id set", "host relation lan", "blocks several", "agent skipped", "where agent run 2 turn 3", "where agent warmup 1 turn 5", "clients skipped", "where clients 4 round 2", "where clients 8 warmup 1", "where chat run 9", "where chat warmup 1", "custom with the quick blocks", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
 
     def test_the_schema_data_file_is_current(self):
         import sys

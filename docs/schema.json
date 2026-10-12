@@ -629,6 +629,23 @@
   "warnings",
   "failed"
  ],
+ "suite_blocks": {
+  "full": [
+   "first-token",
+   "chat",
+   "agent",
+   "clients"
+  ],
+  "quick": [
+   "first-token",
+   "chat"
+  ],
+  "standard": [
+   "first-token",
+   "chat",
+   "agent"
+  ]
+ },
  "suites": [
   "custom",
   "quick",

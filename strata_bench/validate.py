@@ -48,6 +48,9 @@ def version_problems(doc: dict, proto: dict) -> list:
     if not (isinstance(blocks, list) and blocks and all(b in schema.BLOCKS for b in blocks)):
         out.append("protocol.blocks must be a list of " + ", ".join(schema.BLOCKS))
         return out
+    suite = proto.get("suite")
+    if isinstance(suite, str) and suite in schema.SUITE_BLOCKS and blocks != schema.SUITE_BLOCKS[suite]:
+        out.append(f"protocol.suite {suite} lists the blocks " + ", ".join(schema.SUITE_BLOCKS[suite]))
     skipped = proto.get("skipped")
     if skipped is not None and not (isinstance(skipped, list) and all(
             isinstance(k, dict) and k.get("block") in blocks and k.get("reason") in schema.SKIP_REASONS for k in skipped)):

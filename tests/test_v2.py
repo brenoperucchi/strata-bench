@@ -618,5 +618,78 @@ class ClientsTests(V2Run):
             self.assertEqual("failure.where is not one of the protocol's call names" not in validate.problems(f), ok, where)
 
 
+class SuiteTests(V2Run):
+    def suite(self, name, label=None, **kw):
+        return self.go(("medium",), label=label or name, protocol=core.PROTOCOL_V2, suite=name, **kw)
+
+    def test_quick_standard_and_full_run_their_own_blocks_and_ignore_sizes(self):
+        for name, blocks, requests in (("quick", ["first-token", "chat"], 10 + 4 + 4),
+                                       ("standard", ["first-token", "chat", "agent"], 10 + 4 * 3 + 20),
+                                       ("full", ["first-token", "chat", "agent", "clients"], 10 + 4 * 3 + 20 + 42)):
+            Fake.reset()
+            self.assertEqual(self.suite(name), 0, name)                                # --sizes medium is replaced by the suite's own list
+            d = self.doc(name)
+            self.assertEqual((d["protocol"]["suite"], d["protocol"]["blocks"]), (name, blocks), name)
+            self.assertEqual(len(Fake.st["calls"]), requests, name)
+            self.assertEqual(sorted(k for k in d["protocol"] if k in schema.BLOCK_PROTOCOLS), sorted(b for b in blocks if b in schema.BLOCK_PROTOCOLS))
+            self.assertEqual(sorted(d["sizes"]), sorted(schema.SUITE_SIZES[name] and [x for x in schema.SUITE_SIZES[name] if x in core.SIZES + ("chat",)]))
+            self.assertEqual(validate.problems(d), [], name)
+
+    def test_blocks_the_server_cannot_run_are_skipped_but_the_suite_keeps_its_name(self):
+        Fake.st["n_ctx"], Fake.st["slots"] = 8192, 1
+        self.assertEqual(self.suite("full", cfg={**CFG, "args": ["8192" if a == "32768" else a for a in CFG["args"]]}), 0)
+        d = self.doc("full")
+        self.assertEqual(d["protocol"]["blocks"], ["first-token", "chat", "agent", "clients"])
+        self.assertEqual(d["protocol"]["skipped"], [{"block": "agent", "reason": "context_too_small"}, {"block": "clients", "reason": "no_parallel_slots"}])
+        self.assertTrue("agent" not in d and "clients" not in d)
+        self.assertEqual(validate.problems(d), [])
+
+    def test_a_suite_is_for_v2_and_must_be_known(self):
+        with self.assertRaises(SystemExit):
+            self.go(("medium",), label="x", suite="quick")
+        with self.assertRaises(SystemExit):
+            self.suite("everything", label="x")
+        self.assertFalse(list(self.tmp.glob("x*")))
+
+    def test_sizes_alone_stay_custom_and_the_cli_picks_the_standard_suite_for_v2(self):
+        cfg = self.tmp / "c.json"
+        cfg.write_text(json.dumps(CFG))
+        base = ["run", "--base", self.base, "--config", str(cfg), "--origin", "setup-default", "--out", str(self.tmp)]
+        self.assertEqual(main(base + ["--label", "s", "--protocol", "standard-v2"]), 0)
+        self.assertEqual((self.doc("s")["protocol"]["suite"], self.doc("s")["protocol"]["blocks"]), ("standard", ["first-token", "chat", "agent"]))
+        self.assertEqual(main(base + ["--label", "q", "--protocol", "standard-v2", "--suite", "quick"]), 0)
+        self.assertEqual(self.doc("q")["protocol"]["suite"], "quick")
+        self.assertEqual(main(base + ["--label", "m", "--protocol", "standard-v2", "--sizes", "medium"]), 0)
+        self.assertEqual((self.doc("m")["protocol"]["suite"], self.doc("m")["protocol"]["blocks"]), ("custom", ["first-token"]))
+        self.assertEqual(main(base + ["--label", "v", "--sizes", "medium"]), 0)                       # v1 is untouched
+        self.assertEqual(self.doc("v")["schema"], "strata-bench/v1")
+        for extra in (["--protocol", "standard-v2", "--suite", "quick", "--sizes", "medium"], ["--suite", "quick"], ["--protocol", "standard-v2", "--suite", "huge"]):
+            with self.assertRaises(SystemExit):
+                main(base + ["--label", "z"] + extra)
+        self.assertFalse((self.tmp / "z.result.json").exists())
+
+    def test_the_request_estimate_is_logged_before_anything_is_measured(self):
+        lines = []
+        core.run(self.base, CFG, "setup-default", ["medium"], "e", self.tmp, protocol=core.PROTOCOL_V2, suite="quick", log=lines.append)
+        self.assertTrue(lines[0].startswith("e: suite quick: chat, medium, long - about 18 requests"), lines[0])
+        self.assertEqual(core.planned_requests(["probe", "medium"], 1, 3), 34)
+        self.assertEqual([core.planned_requests([x], 1, 3) for x in ("gprobe", "chat", "agent", "clients")], [90, 10, 20, 42])
+
+    def test_validator_ties_a_suite_name_to_its_blocks(self):
+        self.suite("quick")
+        self.suite("full", label="f")
+        q, f = self.doc("quick"), self.doc("f")
+
+        def broken(base, fn):
+            d = copy.deepcopy(base)
+            fn(d)
+            return validate.problems(d)
+        self.assertIn("protocol.suite quick lists the blocks first-token, chat", broken(q, lambda d: d["protocol"].update(blocks=["first-token", "chat", "agent"])))
+        self.assertIn("protocol.suite quick lists the blocks first-token, chat", broken(q, lambda d: d["protocol"].update(blocks=["chat", "first-token"])))
+        self.assertIn("protocol.suite full lists the blocks first-token, chat, agent, clients", broken(f, lambda d: d["protocol"].update(suite="full", blocks=["first-token", "chat"])))
+        self.assertEqual([p for p in broken(q, lambda d: d["protocol"].update(suite="custom")) if "suite" in p], [])        # custom may list any blocks it ran
+        self.assertEqual([p for p in broken(q, lambda d: d["protocol"].update(suite=["quick"])) if "lists the blocks" in p], [])
+
+
 if __name__ == "__main__":
     unittest.main()

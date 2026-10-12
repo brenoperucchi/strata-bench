@@ -77,6 +77,10 @@ SCHEMA_IDS = {"standard-v1": "strata-bench/v1", "standard-v2": "strata-bench/v2"
 HOST_RELATIONS = ("same-host", "lan", "remote")       # v2: where the client ran relative to the server (declared); first-token time includes the network
 SUITES = ("custom", "quick", "standard", "full")      # v2: which profile of blocks was run ("custom" = the sizes picked with --sizes)
 BLOCKS = ("first-token", "chat", "agent", "clients", "decode-curve")
+SUITE_SIZES = {"quick": ["chat", "medium", "long"], "standard": ["chat", "medium", "long", "xlong", "agent"],
+               "full": ["chat", "medium", "long", "xlong", "agent", "clients"]}     # what --suite runs; the probes and gprobe are v1-style extras, asked for with --sizes
+SUITE_BLOCKS = {"quick": ["first-token", "chat"], "standard": ["first-token", "chat", "agent"],
+                "full": ["first-token", "chat", "agent", "clients"]}                  # the blocks a result of that suite lists, in this order
 
 FAILURE_KINDS = ("crash", "oom", "garbage", "hang", "server_error")        # the health view: only catastrophic failures, a closed list
 FAILURE_WHERE = re.compile(r"^((short|medium|long|xlong) (warmup|run) \d{1,3}|(probe|gprobe(150|300|450)) \d{1,3}|agent (warmup|run) \d{1,3} turn [1-5]|chat (warmup|run) \d{1,3}|clients \d{1,3} (warmup|round) \d{1,3})$")

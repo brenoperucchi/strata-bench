@@ -35,6 +35,7 @@ def data() -> dict:
         "host_relations": list(schema.HOST_RELATIONS),
         "suites": list(schema.SUITES),
         "blocks": list(schema.BLOCKS),
+        "suite_blocks": schema.SUITE_BLOCKS,
         "public": spec(schema.PUBLIC),
         "hex_re": schema._HEX.pattern,
         "prompts": schema.STANDARD_V1_PROMPTS,
