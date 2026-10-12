@@ -41,7 +41,7 @@
    "driver": "616.64",
    "engine": "0.1.43.1",
    "failure": null,
-   "gpu": "NVIDIA GeForce RTX 5090",
+   "gpu": "RTX 5090",
    "gpu_count": 1,
    "host_relation": null,
    "id": "results/2026-10-12-ryzen9-5090-0143-1-v1-f33dcc54.result.json",

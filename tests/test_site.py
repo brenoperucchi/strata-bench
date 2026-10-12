@@ -64,6 +64,18 @@ class Site(unittest.TestCase):
         self.assertEqual([c["n"] for c in new["clients"]], [2, 4, 8])
         self.assertEqual(sorted(new["clients"][0]), ["errors", "n", "total_tps", "ttft_p95_ms"])
 
+    def test_the_same_gpu_declared_with_and_without_the_vendor_name_is_one_gpu_on_the_page(self):
+        for name, shown in (("NVIDIA GeForce RTX 5090", "RTX 5090"), ("RTX 5090", "RTX 5090"), ("GeForce RTX 3090", "RTX 3090"), ("NVIDIA RTX 4000 Ada Generation", "RTX 4000 Ada Generation"),
+                            ("AMD Radeon RX 7900 XTX", "Radeon RX 7900 XTX"), ("nvidia geforce rtx 4090", "rtx 4090"), ("Tesla P100", "Tesla P100"), ("NVIDIA", "NVIDIA"), (None, None)):
+            self.assertEqual(build_site.gpu_name(name), shown, name)
+        ident = json.loads(json.dumps(self.IDENT))
+        ident["machine"]["gpus"][0]["name"] = "NVIDIA GeForce RTX 5090"
+        self.make("long-name", identity=ident)
+        self.make("short-name", identity=self.IDENT)
+        rows = build_site.build(self.tmp / "results")["results"]
+        self.assertEqual({r["gpu"] for r in rows}, {"RTX 5090"})
+        self.assertIn("NVIDIA GeForce RTX 5090", (self.tmp / "results" / "long-name.result.json").read_text())      # the file keeps what was declared
+
     def test_a_failed_result_is_published_for_the_health_view(self):
         self.make("boom", mode="crash", identity=self.IDENT)
         r = build_site.build(self.tmp / "results")["results"][0]

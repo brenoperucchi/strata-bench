@@ -9,6 +9,7 @@ Only whitelisted fields are copied. The output is deterministic (no timestamps),
 """
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -17,6 +18,13 @@ sys.path.insert(0, str(ROOT))
 from strata_bench import schema, validate  # noqa: E402
 
 SIZE_ORDER = ("short", "medium", "long", "xlong", "chat", "probe", "gprobe150", "gprobe300", "gprobe450")
+
+
+def gpu_name(name):
+    """The GPU as the dashboard groups and filters it: a leading vendor word is dropped ("NVIDIA GeForce RTX 5090" and "RTX 5090" are the same card). The result file keeps what was declared."""
+    if not isinstance(name, str):
+        return name
+    return re.sub(r"^(?:(?:NVIDIA|GeForce|AMD)\s+)+", "", name.strip(), flags=re.I) or name
 
 
 def med(x):
@@ -47,7 +55,7 @@ def row(rel: str, doc: dict) -> dict:
         "status": val.get("status"),
         "warnings": len(val.get("warnings") or []),
         "failure": val.get("failure"),
-        "gpu": g0.get("name"), "vram_gb": g0.get("vram_gb"), "gpu_count": len(m.get("gpus") or []) or None,
+        "gpu": gpu_name(g0.get("name")), "vram_gb": g0.get("vram_gb"), "gpu_count": len(m.get("gpus") or []) or None,
         "cpu": m.get("cpu"), "ram_gb": m.get("ram_gb"), "os": m.get("os"), "driver": m.get("driver"),
         "engine": e.get("version") or doc.get("build_info"), "commit": e.get("commit"), "backend": e.get("backend"),
         "model": mo.get("family") or doc.get("model_path"), "quant": mo.get("quant"), "n_ctx": doc.get("n_ctx"),
