@@ -1,5 +1,5 @@
-"""Public-export gate. A result.json may be published only if: it is a complete strata-bench/v1 result of the public
-protocol with its canonical prompt hashes, every key at every depth is in the public schema (schema.PUBLIC), and no
+"""Public-export gate. A result.json may be published only if: it is a complete strata-bench/v1 (protocol standard-v1) or
+strata-bench/v2 (protocol standard-v2) result of the public protocol with its canonical prompt hashes, every key at every depth is in the public schema (schema.PUBLIC), and no
 value looks like a local path, a private network address or a secret. It does not prove that a free-text value is
 harmless: keep free text out."""
 import json
@@ -17,15 +17,44 @@ LEAKS = [
 ]
 
 
+def version_problems(doc: dict, proto: dict) -> list:
+    """v2 adds first-token timing, the suite and the host relation; v1 results must not carry them, and a v2 result must
+    declare the closed ones."""
+    out = []
+    v2 = doc.get("schema") == "strata-bench/v2"
+    runner = doc.get("runner") if isinstance(doc.get("runner"), dict) else {}
+    sizes = doc.get("sizes") if isinstance(doc.get("sizes"), dict) else {}
+    runs = [r for r in doc.get("runs") or [] if isinstance(r, dict)] if isinstance(doc.get("runs"), list) else []
+    if not v2:
+        for path, present in (("runner.host_relation", "host_relation" in runner), ("protocol.suite", "suite" in proto),
+                              ("protocol.blocks", "blocks" in proto), ("runs[].stream", any("stream" in r for r in runs)),
+                              ("sizes.*.ttft_ms", any(isinstance(s, dict) and "ttft_ms" in s for s in sizes.values()))):
+            if present:
+                out.append(f"{path} is only allowed in strata-bench/v2")
+        return out
+    if runner.get("host_relation") not in schema.HOST_RELATIONS:
+        out.append("runner.host_relation must be one of " + ", ".join(schema.HOST_RELATIONS))
+    if proto.get("suite") not in schema.SUITES:
+        out.append("protocol.suite must be one of " + ", ".join(schema.SUITES))
+    blocks = proto.get("blocks")
+    if not (isinstance(blocks, list) and blocks and all(b in schema.BLOCKS for b in blocks)):
+        out.append("protocol.blocks must be a list of " + ", ".join(schema.BLOCKS))
+    return out
+
+
 def problems(doc: dict) -> list:
     out = schema.check(doc, schema.PUBLIC)
     if not isinstance(doc, dict):
         return out
-    if doc.get("schema") != "strata-bench/v1":
-        out.append("schema is not strata-bench/v1")
+    if doc.get("schema") not in schema.SCHEMA_IDS.values():
+        out.append("schema is not strata-bench/v1 or strata-bench/v2")
     proto = doc.get("protocol") or {}
-    if proto.get("id") != "standard-v1":
-        out.append(f"protocol {proto.get('id')!r} is not public")
+    pid = proto.get("id")
+    if not (isinstance(pid, str) and pid in schema.SCHEMA_IDS):
+        out.append(f"protocol {pid!r} is not public")
+    elif doc.get("schema") in schema.SCHEMA_IDS.values() and schema.SCHEMA_IDS[pid] != doc["schema"]:
+        out.append(f"protocol {pid} is written in {schema.SCHEMA_IDS[pid]}, not {doc['schema']}")
+    out.extend(version_problems(doc, proto))
     for name, h in (proto.get("prompt_sha256") or {}).items():
         if schema.STANDARD_V1_PROMPTS.get(name) != h:
             out.append(f"prompt {name} is not standard-v1's")

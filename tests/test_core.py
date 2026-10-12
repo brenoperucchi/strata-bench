@@ -2,6 +2,7 @@ import json
 import shutil
 import tempfile
 import threading
+import time
 import unittest
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
@@ -26,7 +27,8 @@ class Fake(BaseHTTPRequestHandler):
     def reset(cls):
         cls.st = {"model": MODEL, "n_ctx": 32768, "build": "Strata 0.1.39", "reused": 0, "probe_read": 20,
                   "probe_reused": 400, "fail_after": None, "no_timings": False, "calls": [], "shared": {},
-                  "settings": True, "api_key": None, "mode": None, "mode_after": 0}
+                  "settings": True, "api_key": None, "mode": None, "mode_after": 0,
+                  "sse": {}}
 
     def log_message(self, *a):
         pass
@@ -74,6 +76,8 @@ class Fake(BaseHTTPRequestHandler):
             return self.reply({"error": {"message": "CUDA error: out of memory at E:\\\\private\\\\kernel.cu:12"}}, 500)
         if mode == "bad_request":
             return self.reply({"error": "bad request"}, 400)
+        if body.get("stream"):
+            return self.stream(body, probe=body["messages"][0]["role"] == "system")
         msg = {"choices": [{"message": {"content": "SAFE", "reasoning_content": "hmm"}, "finish_reason": "stop"}],
                "usage": {"completion_tokens": 1, "secret_extra": "x"}}
         if s["no_timings"]:
@@ -85,6 +89,51 @@ class Fake(BaseHTTPRequestHandler):
         msg["timings"] = {"prompt_n": read, "cache_n": reused, "prompt_ms": 50.0, "prompt_per_second": 2000.0,
                           "predicted_n": 1, "predicted_ms": 5.0, "predicted_per_second": 200.0, "private_case": "X"}
         self.reply(msg)
+
+
+    def stream(self, body, probe):
+        """An SSE answer (standard-v2). st["sse"] shapes it: header_delay (s before the response starts), keepalive, empty_deltas, pieces, gap (s between pieces), first_delay (s
+        before the first piece), drop_after (pieces, then the connection closes), error (an error event after one piece),
+        garbage, no_timings, no_done."""
+        o = Fake.st["sse"]
+        time.sleep(o.get("header_delay", 0))                 # a server that is busy reading the prompt answers late
+        self.send_response(200)
+        self.send_header("content-type", "text/event-stream")
+        self.end_headers()
+
+        def send(ev):
+            self.wfile.write(("data: " + (ev if isinstance(ev, str) else json.dumps(ev)) + "\n\n").encode())
+            self.wfile.flush()
+        time.sleep(o.get("first_delay", 0))
+        if o.get("keepalive"):
+            self.wfile.write(b": keep-alive\n\n")
+            self.wfile.flush()
+            time.sleep(o.get("keepalive_delay", 0))
+        if o.get("empty_deltas"):
+            send({"choices": [{"delta": {"role": "assistant", "content": ""}}]})
+            send({"choices": [{"delta": {"content": None, "reasoning_content": ""}}]})
+        pieces = o.get("pieces", 3)
+        for i in range(pieces):
+            if i == o.get("drop_after", -1):
+                self.close_connection = True
+                return
+            if i == 1 and o.get("error"):
+                send({"error": {"message": o["error"]}})
+                return
+            if i:
+                time.sleep(o.get("gap", 0))
+            text = "tok " * 60 if o.get("garbage") else "SAFE " if i < pieces - 1 else "SAFE"
+            send({"choices": [{"delta": {"content": text, "reasoning_content": None}}]})
+        s = Fake.st
+        read, reused = (s["probe_read"], s["probe_reused"]) if probe else (100, s["reused"])
+        send({"choices": [{"delta": {}, "finish_reason": "stop"}]})
+        send({"choices": [], "usage": {"completion_tokens": pieces, "secret_extra": "x"},
+              **({} if o.get("no_timings") else {"timings": {"prompt_n": read, "cache_n": reused, "prompt_ms": 50.0,
+                                                           "prompt_per_second": 2000.0, "predicted_n": pieces,
+                                                           "predicted_ms": 5.0, "predicted_per_second": 200.0,
+                                                           "private_case": "X"}})})
+        if not o.get("no_done"):
+            send("[DONE]")
 
 
 class CoreTest(unittest.TestCase):
@@ -100,9 +149,9 @@ class CoreTest(unittest.TestCase):
         self.srv.server_close()
         shutil.rmtree(self.tmp)
 
-    def go(self, sizes=("medium",), origin="setup-default", label="t", cfg=CFG, identity=None, api_key=None, by=None):
+    def go(self, sizes=("medium",), origin="setup-default", label="t", cfg=CFG, identity=None, api_key=None, by=None, **kw):
         return core.run(self.base, cfg, origin, list(sizes), label, self.tmp, identity, api_key=api_key, by=by,
-                        log=lambda *a: None)
+                        log=lambda *a: None, **kw)
 
     def doc(self, label="t"):
         return json.loads((self.tmp / f"{label}.result.json").read_text())

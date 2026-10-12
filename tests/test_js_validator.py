@@ -17,14 +17,14 @@ IDENT = {"machine": {"gpus": [{"name": "RTX 5090", "vram_gb": 32}], "cpu": "Ryze
          "engine": {"version": "0.1.40.2", "commit": "abc1234"}, "model": {"family": "Swift", "quant": "IQ3_XXS"}}
 
 
-def real(tmp, label, mode=None, sizes=("medium", "probe", "gprobe"), **kw):
+def real(tmp, label, mode=None, sizes=("medium", "probe", "gprobe"), run_kw=None, **kw):
     TC.Fake.reset()
     TC.Fake.st["mode"], TC.Fake.st["mode_after"] = mode, 1
     TC.Fake.st.update(kw)
     srv = TC.HTTPServer(("127.0.0.1", 0), TC.Fake)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     try:
-        core.run(f"http://127.0.0.1:{srv.server_port}", TC.CFG, "setup-default", list(sizes), label, tmp, IDENT, log=lambda *a: None)
+        core.run(f"http://127.0.0.1:{srv.server_port}", TC.CFG, "setup-default", list(sizes), label, tmp, IDENT, log=lambda *a: None, **(run_kw or {}))
     finally:
         srv.shutdown()
         srv.server_close()
@@ -41,7 +41,9 @@ class JsParity(unittest.TestCase):
         warn = real(tmp, "warn", sizes=("medium",), reused=500)
         TC.Fake.reset()
         inc = real(tmp, "inc", mode="bad_request")
-        out = {"ok": ok, "failed": failed, "warnings": warn, "incomplete": inc, "empty": {}}
+        v2 = real(tmp, "v2", sizes=("medium", "probe"), run_kw={"protocol": core.PROTOCOL_V2})
+        v2_failed = real(tmp, "v2failed", mode="crash", sizes=("medium",), run_kw={"protocol": core.PROTOCOL_V2})
+        out = {"ok": ok, "failed": failed, "warnings": warn, "v2 ok": v2, "v2 failed": v2_failed, "incomplete": inc, "empty": {}}
 
         def mut(name, fn, base=ok):
             d = copy.deepcopy(base)
@@ -96,6 +98,35 @@ class JsParity(unittest.TestCase):
         mut("failure not object", lambda d: d["validity"].update(failure="crash"), failed)
         mut("failure extra key", lambda d: d["validity"]["failure"].update(note="x"), failed)
         mut("errors with leak", lambda d: d["validity"].update(error="boom at E:\\x\\y.cu"), failed)
+        # standard-v2 (additive): the new fields are closed, paired with the v2 schema, and absent from v1
+        mut("v2 schema on v1 protocol", lambda d: d.update(schema="strata-bench/v2"), ok)
+        mut("v1 schema on v2 protocol", lambda d: d.update(schema="strata-bench/v1"), v2)
+        mut("schema v3", lambda d: d.update(schema="strata-bench/v3"), v2)
+        mut("protocol v3", lambda d: d["protocol"].update(id="standard-v3"), v2)
+        mut("protocol id a list", lambda d: d["protocol"].update(id=["standard-v2"]), v2)
+        mut("protocol id an object", lambda d: d["protocol"].update(id={"a": 1}), v2)
+        mut("host relation cloud", lambda d: d["runner"].update(host_relation="cloud"), v2)
+        mut("host relation lan", lambda d: d["runner"].update(host_relation="lan"), v2)
+        mut("host relation missing", lambda d: d["runner"].pop("host_relation"), v2)
+        mut("host relation a list", lambda d: d["runner"].update(host_relation=["lan"]), v2)
+        mut("suite bad", lambda d: d["protocol"].update(suite="everything"), v2)
+        mut("suite missing", lambda d: d["protocol"].pop("suite"), v2)
+        mut("blocks empty", lambda d: d["protocol"].update(blocks=[]), v2)
+        mut("blocks bad", lambda d: d["protocol"].update(blocks=["first-token", "free-text"]), v2)
+        mut("blocks a string", lambda d: d["protocol"].update(blocks="first-token"), v2)
+        mut("blocks nested", lambda d: d["protocol"].update(blocks=[["first-token"]]), v2)
+        mut("blocks several", lambda d: d["protocol"].update(blocks=["first-token", "chat", "agent"]), v2)
+        mut("stream extra key", lambda d: d["runs"][0]["stream"].update(note="x"), v2)
+        mut("stream gap extra key", lambda d: d["runs"][0]["stream"].update(gap_ms={"p50": 1, "p99": 2}), v2)
+        mut("stream ttft a list", lambda d: d["runs"][0]["stream"].update(ttft_ms=[1]), v2)
+        mut("size ttft extra key", lambda d: d["sizes"]["medium"].update(ttft_ms={"mean": 1}), v2)
+        mut("stream with a leak", lambda d: d["runs"][0]["stream"].update(ttft_ms="E:\\x"), v2)
+        mut("v1 with host relation", lambda d: d["runner"].update(host_relation="lan"))
+        mut("v1 with suite", lambda d: d["protocol"].update(suite="custom"))
+        mut("v1 with blocks", lambda d: d["protocol"].update(blocks=["first-token"]))
+        mut("v1 with stream", lambda d: d["runs"][0].update(stream={"ttft_ms": 1}))
+        mut("v1 with size ttft", lambda d: d["sizes"]["medium"].update(ttft_ms={"median": 1}))
+        mut("v2 prompt hash", lambda d: d["protocol"]["prompt_sha256"].update({"medium.txt": "0" * 64}), v2)
         mut("unicode label", lambda d: d.update(label="résultat ✓ 测试"))
         mut("quote in label with leak", lambda d: d.update(label="it's /usr/local/x"))
         return [{"name": k, "doc": v} for k, v in out.items()]
@@ -111,7 +142,7 @@ class JsParity(unittest.TestCase):
         for c, got in zip(cases, js):
             self.assertEqual(got, validate.problems(c["doc"]), c["name"])
         self.assertGreater(sum(1 for c in cases if validate.problems(c["doc"])), 30)        # the tampering cases really are rejected
-        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "by set", "by 39 chars", "machine id set", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
+        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "v2 ok", "v2 failed", "by set", "by 39 chars", "machine id set", "host relation lan", "blocks several", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
 
     def test_the_schema_data_file_is_current(self):
         import sys

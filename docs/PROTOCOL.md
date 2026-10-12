@@ -27,3 +27,14 @@ A call that fails because the server failed is recorded as a `failed` result: th
 ## What this does not prove
 
 The hardware description is declared by the submitter. The runner checks the model file name and context size against the server, not the file contents. One result is one machine on one day. Different engine versions, configs or prompt sets are different measurements.
+
+## standard-v2 (in progress: first token only)
+
+`standard-v2` is additive. A result is written in schema `strata-bench/v2` and keeps every field of v1; the validator accepts both, and a v1 result must not carry the new fields. Run it with `--protocol standard-v2`.
+
+- **What changes:** the four text sizes are requested as a stream (SSE) and thinking is fixed off (`reasoning_effort` none, `enable_thinking` false), so the first piece of text is the answer and not the start of reasoning. The texts and their hashes are the v1 ones. The probes and `gprobe` stay non-streamed one-token calls.
+- **Time to first token (`ttft_ms`):** from just before the request is sent to the first non-empty piece of `content` or `reasoning_content`. Keep-alives and empty deltas do not count. It includes the network, so a v2 result declares `runner.host_relation` (`same-host`, `lan`, `remote`). `--host-relation` sets it; a loopback `--base` defaults to `same-host`, anything else must say.
+- **Per request:** `runs[].stream` has `ttft_ms`, `total_ms`, `pieces` and `gap_ms` (p50, p95 and max of the time between pieces, null with fewer than two pieces). Per size: `sizes.<size>.ttft_ms` with median, min and max.
+- **Speeds are still the engine's own** `timings`, read from the last chunk of the stream. A server that sends none gives an `incomplete` result (`no_stream_timings`), not a guess.
+- **Failures:** a connection that closes before the stream finishes is a `crash`; an error event in the stream is `oom` or `server_error`. The server's own words are never kept. `failure.where` names are the same as in v1.
+- `protocol.suite` is `custom` for now (the sizes you picked with `--sizes`) and `protocol.blocks` is `["first-token"]`. The names `quick`, `standard`, `full` and the blocks `chat`, `agent`, `clients`, `decode-curve` are reserved for the next phases and are not produced yet.

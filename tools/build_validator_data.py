@@ -31,8 +31,10 @@ def spec(s):
 
 def data() -> dict:
     return {
-        "schema_id": "strata-bench/v1",
-        "protocol_id": "standard-v1",
+        "schema_ids": schema.SCHEMA_IDS,
+        "host_relations": list(schema.HOST_RELATIONS),
+        "suites": list(schema.SUITES),
+        "blocks": list(schema.BLOCKS),
         "public": spec(schema.PUBLIC),
         "hex_re": schema._HEX.pattern,
         "prompts": schema.STANDARD_V1_PROMPTS,

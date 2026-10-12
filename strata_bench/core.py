@@ -3,6 +3,7 @@
 Attach mode only: the caller starts and stops the server. Standard library only.
 """
 import hashlib
+import ipaddress
 import http.client
 import json
 import os
@@ -12,16 +13,19 @@ import statistics
 import subprocess
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime
 from pathlib import Path
 
-from . import SCHEMA, VERSION
-from .schema import FAILURE_KINDS, ID_RE, IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS, SHARED_KEYS, STANDARD_V1_PROMPTS, prune
+from . import SCHEMA, SCHEMA_V2, VERSION
+from .schema import FAILURE_KINDS, HOST_RELATIONS, ID_RE, IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS, SHARED_KEYS, STANDARD_V1_PROMPTS, prune
 
 PROMPTS = Path(__file__).parent / "prompts"
 SIZES = ("short", "medium", "long", "xlong")
 PROTOCOL = "standard-v1"
+PROTOCOL_V2 = "standard-v2"
+LOOPBACK = ("localhost",)
 REUSE_LIMIT = 64          # more reused prompt tokens than this on a size run means the prompt was not read fresh
 SECRET_ENV = re.compile(r"(?i)(api_?key|secret|passw(or)?d|token)$")
 
@@ -241,8 +245,79 @@ def call(base: str, messages: list, max_tokens: int, extra=None) -> dict:
                                                 finish]).encode())}
 
 
+def percentile(sorted_values: list, pct: int):
+    """Nearest rank: the smallest value with at least pct percent of the sample at or below it."""
+    return sorted_values[max(1, -(-pct * len(sorted_values) // 100)) - 1]
+
+
+def stream_error_kind(ev: dict) -> str:
+    return "oom" if OOM_RX.search(json.dumps(ev.get("error"))[:2048]) else "server_error"
+
+
+def call_stream(base: str, messages: list, max_tokens: int, extra=None) -> dict:
+    """standard-v2 request: the same body as call() but streamed (SSE). Time to first token runs from just before the
+    request is sent to the first non-empty piece of content or reasoning_content (keep-alives and empty deltas do not
+    count), so it includes the network. Speeds still come from the engine's own `timings` in the stream's last chunk."""
+    body = {"messages": messages, "temperature": 0, "seed": 42, "max_tokens": max_tokens, "stream": True,
+            "stream_options": {"include_usage": True}, "reasoning_effort": "none",
+            "chat_template_kwargs": {"enable_thinking": False}, **(extra or {})}
+    headers = {"content-type": "application/json"}
+    if API_KEY["value"]:
+        headers["authorization"] = "Bearer " + API_KEY["value"]
+    req = urllib.request.Request(base + "/v1/chat/completions", data=json.dumps(body).encode(), headers=headers)
+    content, reasoning, stamps, finish, timings, usage, done = [], [], [], None, {}, None, False
+    t0 = time.perf_counter()
+    with urllib.request.urlopen(req, timeout=1800) as r:
+        for raw in r:
+            line = raw.decode("utf-8", "replace").strip()
+            if not line.startswith("data:"):           # blank separators, ": keep-alive" comments, event names
+                continue
+            payload = line[5:].strip()
+            if payload == "[DONE]":
+                done = True
+                break
+            ev = json.loads(payload)
+            if not isinstance(ev, dict):
+                continue
+            if "error" in ev:                          # the server failed mid-stream; its own words are never kept
+                raise MeasureFailure(stream_error_kind(ev))
+            now = time.perf_counter()
+            for ch in ev.get("choices") or []:
+                delta = ch.get("delta") or {}
+                c, rc = delta.get("content") or "", delta.get("reasoning_content") or ""
+                if c or rc:
+                    stamps.append(now)
+                    content.append(c)
+                    reasoning.append(rc)
+                finish = ch.get("finish_reason") or finish
+            if isinstance(ev.get("timings"), dict):
+                timings = ev["timings"]
+            if isinstance(ev.get("usage"), dict):
+                usage = ev["usage"]
+    wall = time.perf_counter() - t0
+    if not done and finish is None:                    # the stream ended with no finish_reason and no [DONE]: the server died
+        raise MeasureFailure("crash")
+    text, rtext = "".join(content), "".join(reasoning)
+    gaps = sorted(round((b - a) * 1000, 1) for a, b in zip(stamps, stamps[1:]))
+    stream = {"ttft_ms": round((stamps[0] - t0) * 1000, 1) if stamps else None, "total_ms": round(wall * 1000, 1),
+              "pieces": len(stamps),
+              "gap_ms": {"p50": percentile(gaps, 50), "p95": percentile(gaps, 95), "max": gaps[-1]} if gaps else None}
+    return {"request_sha256": sha256(json.dumps(messages, ensure_ascii=False).encode()),
+            "wall_ms": stream["total_ms"], "timings": prune(timings, RUN["timings"]),
+            "usage": prune(usage, RUN["usage"]),
+            "tokens": {"prompt": timings.get("prompt_n"), "reused": timings.get("cache_n"),
+                       "generated": timings.get("predicted_n")},
+            "reasoning_chars": len(rtext), "content_chars": len(text), "finish_reason": finish,
+            "output_check": "garbage" if looks_like_garbage(rtext + " " + text) else "ok",
+            "output_sha256": sha256(json.dumps([rtext, text, finish]).encode()), "stream": stream}
+
+
 def require(r: dict, keys: tuple, what: str):
     missing = [k for k in keys if not isinstance(r["timings"].get(k), (int, float))]
+    if "stream" in r and not r["timings"]:
+        raise MeasureError(f"{what}: the server sent no timings in the stream (no_stream_timings)")
+    if "stream" in r and not isinstance((r["stream"] or {}).get("ttft_ms"), (int, float)):
+        raise MeasureError(f"{what}: the stream carried no text, so there is no first token")
     if missing:
         raise MeasureError(f"{what}: the server returned no {', '.join(missing)}")
 
@@ -250,6 +325,19 @@ def require(r: dict, keys: tuple, what: str):
 def summary(runs: list, key: str):
     v = [r["timings"][key] for r in runs if isinstance(r["timings"].get(key), (int, float))]
     return {"median": statistics.median(v), "min": min(v), "max": max(v)} if v else None
+
+
+def stream_summary(runs: list, key: str):
+    v = [r["stream"][key] for r in runs if isinstance((r.get("stream") or {}).get(key), (int, float))]
+    return {"median": statistics.median(v), "min": min(v), "max": max(v)} if v else None
+
+
+def is_loopback(base: str) -> bool:
+    host = (urllib.parse.urlparse(base).hostname or "").lower()
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:                          # a name, not an address
+        return host in LOOPBACK
 
 
 def core_commit() -> str:
@@ -295,9 +383,20 @@ class Result:
 
 
 def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Path, identity=None,
-        runs_n=3, warmup=1, max_tokens=256, probe_offset=0, api_key=None, by=None, log=print) -> int:
+        runs_n=3, warmup=1, max_tokens=256, probe_offset=0, api_key=None, by=None, protocol=PROTOCOL,
+        host_relation=None, log=print) -> int:
     if not re.fullmatch(r"setup-default|custom-\d+", origin):
         raise SystemExit("--origin must be setup-default or custom-N")
+    v2 = protocol == PROTOCOL_V2
+    if protocol not in (PROTOCOL, PROTOCOL_V2):
+        raise SystemExit(f"unknown protocol {protocol!r}")
+    if v2:                                      # first-token time includes the network, so say where the client ran
+        if host_relation is None and is_loopback(base):
+            host_relation = "same-host"
+        if host_relation not in HOST_RELATIONS:
+            raise SystemExit("--host-relation " + "|".join(HOST_RELATIONS) + " is required with standard-v2 when --base is not a loopback address")
+    elif host_relation is not None:
+        raise SystemExit("--host-relation is only for standard-v2")
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"{label}.result.json"
     if path.exists():
@@ -317,11 +416,12 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
             raise SystemExit(f"{what} must be a short name: letters, digits, '.', '_' and '-' (up to 39 characters)")
     verified = bool((ident.get("config") or {}).get("origin_verified")) and origin == "setup-default"
     res = Result(path, {
-        "schema": SCHEMA,
+        "schema": SCHEMA_V2 if v2 else SCHEMA,
         # flat copies for dashboards that read the legacy run_bench.py layout (no paths: model_path is the file name)
         "label": label, "build_info": server["build_info"], "model_path": server["model_file"],
         "n_ctx": server["n_ctx"],
-        "runner": {"name": "strata-bench", "version": VERSION, "commit": core_commit()},
+        "runner": {"name": "strata-bench", "version": VERSION, "commit": core_commit(),
+                   **({"host_relation": host_relation} if v2 else {})},
         "submission": {"label": label, "date": datetime.now().astimezone().isoformat(timespec="seconds"),
                        **({"by": by} if by else {})},
         "machine": merge_identity("machine", {}, ident, warnings),
@@ -330,13 +430,15 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
         "config": {**config_block(cfg, origin, verified, server["shared"]),
                    **({"calibration": merge_identity("calibration", {}, ident, warnings)}
                       if ident.get("calibration") else {})},
-        "protocol": {"id": PROTOCOL, "prompt_sha256": sums, "probe_system_sha256": sha256(PROBE_SYSTEM.encode()),
+        "protocol": {"id": protocol, "prompt_sha256": sums, "probe_system_sha256": sha256(PROBE_SYSTEM.encode()),
                      "sampling": {"temperature": 0, "seed": 42, "cache_prompt": "false on sizes"},
                      "max_tokens": max_tokens, "warmup": warmup, "runs": runs_n,
                      "probe": {"calls": PROBE_CALLS, "skip_first": PROBE_SKIP, "max_tokens": 1, "offset": probe_offset,
                                "cache_prompt": "server default (the shared system prefix may be reused)"},
-                     "reasoning_sent": {"sizes": "server default", "probe": "enable_thinking false"},
-                     "unique_line": "[strata-bench <size> <warmup|run> <i>]"},
+                     "reasoning_sent": {"sizes": "off (reasoning_effort none, enable_thinking false)" if v2 else "server default",
+                                        "probe": "enable_thinking false"},
+                     "unique_line": "[strata-bench <size> <warmup|run> <i>]",
+                     **({"suite": "custom", "blocks": ["first-token"]} if v2 else {})},
         "runs": [], "sizes": {},
         "validity": {"status": "running", "warnings": warnings},
     })
@@ -360,7 +462,7 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
                     msg = [{"role": "user", "content": f"[strata-bench {size} {kind} {i}]\n" + text}]
                     res.where = f"{size} {kind} {i}"
                     r = {"size": size, "kind": kind, "index": i,
-                         **call(base, msg, max_tokens, {"cache_prompt": False})}
+                         **(call_stream if v2 else call)(base, msg, max_tokens, {"cache_prompt": False})}
                     d["runs"].append(r)
                     res.save()
                     if r.get("output_check") == "garbage":
@@ -379,10 +481,11 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
                     t = r["timings"]
                     log(f"{label} {size} run {i}: prompt {t.get('prompt_n')} (+{t.get('cache_n')} reused) "
                         f"{t.get('prompt_per_second')} tok/s, decode {t.get('predicted_n')} tok "
-                        f"{t.get('predicted_per_second')} tok/s")
+                        f"{t.get('predicted_per_second')} tok/s" + (f", first token {r['stream']['ttft_ms']} ms" if v2 else ""))
             d["sizes"][size] = {"prompt_tps": summary(done, "prompt_per_second"),
                                 "decode_tps": summary(done, "predicted_per_second"),
-                                "prompt_ms": summary(done, "prompt_ms")}
+                                "prompt_ms": summary(done, "prompt_ms"),
+                                **({"ttft_ms": stream_summary(done, "ttft_ms")} if v2 else {})}
             res.save()
     except KeyboardInterrupt:                   # Ctrl+C keeps the partial result too, and never leaves it as "running"
         d["validity"].update(status="incomplete", error="interrupted by the user")

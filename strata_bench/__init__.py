@@ -2,3 +2,4 @@
 
 VERSION = "0.2.0"
 SCHEMA = "strata-bench/v1"
+SCHEMA_V2 = "strata-bench/v2"

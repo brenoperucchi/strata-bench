@@ -1,4 +1,11 @@
 {
+ "blocks": [
+  "first-token",
+  "chat",
+  "agent",
+  "clients",
+  "decode-curve"
+ ],
  "failure_kinds": [
   "crash",
   "oom",
@@ -14,6 +21,11 @@
  },
  "gprobe_system_sha256": "5530caa1b4d9f495fb591d3d309e1ab19ff4d1bc923dc09bb625427fc20ec43c",
  "hex_re": "^[0-9a-f]{8,64}$",
+ "host_relations": [
+  "same-host",
+  "lan",
+  "remote"
+ ],
  "id_re": "[A-Za-z0-9][A-Za-z0-9._-]{0,38}",
  "leaks": [
   [
@@ -45,7 +57,6 @@
   "short.txt": "2cd69728112a942401591b3d19141361105a8b2e9195ae19c007b593d70e9402",
   "xlong.txt": "acf504f5230c14fdb6e6ca5d8125a9dabd4176d8f5d09882b5a3aed4eee98b83"
  },
- "protocol_id": "standard-v1",
  "public": {
   "k": {
    "build_info": "scalar",
@@ -196,6 +207,10 @@
    "n_ctx": "scalar",
    "protocol": {
     "k": {
+     "blocks": {
+      "s": "scalar",
+      "t": "list"
+     },
      "gprobe": {
       "k": {
        "calls": "scalar",
@@ -245,6 +260,7 @@
       },
       "t": "obj"
      },
+     "suite": "scalar",
      "unique_line": "scalar",
      "warmup": "scalar"
     },
@@ -253,6 +269,7 @@
    "runner": {
     "k": {
      "commit": "scalar",
+     "host_relation": "scalar",
      "name": "scalar",
      "version": "scalar"
     },
@@ -270,6 +287,22 @@
       "reasoning_chars": "scalar",
       "request_sha256": "hex",
       "size": "scalar",
+      "stream": {
+       "k": {
+        "gap_ms": {
+         "k": {
+          "max": "scalar",
+          "p50": "scalar",
+          "p95": "scalar"
+         },
+         "t": "obj"
+        },
+        "pieces": "scalar",
+        "total_ms": "scalar",
+        "ttft_ms": "scalar"
+       },
+       "t": "obj"
+      },
       "timings": {
        "k": {
         "cache_n": "scalar",
@@ -351,6 +384,14 @@
       },
       "read_median": "scalar",
       "reused_median": "scalar",
+      "ttft_ms": {
+       "k": {
+        "max": "scalar",
+        "median": "scalar",
+        "min": "scalar"
+       },
+       "t": "obj"
+      },
       "wall_ms": {
        "k": {
         "max": "scalar",
@@ -394,10 +435,19 @@
   },
   "t": "obj"
  },
- "schema_id": "strata-bench/v1",
+ "schema_ids": {
+  "standard-v1": "strata-bench/v1",
+  "standard-v2": "strata-bench/v2"
+ },
  "statuses": [
   "ok",
   "warnings",
   "failed"
+ ],
+ "suites": [
+  "custom",
+  "quick",
+  "standard",
+  "full"
  ]
 }

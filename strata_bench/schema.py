@@ -55,16 +55,24 @@ IDENTITY = {
 ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,38}")   # submission.by and machine.machine_id: a short name, never free text
 OBSERVED = {"engine": {"build_info"}, "model": {"file", "n_ctx"}}
 
+SCHEMA_IDS = {"standard-v1": "strata-bench/v1", "standard-v2": "strata-bench/v2"}   # protocol id -> the schema it is written in
+HOST_RELATIONS = ("same-host", "lan", "remote")       # v2: where the client ran relative to the server (declared); first-token time includes the network
+SUITES = ("custom", "quick", "standard", "full")      # v2: which profile of blocks was run ("custom" = the sizes picked with --sizes)
+BLOCKS = ("first-token", "chat", "agent", "clients", "decode-curve")
+
 FAILURE_KINDS = ("crash", "oom", "garbage", "hang", "server_error")        # the health view: only catastrophic failures, a closed list
 FAILURE_WHERE = re.compile(r"^((short|medium|long|xlong) (warmup|run) \d{1,3}|(probe|gprobe(150|300|450)) \d{1,3})$")
 
+STREAM = {"ttft_ms": SCALAR, "total_ms": SCALAR, "pieces": SCALAR, "gap_ms": {"p50": SCALAR, "p95": SCALAR, "max": SCALAR}}
+
 RUN = {"size": SCALAR, "kind": SCALAR, "index": SCALAR, "request_sha256": HEX, "wall_ms": SCALAR, "timings": TIMINGS,
        "usage": USAGE, "tokens": {"prompt": SCALAR, "reused": SCALAR, "generated": SCALAR},
-       "reasoning_chars": SCALAR, "content_chars": SCALAR, "finish_reason": SCALAR, "output_sha256": HEX, "output_check": SCALAR}
+       "reasoning_chars": SCALAR, "content_chars": SCALAR, "finish_reason": SCALAR, "output_sha256": HEX, "output_check": SCALAR,
+       "stream": STREAM}
 
 PUBLIC = {
     "schema": SCALAR, "label": SCALAR, "build_info": SCALAR, "model_path": SCALAR, "n_ctx": SCALAR,
-    "runner": {"name": SCALAR, "version": SCALAR, "commit": SCALAR},
+    "runner": {"name": SCALAR, "version": SCALAR, "commit": SCALAR, "host_relation": SCALAR},
     "submission": {"label": SCALAR, "date": SCALAR, "by": SCALAR},
     "machine": IDENTITY["machine"],
     "engine": IDENTITY["engine"],
@@ -82,10 +90,11 @@ PUBLIC = {
                            "cache_prompt": SCALAR},
                  "gprobe": {"system_sha256": HEX, "chars": Map(r"^(150|300|450)$", SCALAR), "source": SCALAR,
                             "calls": SCALAR, "skip_first": SCALAR, "max_tokens": SCALAR},
-                 "reasoning_sent": {"sizes": SCALAR, "probe": SCALAR}, "unique_line": SCALAR},
+                 "reasoning_sent": {"sizes": SCALAR, "probe": SCALAR}, "unique_line": SCALAR,
+                 "suite": SCALAR, "blocks": [SCALAR]},
     "runs": [RUN],
     "sizes": Map(r"^(short|medium|long|xlong|probe|gprobe150|gprobe300|gprobe450)$",
-                 {"prompt_tps": SUMMARY, "decode_tps": SUMMARY, "prompt_ms": SUMMARY, "wall_ms": SUMMARY,
+                 {"prompt_tps": SUMMARY, "decode_tps": SUMMARY, "prompt_ms": SUMMARY, "wall_ms": SUMMARY, "ttft_ms": SUMMARY,
                   "reused_median": SCALAR, "read_median": SCALAR}),
     "validity": {"status": SCALAR, "warnings": [SCALAR], "error": SCALAR,
                  "failure": {"kind": SCALAR, "where": SCALAR, "http_status": SCALAR}},
