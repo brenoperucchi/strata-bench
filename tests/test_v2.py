@@ -2,6 +2,7 @@
 import copy
 import json
 import shutil
+import time
 import unittest
 from unittest import mock
 
@@ -427,6 +428,192 @@ class AgentTests(V2Run):
         for where, ok in (("agent run 2 turn 3", True), ("agent warmup 1 turn 5", True), ("agent run 2 turn 6", False), ("agent run 2", False),
                           ("agent run x turn 1", False), ("agent run 1 turn 1; rm", False)):
             f = copy.deepcopy(a)
+            f["validity"].update(status="failed", failure={"kind": "crash", "where": where})
+            self.assertEqual("failure.where is not one of the protocol's call names" not in validate.problems(f), ok, where)
+
+
+class ChatTests(V2Run):
+    def chat(self, label="c", sizes=("chat",), **kw):
+        return self.go(sizes, label=label, **V2, **kw)
+
+    def test_a_chat_run_is_nine_short_answers_capped_at_a_hundred_tokens(self):
+        self.assertEqual(self.chat(), 0)
+        d = self.doc("c")
+        P = schema.CHAT_PROTOCOL
+        runs = [r for r in d["runs"] if r["size"] == "chat"]
+        self.assertEqual((len(runs), [r["kind"] for r in runs].count("run")), (P["warmup"] + P["runs"], P["runs"]))
+        calls = Fake.st["calls"]
+        short = (core.PROMPTS / "short.txt").read_text()
+        self.assertEqual(calls[3]["messages"][0]["content"], "[strata-bench chat run 3]\n" + short)
+        for c in calls:
+            self.assertEqual((c["max_tokens"], c["stream"], c["cache_prompt"], c["reasoning_effort"]), (100, True, False, "none"))
+        self.assertEqual((d["protocol"]["blocks"], d["protocol"]["chat"]), (["chat"], P))
+        self.assertEqual(set(d["sizes"]["chat"]), {"prompt_tps", "decode_tps", "prompt_ms", "ttft_ms"})
+        self.assertEqual(d["validity"]["status"], "ok")
+        self.assertEqual(validate.problems(d), [])
+
+    def test_blocks_are_listed_in_a_fixed_order_next_to_the_text_sizes(self):
+        self.assertEqual(self.chat(sizes=("clients", "agent", "chat", "medium"), label="all", host_relation="lan",
+                                   by=None), 0)
+        self.assertEqual(self.doc("all")["protocol"]["blocks"], ["first-token", "chat", "agent", "clients"])
+
+    def test_chat_is_v2_only_and_failures_name_the_call(self):
+        with self.assertRaises(SystemExit):
+            self.go(("chat",), label="x")
+        Fake.st["mode"], Fake.st["mode_after"] = "oom", 3
+        self.assertEqual(self.chat(label="f"), 3)
+        d = self.doc("f")
+        self.assertEqual(d["validity"]["failure"]["where"], "chat run 3")
+        self.assertEqual(validate.problems(d), [])
+
+
+class ClientsTests(V2Run):
+    def clients(self, label="k", sizes=("clients",), **kw):
+        return self.go(sizes, label=label, **V2, **kw)
+
+    def test_clients_send_at_once_and_the_rows_carry_the_throughput_and_percentiles(self):
+        self.sse(first_delay=0.1, gap=0.04)                                            # first token at ~0.1 s, the whole answer at ~0.18 s
+        t0 = time.perf_counter()
+        self.assertEqual(self.clients(), 0)
+        elapsed = time.perf_counter() - t0
+        d = self.doc("k")
+        P = schema.CLIENTS_PROTOCOL
+        self.assertLess(elapsed, 4.0)                                                  # 42 requests of 0.18 s: serial would be over 7 s
+        self.assertEqual(Fake.st["max_active"], 8)                                     # the eight clients were really in flight together
+        self.assertEqual((d["protocol"]["blocks"], d["protocol"]["clients"]), (["clients"], P))
+        self.assertEqual([x["n"] for x in d["clients"]], [2, 4, 8])
+        for row in d["clients"]:
+            self.assertEqual((row["rounds"], row["requests"], row["errors"]), (2, 2 * row["n"], 0))
+            self.assertGreaterEqual(row["ttft_p50_ms"], 90)
+            self.assertLessEqual(row["ttft_p50_ms"], row["ttft_p95_ms"])
+            self.assertLessEqual(row["ttft_p95_ms"], row["latency_p95_ms"])
+            self.assertLessEqual(row["total_tps"], row["n"] * 3 / 0.18)                # 3 tokens per client, over at least 0.18 s
+            self.assertGreater(row["total_tps"], row["n"] * 3 * 1.5)                   # and not over seconds: tokens are divided by the time
+            self.assertGreaterEqual(row["latency_p50_ms"], row["ttft_p50_ms"] + 60)    # the whole request takes longer than its first token
+        runs = [r for r in d["runs"] if r["size"] == "clients"]
+        self.assertEqual(len(runs), (2 + 4 + 8) * 3)
+        self.assertEqual(len({r["request_sha256"] for r in runs}), len(runs))        # every client sent its own first line
+        calls = [c for c in Fake.st["calls"]]
+        self.assertTrue(all(c["max_tokens"] == 128 and c["cache_prompt"] is False and c["stream"] is True for c in calls))
+        self.assertIn("[strata-bench clients 4 run 2 3]\n", {c["messages"][0]["content"].split("\n", 1)[0] + "\n" for c in calls})
+        self.assertEqual(d["validity"]["status"], "ok")
+        self.assertEqual(validate.problems(d), [])
+
+    def test_a_server_that_says_busy_is_counted_not_failed(self):
+        for status in (503, 429):
+            Fake.reset()
+            Fake.st["busy_client"], Fake.st["busy_status"] = "2", status
+            self.assertEqual(self.clients(label=f"b{status}"), 0)
+            d = self.doc(f"b{status}")
+            self.assertEqual([x["errors"] for x in d["clients"]], [2, 2, 2])           # client 2 is turned away in both measured rounds of each N
+            self.assertEqual([x["requests"] for x in d["clients"]], [4, 8, 16])
+            busy = [r for r in d["runs"] if "error_status" in r]
+            self.assertTrue(busy and all(r["error_status"] == status and "stream" not in r and "timings" not in r for r in busy))
+            self.assertEqual(d["validity"]["status"], "ok")
+            self.assertEqual(validate.problems(d), [])
+
+    def test_when_every_request_is_turned_away_the_row_is_empty_and_warned_about(self):
+        Fake.st["busy_client"] = "*"
+        self.assertEqual(self.clients(), 0)
+        d = self.doc("k")
+        self.assertEqual(d["clients"][0], {"n": 2, "rounds": 2, "requests": 4, "errors": 4, "total_tps": None, "ttft_p50_ms": None,
+                                           "ttft_p95_ms": None, "latency_p50_ms": None, "latency_p95_ms": None})
+        self.assertEqual(d["validity"]["status"], "warnings")
+        self.assertIn("clients 2: every request was turned away as busy", d["validity"]["warnings"])
+        self.assertEqual(validate.problems(d), [])
+
+    def test_any_other_failure_of_a_client_is_a_failure_of_the_server(self):
+        Fake.st["mode"], Fake.st["mode_after"] = "oom", 0
+        self.assertEqual(self.clients(label="o"), 3)
+        d = self.doc("o")
+        self.assertEqual(d["validity"]["failure"]["kind"], "oom")
+        self.assertEqual(d["validity"]["failure"]["where"], "clients 2 warmup 1")
+        self.assertEqual(validate.problems(d), [])
+        self.sse(drop_after=1)
+        Fake.st["mode"] = None
+        self.assertEqual(self.clients(label="d"), 3)
+        self.assertEqual(self.doc("d")["validity"]["failure"], {"kind": "crash", "where": "clients 2 warmup 1", "http_status": None})
+        Fake.st["busy_client"], Fake.st["busy_status"] = "1", 400                      # a client-side error is not the server's health
+        self.sse()
+        self.assertEqual(self.clients(label="e"), 3)
+        self.assertEqual(self.doc("e")["validity"]["status"], "incomplete")
+
+    def test_a_failure_in_a_measured_round_names_the_round_and_keeps_earlier_rows(self):
+        Fake.st["mode"], Fake.st["mode_after"] = "oom", 2 * 3 + 1                      # N=2 finishes (6 requests); the first N=4 request fails
+        self.assertEqual(self.clients(), 3)
+        d = self.doc("k")
+        self.assertEqual(d["validity"]["failure"]["where"], "clients 4 warmup 1")
+        self.assertGreaterEqual(len([r for r in d["runs"] if r["clients"] == 2]), 6)
+        self.assertNotIn("clients", d)
+
+    def test_no_parallel_slots_skips_the_block_and_unknown_slots_run(self):
+        Fake.st["slots"] = 1
+        self.assertEqual(self.clients(label="s", sizes=("medium", "clients")), 0)
+        d = self.doc("s")
+        self.assertEqual(d["protocol"]["skipped"], [{"block": "clients", "reason": "no_parallel_slots"}])
+        self.assertEqual(d["protocol"]["blocks"], ["first-token", "clients"])
+        self.assertNotIn("clients", d)
+        self.assertNotIn("clients", d["protocol"])
+        self.assertEqual(validate.problems(d), [])
+        self.assertEqual(self.clients(label="only"), 2)
+        self.assertFalse((self.tmp / "only.result.json").exists())
+        Fake.st["slots"] = 2
+        self.assertEqual(self.clients(label="two"), 0)                                  # more clients than slots just queue: still a measurement
+        Fake.st["slots"] = None
+        self.assertEqual(self.clients(label="unknown"), 0)
+
+    def test_the_clients_block_is_v2_only(self):
+        with self.assertRaises(SystemExit):
+            self.go(("clients",), label="x")
+
+    def test_validator_gates_chat_and_clients(self):
+        self.clients()
+        self.go(("chat",), label="c", **V2)
+        self.go(("medium",), label="m", **V2)
+        k, c, m = self.doc("k"), self.doc("c"), self.doc("m")
+
+        def broken(base, fn):
+            d = copy.deepcopy(base)
+            fn(d)
+            return validate.problems(d)
+        self.assertIn("a result with the clients block needs clients", broken(k, lambda d: d.pop("clients")))
+        self.assertIn("a result with the clients block needs clients", broken(k, lambda d: d.update(clients=[])))
+        self.assertIn("a result with the chat block needs sizes.chat", broken(c, lambda d: d["sizes"].pop("chat")))
+        self.assertIn("clients data is only allowed when the clients block ran", broken(m, lambda d: d.update(clients=copy.deepcopy(k["clients"]))))
+        self.assertIn("chat data is only allowed when the chat block ran", broken(m, lambda d: d["sizes"].update(chat=copy.deepcopy(c["sizes"]["chat"]))))
+        self.assertIn("chat data is only allowed when the chat block ran", broken(m, lambda d: d["protocol"].update(chat=dict(schema.CHAT_PROTOCOL))))
+        self.assertIn("protocol.clients is not standard-v2's", broken(k, lambda d: d["protocol"]["clients"].update(counts="2,4")))
+        self.assertIn("protocol.clients is not standard-v2's", broken(k, lambda d: d["protocol"]["clients"].update(rounds=True)))
+        self.assertIn("protocol.chat is not standard-v2's", broken(c, lambda d: d["protocol"]["chat"].update(max_tokens=256)))
+        self.assertIn("protocol.chat is not standard-v2's", broken(c, lambda d: d["protocol"].pop("chat")))
+        self.assertTrue(any("not in the public schema" in p for p in broken(k, lambda d: d["clients"][0].update(note="x"))))
+        self.assertTrue(any("not a scalar" in p for p in broken(k, lambda d: d["clients"][0].update(errors=[1]))))
+        for fld in ("protocol.chat", "sizes.chat", "protocol.clients", "clients", "runs[].clients", "runs[].client", "runs[].error_status"):
+            def v1(d, fld=fld):
+                d.update(schema="strata-bench/v1")
+                d["protocol"].update(id="standard-v1")
+                for key in ("suite", "blocks", "skipped", "agent", "chat", "clients"):
+                    d["protocol"].pop(key, None)
+                d["runner"].pop("host_relation", None)
+                d.pop("clients", None)
+                d["sizes"].pop("chat", None)
+                for r in d["runs"]:
+                    for key in schema.V2_RUN_KEYS:
+                        r.pop(key, None)
+                for sz in d["sizes"].values():
+                    sz.pop("ttft_ms", None)
+                if fld in ("protocol.chat", "protocol.clients"):
+                    d["protocol"][fld.split(".")[1]] = {"x": 1}
+                elif fld == "sizes.chat":
+                    d["sizes"]["chat"] = {"decode_tps": {"median": 1}}
+                elif fld == "clients":
+                    d["clients"] = []
+                else:
+                    d["runs"][0][fld.split(".")[1]] = 1
+            self.assertIn(f"{fld} is only allowed in strata-bench/v2", broken(m, v1), fld)
+        for where, ok in (("clients 4 round 2", True), ("clients 8 warmup 1", True), ("chat run 9", True), ("chat warmup 1", True),
+                          ("clients round 2", False), ("clients 4 round", False), ("chat run", False), ("clients 4 turn 2", False)):
+            f = copy.deepcopy(k)
             f["validity"].update(status="failed", failure={"kind": "crash", "where": where})
             self.assertEqual("failure.where is not one of the protocol's call names" not in validate.problems(f), ok, where)
 

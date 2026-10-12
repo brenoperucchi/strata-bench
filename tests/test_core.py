@@ -5,7 +5,7 @@ import tempfile
 import threading
 import time
 import unittest
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 from pathlib import Path
 from unittest import mock
 
@@ -20,16 +20,23 @@ MODEL = "E:\\m\\Swift-IQ3_XXS-00001-of-00002.gguf"
 H64 = "ab" * 32
 
 
+class Threaded(ThreadingHTTPServer):
+    """The clients block opens up to eight connections at once; the default backlog of 5 would make the connections wait a second to retry."""
+    request_queue_size = 64
+    daemon_threads = True
+
+
 class Fake(BaseHTTPRequestHandler):
     """A Strata server.py stand-in: prompt_n is what was read, cache_n what was reused."""
     st = {}
+    lock = threading.Lock()
 
     @classmethod
     def reset(cls):
         cls.st = {"model": MODEL, "n_ctx": 32768, "build": "Strata 0.1.39", "reused": 0, "probe_read": 20,
                   "probe_reused": 400, "fail_after": None, "no_timings": False, "calls": [], "shared": {},
                   "settings": True, "api_key": None, "mode": None, "mode_after": 0,
-                  "sse": {}, "last_render": "", "agent_cache": True}
+                  "sse": {}, "last_render": "", "agent_cache": True, "busy_client": None, "slots": None, "active": 0, "max_active": 0}
 
     def log_message(self, *a):
         pass
@@ -52,6 +59,8 @@ class Fake(BaseHTTPRequestHandler):
             p = {"model_path": s["model"], "default_generation_settings": {"n_ctx": s["n_ctx"]} if s["n_ctx"] else {}}
             if s["build"]:
                 p["build_info"] = s["build"]
+            if s["slots"] is not None:
+                p["total_slots"] = s["slots"]
             return self.reply(p)
         if not self.authed():
             return self.reply({"error": "unauthorized"}, 401)
@@ -69,6 +78,9 @@ class Fake(BaseHTTPRequestHandler):
         s["calls"].append(body)
         if s["fail_after"] is not None and len(s["calls"]) > s["fail_after"]:
             return self.reply({}, 500)
+        first_line = str((body.get("messages") or [{}])[0].get("content") or "").split("\n", 1)[0]
+        if s.get("busy_client") and first_line.startswith("[strata-bench clients ") and (s["busy_client"] == "*" or first_line.endswith(f" {s['busy_client']}]")):
+            return self.reply({"error": "busy"}, s.get("busy_status", 503))
         mode = s["mode"] if len(s["calls"]) > s["mode_after"] else None
         if mode == "crash":                      # the server dies: the connection is closed without any answer
             self.close_connection = True
@@ -78,7 +90,14 @@ class Fake(BaseHTTPRequestHandler):
         if mode == "bad_request":
             return self.reply({"error": "bad request"}, 400)
         if body.get("stream"):
-            return self.stream(body, probe=body["messages"][0]["role"] == "system")
+            with Fake.lock:
+                s["active"] += 1
+                s["max_active"] = max(s["max_active"], s["active"])
+            try:
+                return self.stream(body, probe=body["messages"][0]["role"] == "system")
+            finally:
+                with Fake.lock:
+                    s["active"] -= 1
         msg = {"choices": [{"message": {"content": "SAFE", "reasoning_content": "hmm"}, "finish_reason": "stop"}],
                "usage": {"completion_tokens": 1, "secret_extra": "x"}}
         if s["no_timings"]:
@@ -145,7 +164,7 @@ class Fake(BaseHTTPRequestHandler):
 class CoreTest(unittest.TestCase):
     def setUp(self):
         Fake.reset()
-        self.srv = HTTPServer(("127.0.0.1", 0), Fake)
+        self.srv = Threaded(("127.0.0.1", 0), Fake)
         threading.Thread(target=self.srv.serve_forever, daemon=True).start()
         self.base = f"http://127.0.0.1:{self.srv.server_port}"
         self.tmp = Path(tempfile.mkdtemp())

@@ -56,9 +56,10 @@ function versionProblems(doc, proto, data, out) {
   const sizes = isObj(doc.sizes) ? doc.sizes : {};
   const runs = Array.isArray(doc.runs) ? doc.runs.filter(isObj) : [];
   if (!v2) {
-    const present = [["runner.host_relation", "host_relation" in runner], ["protocol.suite", "suite" in proto], ["protocol.blocks", "blocks" in proto],
-      ["protocol.skipped", "skipped" in proto], ["protocol.agent", "agent" in proto], ["agent", "agent" in doc],
-      ["runs[].stream", runs.some((r) => "stream" in r)], ["runs[].turn", runs.some((r) => "turn" in r)], ["sizes.*.ttft_ms", Object.values(sizes).some((s) => isObj(s) && "ttft_ms" in s)]];
+    const present = [["runner.host_relation", "host_relation" in runner], ["protocol.suite", "suite" in proto], ["protocol.blocks", "blocks" in proto], ["protocol.skipped", "skipped" in proto]];
+    for (const [block, data] of [["agent", "agent" in doc], ["chat", "chat" in sizes], ["clients", "clients" in doc]]) present.push([`protocol.${block}`, block in proto], [block === "chat" ? "sizes.chat" : block, data]);
+    for (const k of data.v2_run_keys) present.push([`runs[].${k}`, runs.some((r) => k in r)]);
+    present.push(["sizes.*.ttft_ms", Object.values(sizes).some((s) => isObj(s) && "ttft_ms" in s)]);
     for (const [path, here] of present) if (here) out.push(`${path} is only allowed in strata-bench/v2`);
     return;
   }
@@ -75,12 +76,19 @@ function versionProblems(doc, proto, data, out) {
     skipped = [];
   }
   const skippedBlocks = (Array.isArray(skipped) ? skipped : []).map((k) => (isObj(k) ? k.block : undefined));
-  const ranAgent = blocks.includes("agent") && !skippedBlocks.includes("agent");
-  const hasAgent = "agent" in doc || "agent" in proto || runs.some((r) => r.size === "agent");
   const status = isObj(doc.validity) ? doc.validity.status : undefined;
-  if (ranAgent && status !== "failed" && !(isObj(doc.agent) && Array.isArray(doc.agent.sessions) && doc.agent.sessions.length > 0)) out.push("a result with the agent block needs agent.sessions");
-  else if (!ranAgent && hasAgent) out.push("agent data is only allowed when the agent block ran");
-  if (ranAgent && !sameFlat(proto.agent, data.agent_protocol)) out.push("protocol.agent is not standard-v2's");
+  // per block: [the data a finished result must carry, where that data is, what it is called in the message]
+  const parts = {
+    agent: [isObj(doc.agent) && Array.isArray(doc.agent.sessions) && doc.agent.sessions.length > 0, "agent" in doc, "agent.sessions"],
+    chat: [isObj(sizes.chat), "chat" in sizes, "sizes.chat"],
+    clients: [Array.isArray(doc.clients) && doc.clients.length > 0, "clients" in doc, "clients"],
+  };
+  for (const [block, [complete, hasData, label]] of Object.entries(parts)) {
+    const ran = blocks.includes(block) && !skippedBlocks.includes(block);
+    if (!ran && (hasData || block in proto || runs.some((r) => r.size === block))) out.push(`${block} data is only allowed when the ${block} block ran`);
+    else if (ran && status !== "failed" && !complete) out.push(`a result with the ${block} block needs ${label}`);
+    if (ran && !sameFlat(proto[block], data.block_protocols[block])) out.push(`protocol.${block} is not standard-v2's`);
+  }
 }
 
 // Two flat objects with equal values; a boolean never equals a number (Python's True == 1 would, JavaScript's does not).

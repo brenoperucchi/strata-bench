@@ -11,6 +11,7 @@ import re
 import socket
 import statistics
 import subprocess
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -19,7 +20,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import SCHEMA, SCHEMA_V2, VERSION
-from .schema import (AGENT_MIN_CTX, AGENT_PROTOCOL, FAILURE_KINDS, HOST_RELATIONS, ID_RE, IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS,
+from .schema import (AGENT_MIN_CTX, AGENT_PROTOCOL, BLOCK_PROTOCOLS, BUSY_STATUS, CHAT_PROTOCOL, CLIENTS_PROTOCOL, FAILURE_KINDS, HOST_RELATIONS, ID_RE, IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS,
                      SHARED_KEYS, STANDARD_V1_PROMPTS, STANDARD_V2_PROMPTS, prune)
 
 PROMPTS = Path(__file__).parent / "prompts"
@@ -27,6 +28,7 @@ SIZES = ("short", "medium", "long", "xlong")
 PROTOCOL = "standard-v1"
 PROTOCOL_V2 = "standard-v2"
 LOOPBACK = ("localhost",)
+MEASURED = SIZES + ("chat", "agent", "clients")      # what --sizes may name besides the probes; the last three are standard-v2 blocks
 REUSE_LIMIT = 64          # more reused prompt tokens than this on a size run means the prompt was not read fresh
 SECRET_ENV = re.compile(r"(?i)(api_?key|secret|passw(or)?d|token)$")
 
@@ -213,7 +215,9 @@ def preflight(base: str, cfg: dict) -> tuple:
                 warnings.append(f"server shared setting {k}={shared[k]!r} applies to the size runs")
     except (urllib.error.HTTPError, ValueError):
         warnings.append("server shared settings unknown (no /settings)")
-    return {"build_info": props.get("build_info"), "model_file": served, "n_ctx": n_ctx, "shared": shared}, warnings
+    slots = props.get("total_slots")
+    return {"build_info": props.get("build_info"), "model_file": served, "n_ctx": n_ctx, "shared": shared,
+            "slots": slots if isinstance(slots, int) and not isinstance(slots, bool) else None}, warnings
 
 
 def check_prompts(v2=False) -> dict:
@@ -422,10 +426,10 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
             raise SystemExit("--host-relation " + "|".join(HOST_RELATIONS) + " is required with standard-v2 when --base is not a loopback address")
     elif host_relation is not None:
         raise SystemExit("--host-relation is only for standard-v2")
-    if "agent" in sizes and not v2:
-        raise SystemExit("the agent block is only for --protocol standard-v2")
-    if v2 and not any(x in SIZES or x == "agent" for x in sizes):
-        raise SystemExit("--protocol standard-v2 needs at least one text size (" + ", ".join(SIZES) + ") or agent in --sizes")
+    if not v2 and any(x in sizes for x in ("chat", "agent", "clients")):
+        raise SystemExit("the chat, agent and clients blocks are only for --protocol standard-v2")
+    if v2 and not any(x in MEASURED for x in sizes):
+        raise SystemExit("--protocol standard-v2 needs at least one of " + ", ".join(MEASURED) + " in --sizes")
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"{label}.result.json"
     if path.exists():
@@ -448,10 +452,14 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
             skipped.append({"block": "agent", "reason": "context_too_small"})
             sizes = [x for x in sizes if x != "agent"]
             log(f"agent skipped: the server context {server['n_ctx']!r} is under {AGENT_MIN_CTX} tokens")
-            if not any(x in SIZES for x in sizes):
-                log("nothing left to measure")
-                return 2
-    blocks = ((["first-token"] if any(x in SIZES for x in requested) else []) + (["agent"] if "agent" in requested else []))
+    if "clients" in sizes and server["slots"] is not None and server["slots"] < 2:
+        skipped.append({"block": "clients", "reason": "no_parallel_slots"})
+        sizes = [x for x in sizes if x != "clients"]
+        log(f"clients skipped: the server reports {server['slots']} slot, so it cannot serve clients at once")
+    if v2 and not any(x in MEASURED for x in sizes):
+        log("nothing left to measure")
+        return 2
+    blocks = (["first-token"] if any(x in SIZES for x in requested) else []) + [b for b in ("chat", "agent", "clients") if b in requested]
     ident = identity or {}
     by = by if by is not None else (ident.get("submission") or {}).get("by")
     for what, v in (("--by", by), ("machine.machine_id", (ident.get("machine") or {}).get("machine_id"))):
@@ -482,7 +490,7 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
                                         "probe": "enable_thinking false"},
                      "unique_line": "[strata-bench <size> <warmup|run> <i>]",
                      **({"suite": "custom", "blocks": blocks, **({"skipped": skipped} if skipped else {}),
-                         **({"agent": dict(AGENT_PROTOCOL)} if "agent" in sizes else {})} if v2 else {})},
+                         **{b: dict(BLOCK_PROTOCOLS[b]) for b in BLOCK_PROTOCOLS if b in sizes}} if v2 else {})},
         "runs": [], "sizes": {},
         "validity": {"status": "running", "warnings": warnings},
     })
@@ -496,20 +504,25 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
             if size == "agent":
                 measure_agent(base, res, log)
                 continue
+            if size == "clients":
+                measure_clients(base, res, log)
+                continue
             if size == "gprobe":
                 d["protocol"]["gprobe"] = {"system_sha256": sha256(GPROBE_SYSTEM.encode()), "chars": GPROBE_CHARS,
                                            "source": "xlong.txt", "calls": PROBE_CALLS, "skip_first": PROBE_SKIP,
                                            "max_tokens": 1}
                 measure_gprobe(base, res, log)
                 continue
-            text = (PROMPTS / f"{size}.txt").read_text(encoding="utf-8")
+            text = (PROMPTS / ("short.txt" if size == "chat" else f"{size}.txt")).read_text(encoding="utf-8")
             done = []
-            for kind, n in (("warmup", warmup), ("run", runs_n)):
+            n_warm, n_runs, cap = (warmup, runs_n, max_tokens) if size != "chat" else (
+                CHAT_PROTOCOL["warmup"], CHAT_PROTOCOL["runs"], CHAT_PROTOCOL["max_tokens"])
+            for kind, n in (("warmup", n_warm), ("run", n_runs)):
                 for i in range(1, n + 1):
                     msg = [{"role": "user", "content": f"[strata-bench {size} {kind} {i}]\n" + text}]
                     res.where = f"{size} {kind} {i}"
                     r = {"size": size, "kind": kind, "index": i,
-                         **(call_stream if v2 else call)(base, msg, max_tokens, {"cache_prompt": False})}
+                         **(call_stream if v2 else call)(base, msg, cap, {"cache_prompt": False})}
                     d["runs"].append(r)
                     res.save()
                     if r.get("output_check") == "garbage":
@@ -634,6 +647,80 @@ def measure_agent(base: str, res: Result, log):
                          "decode_tps": spread([r["timings"].get("predicted_per_second") for r in rs])}
     d["agent"] = {"sessions": sessions, "hit_pct": spread([x["hit_pct"] for x in sessions]),
                   "reread_tokens": spread([x["reread_tokens"] for x in sessions]), "turns": turns}
+    res.save()
+
+
+def client_request(base: str, messages: list, results: list, k: int, barrier: threading.Barrier):
+    """One client of the clients block, in its own thread: wait for the others, send one streamed request, store the outcome in results[k]."""
+    try:
+        barrier.wait(timeout=60)
+        results[k] = ("ok", call_stream(base, messages, CLIENTS_PROTOCOL["max_tokens"], {"cache_prompt": False}))
+    except urllib.error.HTTPError as e:
+        results[k] = ("busy", e.code) if e.code in BUSY_STATUS else ("fail", e)
+    except Exception as e:                                  # a closed connection, a timeout, a bad stream: judged by the caller
+        results[k] = ("fail", e)
+
+
+def measure_clients(base: str, res: Result, log):
+    """standard-v2 clients block: for each N in CLIENTS_PROTOCOL["counts"], N clients send the same public prompt at once (each with its own first line,
+    so none reads another's cache), 1 warm-up round and CLIENTS_PROTOCOL["rounds"] measured ones. A client the server turns away as busy (429 or 503) is
+    counted in `errors`; any other failure of a request is a failure of the server and stops the run. total_tps is the tokens all clients
+    generated divided by the time from the common start to the last finish."""
+    d, P = res.doc, CLIENTS_PROTOCOL
+    text = (PROMPTS / "medium.txt").read_text(encoding="utf-8")
+    rows = []
+    for n in (int(x) for x in P["counts"].split(",")):
+        ok, ttft, latency, tps, errors, requests = [], [], [], [], 0, 0
+        for kind, rounds in (("warmup", P["warmup"]), ("run", P["rounds"])):
+            for rnd in range(1, rounds + 1):
+                res.where = f"clients {n} {'warmup' if kind == 'warmup' else 'round'} {rnd}"
+                results, barrier = [None] * n, threading.Barrier(n + 1)
+                threads = [threading.Thread(target=client_request, daemon=True, args=(
+                    base, [{"role": "user", "content": f"[strata-bench clients {n} {kind} {rnd} {k + 1}]\n" + text}], results, k, barrier))
+                    for k in range(n)]
+                for t in threads:
+                    t.start()
+                try:
+                    barrier.wait(timeout=60)
+                except threading.BrokenBarrierError:
+                    raise MeasureError(f"{res.where}: the clients did not start together")
+                t0 = time.perf_counter()
+                for t in threads:
+                    t.join()
+                wall = time.perf_counter() - t0
+                generated, fatal = 0, None
+                for k, (state, r) in enumerate(results):
+                    run = {"size": "clients", "kind": kind, "index": rnd, "clients": n, "client": k + 1}
+                    if state == "ok":
+                        run.update(r)
+                        d["runs"].append(run)
+                        if kind == "run":
+                            require(run, ("prompt_n", "prompt_ms", "prompt_per_second", "predicted_n", "predicted_per_second"), res.where)
+                            generated += run["tokens"]["generated"] or 0
+                            ttft.append(run["stream"]["ttft_ms"])
+                            latency.append(run["stream"]["total_ms"])
+                        if run.get("output_check") == "garbage":
+                            fatal = fatal or MeasureFailure("garbage", res.where)
+                    elif state == "busy":
+                        d["runs"].append({**run, "error_status": r})
+                        errors += kind == "run"
+                    else:
+                        fatal = fatal or r
+                    requests += kind == "run"
+                res.save()
+                if fatal is not None:
+                    raise fatal
+                if kind == "run" and generated:
+                    tps.append(generated / max(wall, 1e-9))
+                log(f"clients {n} {kind} {rnd}: {sum(1 for s, _ in results if s == 'ok')} of {n} answered in {round(wall * 1000)} ms")
+        if not ttft:
+            d["validity"]["warnings"].append(f"clients {n}: every request was turned away as busy")
+        rows.append({"n": n, "rounds": P["rounds"], "requests": requests, "errors": errors,
+                     "total_tps": round(statistics.median(tps), 1) if tps else None,
+                     "ttft_p50_ms": percentile(sorted(ttft), 50) if ttft else None, "ttft_p95_ms": percentile(sorted(ttft), 95) if ttft else None,
+                     "latency_p50_ms": percentile(sorted(latency), 50) if latency else None,
+                     "latency_p95_ms": percentile(sorted(latency), 95) if latency else None})
+    d["clients"] = rows
     res.save()
 
 

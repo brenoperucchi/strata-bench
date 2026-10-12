@@ -32,13 +32,13 @@ def version_problems(doc: dict, proto: dict) -> list:
     sizes = doc.get("sizes") if isinstance(doc.get("sizes"), dict) else {}
     runs = [r for r in doc.get("runs") or [] if isinstance(r, dict)] if isinstance(doc.get("runs"), list) else []
     if not v2:
-        for path, present in (("runner.host_relation", "host_relation" in runner), ("protocol.suite", "suite" in proto),
-                              ("protocol.blocks", "blocks" in proto), ("protocol.skipped", "skipped" in proto),
-                              ("protocol.agent", "agent" in proto), ("agent", "agent" in doc),
-                              ("runs[].stream", any("stream" in r for r in runs)), ("runs[].turn", any("turn" in r for r in runs)),
-                              ("sizes.*.ttft_ms", any(isinstance(s, dict) and "ttft_ms" in s for s in sizes.values()))):
-            if present:
-                out.append(f"{path} is only allowed in strata-bench/v2")
+        present = [("runner.host_relation", "host_relation" in runner), ("protocol.suite", "suite" in proto),
+                   ("protocol.blocks", "blocks" in proto), ("protocol.skipped", "skipped" in proto)]
+        for block, data in (("agent", "agent" in doc), ("chat", "chat" in sizes), ("clients", "clients" in doc)):
+            present += [(f"protocol.{block}", block in proto), ({"chat": "sizes.chat"}.get(block, block), data)]
+        present += [(f"runs[].{k}", any(k in r for r in runs)) for k in schema.V2_RUN_KEYS]
+        present.append(("sizes.*.ttft_ms", any(isinstance(s, dict) and "ttft_ms" in s for s in sizes.values())))
+        out.extend(f"{path} is only allowed in strata-bench/v2" for path, here in present if here)
         return out
     if runner.get("host_relation") not in schema.HOST_RELATIONS:
         out.append("runner.host_relation must be one of " + ", ".join(schema.HOST_RELATIONS))
@@ -54,16 +54,20 @@ def version_problems(doc: dict, proto: dict) -> list:
         out.append("protocol.skipped must list blocks of this result with a reason from " + ", ".join(schema.SKIP_REASONS))
         skipped = []
     skipped_blocks = [k.get("block") for k in skipped or []]
-    ran_agent = "agent" in blocks and "agent" not in skipped_blocks
-    has_agent = "agent" in doc or "agent" in proto or any(r.get("size") == "agent" for r in runs)
     validity = doc.get("validity") if isinstance(doc.get("validity"), dict) else {}
-    if ran_agent and validity.get("status") != "failed" and not (
-            isinstance(doc.get("agent"), dict) and isinstance(doc["agent"].get("sessions"), list) and len(doc["agent"]["sessions"]) > 0):
-        out.append("a result with the agent block needs agent.sessions")
-    elif not ran_agent and has_agent:
-        out.append("agent data is only allowed when the agent block ran")
-    if ran_agent and not same_flat(proto.get("agent"), schema.AGENT_PROTOCOL):
-        out.append("protocol.agent is not standard-v2's")
+    agent, clients = doc.get("agent"), doc.get("clients")
+    # per block: (the data a finished result must carry, where that data is, what it is called in the message)
+    parts = {"agent": (isinstance(agent, dict) and isinstance(agent.get("sessions"), list) and len(agent["sessions"]) > 0, "agent" in doc, "agent.sessions"),
+             "chat": (isinstance(sizes.get("chat"), dict), "chat" in sizes, "sizes.chat"),
+             "clients": (isinstance(clients, list) and len(clients) > 0, "clients" in doc, "clients")}
+    for block, (complete, has_data, label) in parts.items():
+        ran = block in blocks and block not in skipped_blocks
+        if not ran and (has_data or block in proto or any(r.get("size") == block for r in runs)):
+            out.append(f"{block} data is only allowed when the {block} block ran")
+        elif ran and validity.get("status") != "failed" and not complete:
+            out.append(f"a result with the {block} block needs {label}")
+        if ran and not same_flat(proto.get(block), schema.BLOCK_PROTOCOLS[block]):
+            out.append(f"protocol.{block} is not standard-v2's")
     return out
 
 

@@ -21,7 +21,7 @@ def real(tmp, label, mode=None, sizes=("medium", "probe", "gprobe"), run_kw=None
     TC.Fake.reset()
     TC.Fake.st["mode"], TC.Fake.st["mode_after"] = mode, 1
     TC.Fake.st.update(kw)
-    srv = TC.HTTPServer(("127.0.0.1", 0), TC.Fake)
+    srv = TC.Threaded(("127.0.0.1", 0), TC.Fake)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     try:
         core.run(f"http://127.0.0.1:{srv.server_port}", TC.CFG, "setup-default", list(sizes), label, tmp, IDENT, log=lambda *a: None, **(run_kw or {}))
@@ -45,8 +45,13 @@ class JsParity(unittest.TestCase):
         v2_failed = real(tmp, "v2failed", mode="crash", sizes=("medium",), run_kw={"protocol": core.PROTOCOL_V2})
         agent = real(tmp, "agent", sizes=("agent",), run_kw={"protocol": core.PROTOCOL_V2})
         agent_failed = real(tmp, "agentfail", mode="oom", sizes=("agent",), run_kw={"protocol": core.PROTOCOL_V2})
+        chat = real(tmp, "chat", sizes=("chat",), run_kw={"protocol": core.PROTOCOL_V2})
+        clients = real(tmp, "clients", sizes=("clients",), run_kw={"protocol": core.PROTOCOL_V2})
+        busy = real(tmp, "busy", sizes=("clients",), run_kw={"protocol": core.PROTOCOL_V2}, busy_client="2")
+        clients_failed = real(tmp, "clientsfail", mode="oom", sizes=("clients",), run_kw={"protocol": core.PROTOCOL_V2})
         out = {"ok": ok, "failed": failed, "warnings": warn, "v2 ok": v2, "v2 failed": v2_failed, "v2 agent ok": agent,
-               "v2 agent failed": agent_failed, "incomplete": inc, "empty": {}}
+               "v2 agent failed": agent_failed, "v2 chat ok": chat, "v2 clients ok": clients, "v2 clients busy": busy,
+               "v2 clients failed": clients_failed, "incomplete": inc, "empty": {}}
 
         def mut(name, fn, base=ok):
             d = copy.deepcopy(base)
@@ -118,7 +123,7 @@ class JsParity(unittest.TestCase):
         mut("blocks bad", lambda d: d["protocol"].update(blocks=["first-token", "free-text"]), v2)
         mut("blocks a string", lambda d: d["protocol"].update(blocks="first-token"), v2)
         mut("blocks nested", lambda d: d["protocol"].update(blocks=[["first-token"]]), v2)
-        mut("blocks several", lambda d: d["protocol"].update(blocks=["first-token", "chat"]), v2)
+        mut("blocks several", lambda d: d["protocol"].update(blocks=["first-token", "decode-curve"]), v2)
         mut("stream extra key", lambda d: d["runs"][0]["stream"].update(note="x"), v2)
         mut("stream gap extra key", lambda d: d["runs"][0]["stream"].update(gap_ms={"p50": 1, "p99": 2}), v2)
         mut("stream ttft a list", lambda d: d["runs"][0]["stream"].update(ttft_ms=[1]), v2)
@@ -166,6 +171,44 @@ class JsParity(unittest.TestCase):
         mut("v1 with turn", lambda d: d["runs"][0].update(turn=1))
         for where in ("agent run 2 turn 3", "agent warmup 1 turn 5", "agent run 2 turn 6", "agent run 2", "agent run x turn 1", "agent run 1 turn 1; rm"):
             mut(f"where {where}", lambda d, w=where: d["validity"].update(status="failed", failure={"kind": "crash", "where": w}), agent)
+        def skip_clients(d):
+            d.pop("clients")
+            d["protocol"].pop("clients")
+            d["protocol"]["skipped"] = [{"block": "clients", "reason": "no_parallel_slots"}]
+            d["runs"] = []
+        mut("clients skipped", skip_clients, clients)
+        mut("clients skipped with data", lambda d: (skip_clients(d), d.update(clients=[{"n": 2}]))[0], clients)
+        mut("clients data missing", lambda d: d.pop("clients"), clients)
+        mut("clients empty", lambda d: d.update(clients=[]), clients)
+        mut("clients not a list", lambda d: d.update(clients={"n": 2}), clients)
+        mut("clients row extra key", lambda d: d["clients"][0].update(note="x"), clients)
+        mut("clients row a list", lambda d: d["clients"][0].update(errors=[1]), clients)
+        mut("clients protocol counts", lambda d: d["protocol"]["clients"].update(counts="2,4"), clients)
+        mut("clients protocol rounds true", lambda d: d["protocol"]["clients"].update(rounds=True), clients)
+        mut("clients protocol warmup true", lambda d: d["protocol"]["clients"].update(warmup=True), clients)
+        mut("clients protocol missing", lambda d: d["protocol"].pop("clients"), clients)
+        mut("clients not in blocks", lambda d: d["protocol"].update(blocks=["first-token"]), clients)
+        mut("clients skipped bad reason", lambda d: d["protocol"].update(skipped=[{"block": "clients", "reason": "busy"}]), clients)
+        mut("clients data in a chat result", lambda d: d.update(clients=copy.deepcopy(clients["clients"])), chat)
+        mut("chat data missing", lambda d: d["sizes"].pop("chat"), chat)
+        mut("chat data not an object", lambda d: d["sizes"].update(chat=[1]), chat)
+        mut("chat protocol tokens", lambda d: d["protocol"]["chat"].update(max_tokens=256), chat)
+        mut("chat protocol runs true", lambda d: d["protocol"]["chat"].update(runs=True), chat)
+        mut("chat protocol missing", lambda d: d["protocol"].pop("chat"), chat)
+        mut("chat not in blocks", lambda d: d["protocol"].update(blocks=["first-token"]), chat)
+        mut("chat data in a first-token result", lambda d: d["sizes"].update(chat={"decode_tps": {"median": 1}}), v2)
+        mut("chat protocol in a first-token result", lambda d: d["protocol"].update(chat=dict(chat["protocol"]["chat"])), v2)
+        mut("client run key a list", lambda d: d["runs"][0].update(client=[1]), clients)
+        mut("busy run extra key", lambda d: [r for r in d["runs"] if "error_status" in r][0].update(note="x"), busy)
+        mut("v1 with clients", lambda d: d.update(clients=[]))
+        mut("v1 with chat size", lambda d: d["sizes"].update(chat={"decode_tps": {"median": 1}}))
+        mut("v1 with protocol chat", lambda d: d["protocol"].update(chat={"runs": 9}))
+        mut("v1 with protocol clients", lambda d: d["protocol"].update(clients={"n": 1}))
+        mut("v1 with run clients", lambda d: d["runs"][0].update(clients=2))
+        mut("v1 with run client", lambda d: d["runs"][0].update(client=1))
+        mut("v1 with run error status", lambda d: d["runs"][0].update(error_status=503))
+        for where in ("clients 4 round 2", "clients 8 warmup 1", "chat run 9", "chat warmup 1", "clients round 2", "clients 4 round", "chat run", "clients 4 turn 2", "clients 1000 round 1"):
+            mut(f"where {where}", lambda d, w=where: d["validity"].update(status="failed", failure={"kind": "crash", "where": w}), clients)
         mut("v2 prompt hash", lambda d: d["protocol"]["prompt_sha256"].update({"medium.txt": "0" * 64}), v2)
         mut("unicode label", lambda d: d.update(label="résultat ✓ 测试"))
         mut("quote in label with leak", lambda d: d.update(label="it's /usr/local/x"))
@@ -182,7 +225,7 @@ class JsParity(unittest.TestCase):
         for c, got in zip(cases, js):
             self.assertEqual(got, validate.problems(c["doc"]), c["name"])
         self.assertGreater(sum(1 for c in cases if validate.problems(c["doc"])), 30)        # the tampering cases really are rejected
-        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "v2 ok", "v2 failed", "v2 agent ok", "v2 agent failed", "by set", "by 39 chars", "machine id set", "host relation lan", "blocks several", "agent skipped", "where agent run 2 turn 3", "where agent warmup 1 turn 5", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
+        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "v2 ok", "v2 failed", "v2 agent ok", "v2 agent failed", "v2 chat ok", "v2 clients ok", "v2 clients busy", "v2 clients failed", "by set", "by 39 chars", "machine id set", "host relation lan", "blocks several", "agent skipped", "where agent run 2 turn 3", "where agent warmup 1 turn 5", "clients skipped", "where clients 4 round 2", "where clients 8 warmup 1", "where chat run 9", "where chat warmup 1", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
 
     def test_the_schema_data_file_is_current(self):
         import sys

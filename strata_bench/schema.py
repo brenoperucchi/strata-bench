@@ -32,6 +32,11 @@ STANDARD_V2_PROMPTS = {         # added by standard-v2 (the agent block); a v2 r
     "agent_doc_5.txt": "1c4262f60af888cc4cdbc4e5315dda7e09ed9aa99b68bc753a118a534d99fe6b",
 }
 AGENT_PROTOCOL = {"turns": 5, "sessions": 3, "warmup": 1, "max_tokens": 256, "cache_prompt": "true", "tool_choice": "none"}
+CHAT_PROTOCOL = {"runs": 9, "warmup": 1, "max_tokens": 100}                          # short.txt, streamed, answer capped at 100 tokens
+CLIENTS_PROTOCOL = {"counts": "2,4,8", "rounds": 2, "warmup": 1, "max_tokens": 128}    # medium.txt from N clients at once, per N: 1 warm-up round and 2 measured
+BLOCK_PROTOCOLS = {"agent": AGENT_PROTOCOL, "chat": CHAT_PROTOCOL, "clients": CLIENTS_PROTOCOL}   # the fixed settings a result must repeat for each block it ran
+V2_RUN_KEYS = ("stream", "turn", "clients", "client", "error_status")                    # keys of runs[] that only v2 results may carry
+BUSY_STATUS = (429, 503)         # a server that answers "busy" to a client of the clients block: counted in errors, not a failure
 AGENT_MIN_CTX = 16384            # the five documents, the answers and the tool text need about 14K tokens: a smaller context skips the block
 SKIP_REASONS = ("context_too_small", "no_parallel_slots", "no_stream_timings")
 SERVER_FIELDS = ("reasoning_budget_tokens", "sampling", "draft_vocab", "fit_max_tokens", "gpu", "layer_split")
@@ -74,15 +79,17 @@ SUITES = ("custom", "quick", "standard", "full")      # v2: which profile of blo
 BLOCKS = ("first-token", "chat", "agent", "clients", "decode-curve")
 
 FAILURE_KINDS = ("crash", "oom", "garbage", "hang", "server_error")        # the health view: only catastrophic failures, a closed list
-FAILURE_WHERE = re.compile(r"^((short|medium|long|xlong) (warmup|run) \d{1,3}|(probe|gprobe(150|300|450)) \d{1,3}|agent (warmup|run) \d{1,3} turn [1-5])$")
+FAILURE_WHERE = re.compile(r"^((short|medium|long|xlong) (warmup|run) \d{1,3}|(probe|gprobe(150|300|450)) \d{1,3}|agent (warmup|run) \d{1,3} turn [1-5]|chat (warmup|run) \d{1,3}|clients \d{1,3} (warmup|round) \d{1,3})$")
 
 AGENT_TURN_SUMMARY = {k: SUMMARY for k in ("prompt_n", "cache_n", "predicted_n", "ttft_ms", "prompt_ms", "decode_tps")}
 AGENT = {"sessions": [{"index": SCALAR, "hit_pct": SCALAR, "reread_tokens": SCALAR, "new_tokens": SCALAR}],
          "hit_pct": SUMMARY, "reread_tokens": SUMMARY, "turns": Map(r"^[1-5]$", AGENT_TURN_SUMMARY)}
 
+CLIENTS_ROW = {k: SCALAR for k in ("n", "rounds", "requests", "errors", "total_tps", "ttft_p50_ms", "ttft_p95_ms", "latency_p50_ms", "latency_p95_ms")}
+
 STREAM = {"ttft_ms": SCALAR, "total_ms": SCALAR, "pieces": SCALAR, "gap_ms": {"p50": SCALAR, "p95": SCALAR, "max": SCALAR}}
 
-RUN = {"size": SCALAR, "kind": SCALAR, "index": SCALAR, "turn": SCALAR, "request_sha256": HEX, "wall_ms": SCALAR, "timings": TIMINGS,
+RUN = {"size": SCALAR, "kind": SCALAR, "index": SCALAR, "turn": SCALAR, "clients": SCALAR, "client": SCALAR, "error_status": SCALAR, "request_sha256": HEX, "wall_ms": SCALAR, "timings": TIMINGS,
        "usage": USAGE, "tokens": {"prompt": SCALAR, "reused": SCALAR, "generated": SCALAR},
        "reasoning_chars": SCALAR, "content_chars": SCALAR, "finish_reason": SCALAR, "output_sha256": HEX, "output_check": SCALAR,
        "stream": STREAM}
@@ -109,10 +116,12 @@ PUBLIC = {
                             "calls": SCALAR, "skip_first": SCALAR, "max_tokens": SCALAR},
                  "reasoning_sent": {"sizes": SCALAR, "probe": SCALAR}, "unique_line": SCALAR,
                  "suite": SCALAR, "blocks": [SCALAR], "skipped": [{"block": SCALAR, "reason": SCALAR}],
-                 "agent": {k: SCALAR for k in AGENT_PROTOCOL}},
+                 "agent": {k: SCALAR for k in AGENT_PROTOCOL}, "chat": {k: SCALAR for k in CHAT_PROTOCOL},
+                 "clients": {k: SCALAR for k in CLIENTS_PROTOCOL}},
     "runs": [RUN],
     "agent": AGENT,
-    "sizes": Map(r"^(short|medium|long|xlong|probe|gprobe150|gprobe300|gprobe450)$",
+    "clients": [CLIENTS_ROW],
+    "sizes": Map(r"^(short|medium|long|xlong|chat|probe|gprobe150|gprobe300|gprobe450)$",
                  {"prompt_tps": SUMMARY, "decode_tps": SUMMARY, "prompt_ms": SUMMARY, "wall_ms": SUMMARY, "ttft_ms": SUMMARY,
                   "reused_median": SCALAR, "read_median": SCALAR}),
     "validity": {"status": SCALAR, "warnings": [SCALAR], "error": SCALAR,

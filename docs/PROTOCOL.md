@@ -28,7 +28,7 @@ A call that fails because the server failed is recorded as a `failed` result: th
 
 The hardware description is declared by the submitter. The runner checks the model file name and context size against the server, not the file contents. One result is one machine on one day. Different engine versions, configs or prompt sets are different measurements.
 
-## standard-v2 (in progress: first token and the agent block)
+## standard-v2 (in progress: first token, chat, agent and clients)
 
 `standard-v2` is additive. A result is written in schema `strata-bench/v2` and keeps every field of v1; the validator accepts both, and a v1 result must not carry the new fields. Run it with `--protocol standard-v2`.
 
@@ -51,3 +51,17 @@ One conversation of five turns, repeated in one warm-up session and three measur
 - **Skipped, not failed:** a server context under 16,384 tokens cannot hold the conversation, so the block is recorded in `protocol.skipped` with the reason `context_too_small` and no `agent` data. If nothing else was asked for, the run refuses (exit 2). The closed reasons are `context_too_small`, `no_parallel_slots` and `no_stream_timings`.
 - **Failures:** the same kinds as everywhere, with `failure.where` such as `agent run 2 turn 3`.
 - `protocol.blocks` lists `agent` when it was asked for, and `protocol.agent` repeats the fixed settings (5 turns, 3 sessions, 1 warm-up, 256 tokens, cache on, `tool_choice` none); the validator rejects any other values.
+
+### The chat block (`--sizes ...,chat`)
+
+The fixed one-sentence prompt `short.txt`, streamed, with the answer capped at 100 tokens: 1 warm-up and 9 measured requests, each with its own first line (`[strata-bench chat run <i>]`) and `cache_prompt` false. It reports the first-token time and the decode speed of a short answer. Results go to `sizes.chat` (prompt and decode speed, prompt time, `ttft_ms`) and `runs[]` with `size: chat`. `protocol.chat` repeats the fixed settings and the validator rejects any other values.
+
+### The clients block (`--sizes ...,clients`)
+
+Several clients at once, as when a team or a few agents share one server. For N = 2, 4 and 8, N clients each send the public `medium.txt` (own first line `[strata-bench clients <N> <warmup|run> <round> <client>]`, `cache_prompt` false, streamed, at most 128 tokens). All N start together on a barrier. Each N gets 1 warm-up round and 2 measured rounds.
+
+- **Per N** (`clients[]`): `requests` (measured requests sent), `errors`, `total_tps` (tokens all clients generated divided by the time from the common start to the last finish, median over the rounds), and the p50 and p95 (nearest rank, over all measured requests of that N) of the first-token time and of the whole request's latency.
+- **Busy is counted, not failed:** a client the server turns away with HTTP 429 or 503 adds to `errors`, and its `runs[]` entry carries `error_status` and no timings. Any other failure of a request (a closed connection, a stream that ends early, a timeout, another 5xx, degenerate output) is a failure of the server: the run stops, status `failed`, `failure.where` such as `clients 4 round 2` or `clients 4 warmup 1`. A 4xx other than 429 is the client's own mistake and leaves the result `incomplete`.
+- **Every request turned away** for an N leaves that row's numbers empty (null) and adds a warning.
+- **Skipped, not failed:** a server that reports `total_slots` under 2 in `/props` cannot serve clients at once, so the block is recorded in `protocol.skipped` with `no_parallel_slots`. A server that does not report slots is run anyway. More clients than slots simply queue, which is part of what the block measures.
+- `protocol.clients` repeats the fixed settings (counts `2,4,8`, 2 rounds, 1 warm-up round, 128 tokens) and the validator rejects any other values.

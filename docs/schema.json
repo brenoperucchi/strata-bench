@@ -1,11 +1,24 @@
 {
- "agent_protocol": {
-  "cache_prompt": "true",
-  "max_tokens": 256,
-  "sessions": 3,
-  "tool_choice": "none",
-  "turns": 5,
-  "warmup": 1
+ "block_protocols": {
+  "agent": {
+   "cache_prompt": "true",
+   "max_tokens": 256,
+   "sessions": 3,
+   "tool_choice": "none",
+   "turns": 5,
+   "warmup": 1
+  },
+  "chat": {
+   "max_tokens": 100,
+   "runs": 9,
+   "warmup": 1
+  },
+  "clients": {
+   "counts": "2,4,8",
+   "max_tokens": 128,
+   "rounds": 2,
+   "warmup": 1
+  }
  },
  "blocks": [
   "first-token",
@@ -21,7 +34,7 @@
   "hang",
   "server_error"
  ],
- "failure_where_re": "^((short|medium|long|xlong) (warmup|run) \\d{1,3}|(probe|gprobe(150|300|450)) \\d{1,3}|agent (warmup|run) \\d{1,3} turn [1-5])$",
+ "failure_where_re": "^((short|medium|long|xlong) (warmup|run) \\d{1,3}|(probe|gprobe(150|300|450)) \\d{1,3}|agent (warmup|run) \\d{1,3} turn [1-5]|chat (warmup|run) \\d{1,3}|clients \\d{1,3} (warmup|round) \\d{1,3})$",
  "gprobe_chars": {
   "150": 525,
   "300": 1050,
@@ -168,6 +181,23 @@
     "t": "obj"
    },
    "build_info": "scalar",
+   "clients": {
+    "s": {
+     "k": {
+      "errors": "scalar",
+      "latency_p50_ms": "scalar",
+      "latency_p95_ms": "scalar",
+      "n": "scalar",
+      "requests": "scalar",
+      "rounds": "scalar",
+      "total_tps": "scalar",
+      "ttft_p50_ms": "scalar",
+      "ttft_p95_ms": "scalar"
+     },
+     "t": "obj"
+    },
+    "t": "list"
+   },
    "config": {
     "k": {
      "args": {
@@ -330,6 +360,23 @@
       "s": "scalar",
       "t": "list"
      },
+     "chat": {
+      "k": {
+       "max_tokens": "scalar",
+       "runs": "scalar",
+       "warmup": "scalar"
+      },
+      "t": "obj"
+     },
+     "clients": {
+      "k": {
+       "counts": "scalar",
+       "max_tokens": "scalar",
+       "rounds": "scalar",
+       "warmup": "scalar"
+      },
+      "t": "obj"
+     },
      "gprobe": {
       "k": {
        "calls": "scalar",
@@ -407,7 +454,10 @@
    "runs": {
     "s": {
      "k": {
+      "client": "scalar",
+      "clients": "scalar",
       "content_chars": "scalar",
+      "error_status": "scalar",
       "finish_reason": "scalar",
       "index": "scalar",
       "kind": "scalar",
@@ -485,7 +535,7 @@
    },
    "schema": "scalar",
    "sizes": {
-    "re": "^(short|medium|long|xlong|probe|gprobe150|gprobe300|gprobe450)$",
+    "re": "^(short|medium|long|xlong|chat|probe|gprobe150|gprobe300|gprobe450)$",
     "s": {
      "k": {
       "decode_tps": {
@@ -584,5 +634,12 @@
   "quick",
   "standard",
   "full"
+ ],
+ "v2_run_keys": [
+  "stream",
+  "turn",
+  "clients",
+  "client",
+  "error_status"
  ]
 }
