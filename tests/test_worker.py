@@ -22,6 +22,10 @@ class Worker(unittest.TestCase):
         doc = json.loads((ROOT / "worker" / "test" / "fixtures" / "valid.result.json").read_text())
         self.assertEqual(validate.problems(doc), [])
 
+    def test_the_workers_v2_fixture_really_is_valid_for_the_python_validator(self):
+        doc = json.loads((ROOT / "worker" / "test" / "fixtures" / "valid-v2.result.json").read_text())
+        self.assertEqual((doc["schema"], validate.problems(doc)), ("strata-bench/v2", []))
+
     def test_the_page_and_worker_scripts_are_syntactically_valid_modules(self):
         for f in ("docs/submit.js", "docs/validator.js", "docs/config.js", "worker/src/index.js"):
             r = subprocess.run([NODE, "--input-type=module", "--check"], input=(ROOT / f).read_text(), capture_output=True, text=True)

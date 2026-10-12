@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import worker, { safeLabel, plain, toBase64, fileBase, MAX_BYTES } from "../src/index.js";
 
 const VALID = JSON.parse(readFileSync(new URL("./fixtures/valid.result.json", import.meta.url), "utf8"));
+const VALID_V2 = JSON.parse(readFileSync(new URL("./fixtures/valid-v2.result.json", import.meta.url), "utf8"));   // a standard-v2 result of the full suite
 const ORIGIN = "https://brenoperucchi.github.io";
 const ENV = { ALLOWED_ORIGIN: ORIGIN, GITHUB_REPO: "owner/repo", BASE_BRANCH: "main", GITHUB_TOKEN: "ghp_SECRETTOKEN123456", TURNSTILE_SECRET: "ts-SECRET" };
 const NOW = () => new Date("2026-10-12T08:00:00Z");
@@ -223,4 +224,34 @@ test("the stored file is the re-serialized validated object, with a hash in its 
   const again = await call(req({ result: VALID, turnstile: "t" }));
   const out = await again.json();
   assert.match(calls.at(-2).url, new RegExp(out.file.replace(/[.]/g, "\\.")));
+});
+
+test("a standard-v2 result (first token, chat, agent, clients) opens a pull request too", async () => {
+  const calls = mockFetch(goodRoutes());
+  const res = await submit(VALID_V2);
+  const out = await res.json();
+  assert.equal(res.status, 201);
+  assert.equal(out.ok, true);
+  const put = JSON.parse(calls.find((c) => c.method === "PUT").body);
+  const stored = JSON.parse(Buffer.from(put.content, "base64").toString("utf8"));
+  assert.equal(stored.schema, "strata-bench/v2");
+  assert.deepEqual(stored.protocol.blocks, ["first-token", "chat", "agent", "clients"]);
+});
+
+test("a tampered standard-v2 result is refused with the validator's problems", async () => {
+  const calls = mockFetch(goodRoutes());
+  const bad = structuredClone(VALID_V2);
+  bad.protocol.agent.turns = 4;
+  bad.runner.host_relation = "cloud";
+  bad.clients[0].note = "free text";
+  const res = await submit(bad);
+  const out = await res.json();
+  assert.equal(res.status, 422);
+  assert.ok(out.problems.some((p) => p.includes("protocol.agent is not standard-v2's")));
+  assert.ok(out.problems.some((p) => p.includes("runner.host_relation must be one of")));
+  assert.ok(out.problems.some((p) => p.includes("clients[0].note: not in the public schema")));
+  assert.equal(calls.filter((c) => c.url.includes("api.github.com")).length, 0);
+  const asV1 = structuredClone(VALID_V2);
+  asV1.schema = "strata-bench/v1";
+  assert.equal((await submit(asV1)).status, 422);
 });

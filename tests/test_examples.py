@@ -29,7 +29,7 @@ class Examples(unittest.TestCase):
 
     def test_the_documented_commands_exist(self):
         text = (ROOT / "docs" / "SUBMIT.md").read_text() + (ROOT / "README.md").read_text()
-        for flag in ("--base", "--config", "--origin", "--label", "--out", "--identity", "--sizes", "--api-key"):
+        for flag in ("--base", "--config", "--origin", "--label", "--out", "--identity", "--sizes", "--api-key", "--protocol", "--suite", "--host-relation"):
             self.assertIn(flag, text)
         import subprocess
         import sys

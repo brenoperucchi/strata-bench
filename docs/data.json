@@ -1,8 +1,11 @@
 {
  "count": 1,
- "protocol": "standard-v1",
+ "protocols": [
+  "standard-v1"
+ ],
  "results": [
   {
+   "agent": null,
    "args": [
     "--pack",
     "<pack>",
@@ -29,6 +32,7 @@
    ],
    "backend": null,
    "by": null,
+   "clients": null,
    "commit": "61b3fb5d",
    "config_id": "355c006bb87cd541",
    "config_origin": "setup-default",
@@ -39,12 +43,14 @@
    "failure": null,
    "gpu": "RTX 5090",
    "gpu_count": 1,
+   "host_relation": null,
    "id": "results/2026-10-11-ryzen9-5090-default-99366938.result.json",
    "label": "ryzen9-5090-default",
    "machine_id": null,
    "model": "Swift",
    "n_ctx": 32768,
    "os": "Windows",
+   "protocol": "standard-v1",
    "quant": "IQ3_XXS",
    "ram_gb": 96,
    "sizes": {
@@ -54,6 +60,7 @@
      "prompt_tps": null,
      "read_median": 227.0,
      "reused_median": 0.0,
+     "ttft_ms": null,
      "wall_ms": 427.15
     },
     "gprobe300": {
@@ -62,6 +69,7 @@
      "prompt_tps": null,
      "read_median": 384.0,
      "reused_median": 0.0,
+     "ttft_ms": null,
      "wall_ms": 485.55
     },
     "gprobe450": {
@@ -70,6 +78,7 @@
      "prompt_tps": null,
      "read_median": 521.0,
      "reused_median": 0.0,
+     "ttft_ms": null,
      "wall_ms": 542.25
     },
     "long": {
@@ -78,6 +87,7 @@
      "prompt_tps": 5747.3,
      "read_median": null,
      "reused_median": null,
+     "ttft_ms": null,
      "wall_ms": null
     },
     "medium": {
@@ -86,6 +96,7 @@
      "prompt_tps": 3132.7,
      "read_median": null,
      "reused_median": null,
+     "ttft_ms": null,
      "wall_ms": null
     },
     "probe": {
@@ -94,10 +105,12 @@
      "prompt_tps": null,
      "read_median": null,
      "reused_median": 0.0,
+     "ttft_ms": null,
      "wall_ms": 451.85
     }
    },
    "status": "ok",
+   "suite": null,
    "vram_gb": 32,
    "warnings": 0
   }

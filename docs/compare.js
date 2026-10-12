@@ -3,7 +3,7 @@
 (function () {
   var MAX = 3;
   var ID_RX = /^results\/[A-Za-z0-9._\/-]+\.result\.json$/;
-  var SIZES = ["probe", "gprobe150", "gprobe300", "gprobe450", "short", "medium", "long", "xlong"];
+  var SIZES = ["probe", "gprobe150", "gprobe300", "gprobe450", "chat", "short", "medium", "long", "xlong"];
   var $ = function (id) { return document.getElementById(id); };
 
   function el(tag, text, cls) { var e = document.createElement(tag); if (text !== undefined && text !== null) e.textContent = String(text); if (cls) e.className = cls; return e; }
@@ -28,6 +28,8 @@
     text(G, "Date", function (d) { return ((d.submission || {}).date || "").slice(0, 10) || null; });
     text(G, "Submitted by (declared)", function (d) { return (d.submission || {}).by || null; });
     text(G, "Status", function (d) { return (d.validity || {}).status || null; });
+    text(G, "Protocol", function (d) { var p = d.protocol || {}; return p.id ? p.id + (p.suite ? " · " + p.suite : "") : null; });
+    text(G, "Client ran on", function (d) { return (d.runner || {}).host_relation || null; });
     G = "Machine (declared)";
     text(G, "GPU", gpuText);
     text(G, "CPU", function (d) { return (d.machine || {}).cpu || null; });
@@ -51,7 +53,24 @@
       R.push({ group: g, label: "Prompt tok/s", get: function (d) { return sizeStat(d, s, "prompt_tps"); }, better: "high", digits: 0 });
       R.push({ group: g, label: "Decode tok/s", get: function (d) { return sizeStat(d, s, "decode_tps"); }, better: "high", digits: 1 });
       R.push({ group: g, label: "Prompt time (ms)", get: function (d) { return sizeStat(d, s, "prompt_ms"); }, better: "low", digits: 0 });
+      R.push({ group: g, label: "First token (ms)", get: function (d) { return sizeStat(d, s, "ttft_ms"); }, better: "low", digits: 0 });
       R.push({ group: g, label: "Speculative acceptance (%)", get: function (d) { return accept(d, s); }, better: "high", digits: 1 });
+    });
+    var agent = function (d, f) { var a = d.agent || {}; return a[f] && isNum(a[f].median) ? a[f] : null; };
+    var turnStat = function (t, f) { return function (d) { var T = ((d.agent || {}).turns || {})[t]; return T && T[f] && isNum(T[f].median) ? T[f] : null; }; };
+    var lastTurn = function (d) { var k = Object.keys((d.agent || {}).turns || {}).sort(); return k.length ? k[k.length - 1] : null; };
+    R.push({ group: "Agent session", label: "Cache hit (%)", get: function (d) { return agent(d, "hit_pct"); }, better: "high", digits: 1 });
+    R.push({ group: "Agent session", label: "Tokens read again", get: function (d) { return agent(d, "reread_tokens"); }, better: "low", digits: 0 });
+    R.push({ group: "Agent session", label: "Turn 1: first token (ms)", get: turnStat("1", "ttft_ms"), better: "low", digits: 0 });
+    R.push({ group: "Agent session", label: "Last turn: tokens read", get: function (d) { var t = lastTurn(d); return t ? turnStat(t, "prompt_n")(d) : null; }, better: "low", digits: 0 });
+    R.push({ group: "Agent session", label: "Last turn: first token (ms)", get: function (d) { var t = lastTurn(d); return t ? turnStat(t, "ttft_ms")(d) : null; }, better: "low", digits: 0 });
+    [2, 4, 8].forEach(function (n) {
+      var row = function (d) { return ((d.clients || []).filter(function (c) { return c.n === n; })[0]) || null; };
+      var g = n + " clients at once";
+      R.push({ group: g, label: "Total tokens per second", get: function (d) { var c = row(d); return c && isNum(c.total_tps) ? c.total_tps : null; }, better: "high", digits: 1 });
+      R.push({ group: g, label: "First token p95 (ms)", get: function (d) { var c = row(d); return c && isNum(c.ttft_p95_ms) ? c.ttft_p95_ms : null; }, better: "low", digits: 0 });
+      R.push({ group: g, label: "Latency p95 (ms)", get: function (d) { var c = row(d); return c && isNum(c.latency_p95_ms) ? c.latency_p95_ms : null; }, better: "low", digits: 0 });
+      R.push({ group: g, label: "Requests turned away", get: function (d) { var c = row(d); return c && isNum(c.errors) ? c.errors : null; }, better: "low", digits: 0 });
     });
     return R;
   }
@@ -107,10 +126,10 @@
   function verdict(docs) {
     var checks = [["model", function (d) { return ((d.model || {}).family || d.model_path || "") + " " + ((d.model || {}).quant || ""); }], ["context", function (d) { return d.n_ctx; }],
       ["engine", function (d) { return (d.engine || {}).version || d.build_info; }], ["configuration", function (d) { return (d.config || {}).config_id; }],
-      ["GPU", gpuText]];
+      ["GPU", gpuText], ["protocol", function (d) { var p = d.protocol || {}; return (p.id || "") + " " + (p.suite || ""); }], ["client location", function (d) { return (d.runner || {}).host_relation || ""; }]];
     var differ = checks.filter(function (c) { var v = docs.map(c[1]).map(String); return v.some(function (x) { return x !== v[0]; }); }).map(function (c) { return c[0]; });
     var box = $("verdict"); box.textContent = "";
-    box.append(el("p", differ.length ? "These results differ in: " + differ.join(", ") + ". Where the setup differs, the speeds are different measurements, not a ranking of the same thing." : "Same GPU, model, context, engine and configuration. The differences below are between runs.", "note"));
+    box.append(el("p", differ.length ? "These results differ in: " + differ.join(", ") + ". Where the setup differs, the speeds are different measurements, not a ranking of the same thing." : "Same GPU, model, context, engine, configuration and protocol. The differences below are between runs.", "note"));
   }
 
   var ids = [];

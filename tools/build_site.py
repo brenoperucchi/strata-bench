@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from strata_bench import validate  # noqa: E402
 
-SIZE_ORDER = ("short", "medium", "long", "xlong", "probe", "gprobe150", "gprobe300", "gprobe450")
+SIZE_ORDER = ("short", "medium", "long", "xlong", "chat", "probe", "gprobe150", "gprobe300", "gprobe450")
 
 
 def med(x):
@@ -31,10 +31,16 @@ def row(rel: str, doc: dict) -> dict:
     for name in SIZE_ORDER:
         s = (doc.get("sizes") or {}).get(name)
         if isinstance(s, dict):
-            sizes[name] = {k: med(s.get(k)) for k in ("prompt_tps", "decode_tps", "prompt_ms", "wall_ms")}
+            sizes[name] = {k: med(s.get(k)) for k in ("prompt_tps", "decode_tps", "prompt_ms", "wall_ms", "ttft_ms")}
             sizes[name].update(read_median=s.get("read_median"), reused_median=s.get("reused_median"))
+    proto, runner, agent = doc.get("protocol") or {}, doc.get("runner") or {}, doc.get("agent") or {}
     return {
         "id": rel,
+        "protocol": proto.get("id"), "suite": proto.get("suite"), "host_relation": runner.get("host_relation"),
+        "agent": {"hit_pct": med(agent.get("hit_pct")), "reread_tokens": med(agent.get("reread_tokens")),
+                  "ttft_turn1_ms": med(((agent.get("turns") or {}).get("1") or {}).get("ttft_ms")),
+                  "ttft_last_turn_ms": med(((agent.get("turns") or {}).get(str(len(agent.get("turns") or {}))) or {}).get("ttft_ms"))} if agent else None,
+        "clients": [{k: c.get(k) for k in ("n", "total_tps", "ttft_p95_ms", "errors")} for c in doc.get("clients") or []] or None,
         "label": doc.get("label"),
         "date": (doc.get("submission") or {}).get("date"),
         "by": (doc.get("submission") or {}).get("by"), "machine_id": m.get("machine_id"),
@@ -72,7 +78,7 @@ def build(results_dir: Path = ROOT / "results", copies: dict = None) -> dict:
     if bad:
         raise SystemExit("These results do not pass the public-export gate, so the page was not built:\n  " + "\n  ".join(bad))
     rows.sort(key=lambda r: (r["date"] or "", r["id"]), reverse=True)
-    return {"protocol": "standard-v1", "count": len(rows), "results": rows}
+    return {"protocols": sorted({r["protocol"] for r in rows}), "count": len(rows), "results": rows}
 
 
 def dump(data: dict) -> str:

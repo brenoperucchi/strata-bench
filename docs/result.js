@@ -1,7 +1,7 @@
 "use strict";
 // The detail page of one result. Everything from the file is written with textContent (never as HTML).
 (function () {
-  var SIZE_ORDER = ["probe", "gprobe150", "gprobe300", "gprobe450", "short", "medium", "long", "xlong"];
+  var SIZE_ORDER = ["probe", "gprobe150", "gprobe300", "gprobe450", "chat", "short", "medium", "long", "xlong"];
   var LATENCY_SIZES = ["probe", "gprobe150", "gprobe300", "gprobe450"];
   var SPEED_SIZES = ["short", "medium", "long", "xlong"];
   var $ = function (id) { return document.getElementById(id); };
@@ -96,6 +96,7 @@
     var pill = el("span", val.status || "", "pill " + (val.status || ""));
     var cards = [[gpus || "–", "GPU"], [(mo.family || doc.model_path || "–") + (mo.quant ? " " + mo.quant : ""), "model"], [e.version || doc.build_info || "–", "engine"], [num(doc.n_ctx, 0), "context tokens"], [(cfg.config_origin || "–") + (cfg.config_origin_verified ? " (verified)" : ""), "config origin"]];
     cards.forEach(function (c) { var d = el("div", null, "card"); put(d, el("b", c[0]), el("span", c[1])); $("cards").append(d); });
+    if (proto.suite) { var pc = el("div", null, "card"); put(pc, el("b", proto.id + " · " + proto.suite), el("span", "protocol" + ((doc.runner || {}).host_relation && doc.runner.host_relation !== "same-host" ? ", client on the " + doc.runner.host_relation : ""))); $("cards").append(pc); }
     var sc = el("div", null, "card"); put(sc, put(el("b"), pill), el("span", (val.warnings || []).length ? (val.warnings.length + " warning(s)") : "status")); $("cards").append(sc);
 
     // 1. speeds with their ranges
@@ -137,6 +138,43 @@
     if (specRows.length) s4.append(table(["Size", "Drafted", "Accepted", "Acceptance"], specRows, 1));
     else put(s4, el("p", "No speculative decoding was recorded for this run.", "hint"));
 
+    // 4b. standard-v2: first token, the agent session, clients at once
+    var ttftSizes = SIZE_ORDER.filter(function (z) { return doc.sizes && doc.sizes[z] && doc.sizes[z].ttft_ms; });
+    if (ttftSizes.length) {
+      var rel = (doc.runner || {}).host_relation;
+      var sf = section("First token", "Time from sending a request to the first piece of text, which includes the network" + (rel && rel !== "same-host" ? " (the client ran on the " + rel + ", so these times include that distance)" : "") + ". The gaps are the pauses between pieces of the streamed answer: a large maximum is a stall.");
+      sf.append(table(["Size", "Prompt tokens", "First token ms", "Pause p50 ms", "Pause p95 ms", "Longest pause ms"], ttftSizes.map(function (z) {
+        var rs = runsOf(doc, z, "run"), gap = function (k) { return median(rs.map(function (r) { return ((r.stream || {}).gap_ms || {})[k]; })); };
+        return [z, num(median(rs.map(function (r) { return (r.tokens || {}).prompt; })), 0), rng(doc.sizes[z].ttft_ms, 0), num(gap("p50"), 1), num(gap("p95"), 1), num(gap("max"), 1)];
+      }), 1));
+      var ttp = ttftSizes.map(function (z) {
+        var t = median(runsOf(doc, z, "run").map(function (r) { return (r.tokens || {}).prompt; })), T = doc.sizes[z].ttft_ms;
+        return { x: t, y: T.median, lo: T.min, hi: T.max, label: z + ": " + num(T.median, 0) + " ms to the first token at " + num(t, 0) + " prompt tokens" };
+      }).filter(function (q) { return q.x !== null && q.x !== undefined; }).sort(function (a, b) { return a.x - b.x; });
+      if (ttp.length > 1) sf.append(chart(ttp, "prompt tokens", "first token (ms)"));
+    }
+    if (doc.agent && (doc.agent.sessions || []).length) {
+      var A = doc.agent, turnKeys = Object.keys(A.turns || {}).sort();
+      var sa = section("Agent session", "A five-turn conversation: each turn adds one file and a question, the server's own answer goes back into the history, and the prompt cache is on. After turn 1 a working cache means each turn reads only what is new, so tokens read stay flat while tokens from the cache grow.");
+      sa.append(table(["Session", "Cache hit %", "Tokens read again", "New tokens"], A.sessions.map(function (x) { return [x.index, num(x.hit_pct, 1), num(x.reread_tokens, 0), num(x.new_tokens, 0)]; }), 1));
+      sa.append(table(["Turn", "Read", "From cache", "Generated", "First token ms", "Prompt ms", "Decode tok/s"], turnKeys.map(function (k) {
+        var T = A.turns[k];
+        return [k, rng(T.prompt_n, 0), rng(T.cache_n, 0), rng(T.predicted_n, 0), rng(T.ttft_ms, 0), rng(T.prompt_ms, 0), rng(T.decode_tps, 1)];
+      }), 1));
+      var pts = function (field, word) { return turnKeys.map(function (k) { var T = (A.turns[k] || {})[field]; return T ? { x: Number(k), y: T.median, lo: T.min, hi: T.max, label: "turn " + k + ": " + num(T.median, 0) + " " + word } : null; }).filter(Boolean); };
+      var readPts = pts("prompt_n", "tokens read"), cachePts = pts("cache_n", "tokens from the cache");
+      if (readPts.length > 1) put(sa, el("h3", "Tokens read per turn"), chart(readPts, "turn", "tokens read"));
+      if (cachePts.length > 1) put(sa, el("h3", "Tokens served from the cache per turn"), chart(cachePts, "turn", "tokens from cache"));
+    }
+    if ((doc.clients || []).length) {
+      var sc2 = section("Clients at once", "N clients send the same prompt together. Total speed is every token all clients generated divided by the time until the last one finished. A request the server turned away as busy counts in errors and is not a failure.");
+      sc2.append(table(["Clients", "Requests", "Errors", "Total tok/s", "First token p50 ms", "First token p95 ms", "Latency p50 ms", "Latency p95 ms"], doc.clients.map(function (c) {
+        return [c.n, num(c.requests, 0), num(c.errors, 0), num(c.total_tps, 1), num(c.ttft_p50_ms, 0), num(c.ttft_p95_ms, 0), num(c.latency_p50_ms, 0), num(c.latency_p95_ms, 0)];
+      }), 0));
+      var cp = doc.clients.filter(function (c) { return typeof c.total_tps === "number"; }).map(function (c) { return { x: c.n, y: c.total_tps, label: c.n + " clients: " + num(c.total_tps, 1) + " tok/s in total" }; });
+      if (cp.length > 1) sc2.append(chart(cp, "clients", "total tokens per second"));
+    }
+
     // 5. hardware, engine, model, calibration
     var s5 = section("Machine, engine and model", "The hardware fields are declared by the person who ran the benchmark; the engine and model fields come from the server or from the same declaration.");
     var grid = el("div", null, "grid3");
@@ -157,8 +195,9 @@
 
     // 7. validity and protocol
     var s7 = section("Validity and protocol");
-    put(s7, kv({ status: val.status, protocol: proto.id, warmup: proto.warmup, runs: proto.runs, max_tokens: proto.max_tokens, runner: (doc.runner || {}).name ? doc.runner.name + " " + doc.runner.version + (doc.runner.commit ? " (" + doc.runner.commit + ")" : "") : null },
-      [["status", "Status"], ["protocol", "Protocol"], ["warmup", "Warm-up requests"], ["runs", "Measured runs"], ["max_tokens", "Max generated tokens"], ["runner", "Runner"]]));
+    put(s7, kv({ status: val.status, protocol: proto.id, suite: proto.suite, blocks: (proto.blocks || []).join(", "), skipped: (proto.skipped || []).map(function (k) { return k.block + ": " + k.reason; }).join(", "), host_relation: (doc.runner || {}).host_relation,
+      warmup: proto.warmup, runs: proto.runs, max_tokens: proto.max_tokens, runner: (doc.runner || {}).name ? doc.runner.name + " " + doc.runner.version + (doc.runner.commit ? " (" + doc.runner.commit + ")" : "") : null },
+      [["status", "Status"], ["protocol", "Protocol"], ["suite", "Suite"], ["blocks", "Blocks"], ["skipped", "Skipped blocks"], ["host_relation", "Client ran on"], ["warmup", "Warm-up requests"], ["runs", "Measured runs"], ["max_tokens", "Max generated tokens"], ["runner", "Runner"]]));
     if (val.failure) put(s7, el("p", "Failure: " + val.failure.kind + " at " + val.failure.where, "pill failed"));
     if ((val.warnings || []).length) { var ul = el("ul", null, "warnlist"); val.warnings.forEach(function (w) { ul.append(el("li", w)); }); put(s7, el("h3", "Warnings"), ul); }
     var hashes = Object.keys(proto.prompt_sha256 || {});
@@ -168,15 +207,16 @@
     var s8 = section("Every request", "One row per request the runner sent, warm-up requests included.");
     var all = el("details"); all.append(el("summary", "Show all " + (doc.runs || []).length + " requests"));
     var sel = el("select"); sel.append(el("option", "All sizes")); sel.firstChild.value = "";
-    sizes.forEach(function (s) { var o = el("option", s); o.value = s; sel.append(o); });
+    sizes.concat(["agent", "clients"].filter(function (z) { return runsOf(doc, z).length; })).forEach(function (s) { var o = el("option", s); o.value = s; sel.append(o); });
     var holder = el("div");
     function draw() {
       var rs = (doc.runs || []).filter(function (r) { return !sel.value || r.size === sel.value; });
       holder.textContent = "";
-      holder.append(table(["Size", "Kind", "#", "Prompt", "Reused", "Generated", "Prompt ms", "Prompt tok/s", "Decode tok/s", "Wall ms", "Finish", "Output"], rs.map(function (r) {
-        var t = r.timings || {}, k = r.tokens || {};
-        return [r.size, r.kind, r.index, num(k.prompt, 0), num(k.reused, 0), num(k.generated, 0), num(t.prompt_ms, 0), num(t.prompt_per_second, 0), num(t.predicted_per_second, 1), num(r.wall_ms, 0), r.finish_reason || "–", r.output_check || "–"];
-      }), 3));
+      holder.append(table(["Size", "Kind", "#", "Detail", "Prompt", "Reused", "Generated", "First token ms", "Prompt ms", "Prompt tok/s", "Decode tok/s", "Wall ms", "Finish", "Output"], rs.map(function (r) {
+        var t = r.timings || {}, k = r.tokens || {}, detail = r.turn ? "turn " + r.turn : r.clients ? r.clients + " clients, no. " + r.client : "";
+        if (r.error_status) return [r.size, r.kind, r.index, detail, "–", "–", "–", "–", "–", "–", "–", "–", "turned away (" + r.error_status + ")", "–"];
+        return [r.size, r.kind, r.index, detail, num(k.prompt, 0), num(k.reused, 0), num(k.generated, 0), r.stream ? num(r.stream.ttft_ms, 0) : "–", num(t.prompt_ms, 0), num(t.prompt_per_second, 0), num(t.predicted_per_second, 1), num(r.wall_ms, 0), r.finish_reason || "–", r.output_check || "–"];
+      }), 4));
     }
     sel.addEventListener("change", draw);
     var lab = el("label", "Show "); lab.className = "inline"; lab.append(sel);

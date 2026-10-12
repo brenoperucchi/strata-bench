@@ -16,7 +16,7 @@ strata-bench is an independent project. It is not part of Strata and is not main
 
 ## What you get
 
-- A runner that measures a Strata server you already run and writes one `result.json` (schema `strata-bench/v1`) per configuration.
+- A runner that measures a Strata server you already run and writes one `result.json` (schema `strata-bench/v1`, or `strata-bench/v2` with `--protocol standard-v2`) per configuration.
 - A validator that is the public-export gate: it accepts only results of the public protocol and refuses anything that looks like a local path, a private address or a secret.
 - A dashboard with two views. Performance shows prompt and decode speeds side by side for the same model and config. Health lists the catastrophic failures that runs recorded: crash, out of memory, degenerate output, hang, server error.
 
@@ -29,6 +29,8 @@ python3 -m strata_bench run --base http://127.0.0.1:18299 --config strata-yourmo
     --origin setup-default --label myrig-0142-default --out results/ --identity my-identity.json
 python3 -m strata_bench validate results/*.result.json
 ```
+
+Add `--protocol standard-v2` to also measure the time to the first token, a five-turn agent session with the prompt cache on, and 2, 4 and 8 clients at once (`--suite quick`, `standard` or `full`). The guide has the details.
 
 Then send the file with the [upload page](https://brenoperucchi.github.io/strata-bench/submit.html), a pull request that adds it under `results/`, or a "Submit a result" issue. The step-by-step guide, with the identity file and what each status means, is in [docs/SUBMIT.md](docs/SUBMIT.md). What exactly is sent and recorded is in [docs/PROTOCOL.md](docs/PROTOCOL.md).
 

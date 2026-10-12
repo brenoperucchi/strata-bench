@@ -1,6 +1,6 @@
 "use strict";
 (function () {
-  var state = { rows: [], filters: { gpu: "", model: "", engine: "", status: "", by: "", machine_id: "" }, selected: [], sort: { key: "date", dir: -1 } };
+  var state = { rows: [], filters: { gpu: "", model: "", engine: "", status: "", by: "", machine_id: "", protocol: "" }, selected: [], sort: { key: "date", dir: -1 } };
   var $ = function (id) { return document.getElementById(id); };
   var fmt = function (v, d) { return v === null || v === undefined ? "–" : (typeof v === "number" ? v.toLocaleString(undefined, { maximumFractionDigits: d === undefined ? 1 : d }) : String(v)); };
   var esc = function (s) { return String(s === null || s === undefined ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
@@ -15,7 +15,8 @@
   }
 
   function filters(rows) {
-    var defs = [["gpu", "GPU"], ["model", "Model"], ["engine", "Engine"], ["status", "Status"], ["by", "Submitted by"], ["machine_id", "Machine"]].filter(function (d) {
+    var defs = [["gpu", "GPU"], ["model", "Model"], ["engine", "Engine"], ["status", "Status"], ["by", "Submitted by"], ["machine_id", "Machine"], ["protocol", "Protocol"]].filter(function (d) {
+      if (d[0] === "protocol") return uniq(rows, "protocol").length > 1;                       // only worth a filter once both protocols are on the page
       return d[0] === "status" || d[0] === "gpu" || d[0] === "model" || d[0] === "engine" || uniq(rows, d[0]).length > 0;   // the optional filters appear only when some result declares them
     });
     $("filters").innerHTML = defs.map(function (d) {
@@ -39,9 +40,14 @@
     } catch (e) { /* file:// */ }
   }
 
+  var clients8 = function (r) { var c = (r.clients || []).filter(function (x) { return x.n === 8; })[0]; return c ? c.total_tps : null; };
+
   function sortVal(r, key) {
     if (key === "date") return r.date || "";
     if (key === "decode") return size(r, "medium", "decode_tps") || 0;
+    if (key === "ttft") return size(r, "medium", "ttft_ms") || 0;
+    if (key === "agent") return (r.agent && r.agent.hit_pct) || 0;
+    if (key === "clients8") return clients8(r) || 0;
     if (key.indexOf("prompt_") === 0) return size(r, key.slice(7), "prompt_tps") || 0;
     return (r[key] || "").toString().toLowerCase();
   }
@@ -50,23 +56,26 @@
     var rows = state.rows.filter(function (r) {
       return r.status !== "failed" && (!state.filters.gpu || r.gpu === state.filters.gpu) && (!state.filters.model || r.model === state.filters.model) &&
         (!state.filters.engine || r.engine === state.filters.engine) && (!state.filters.status || r.status === state.filters.status) &&
-        (!state.filters.by || r.by === state.filters.by) && (!state.filters.machine_id || r.machine_id === state.filters.machine_id);
+        (!state.filters.by || r.by === state.filters.by) && (!state.filters.machine_id || r.machine_id === state.filters.machine_id) &&
+        (!state.filters.protocol || r.protocol === state.filters.protocol);
     });
     rows.sort(function (a, b) { var x = sortVal(a, state.sort.key), y = sortVal(b, state.sort.key); return (x < y ? -1 : x > y ? 1 : 0) * state.sort.dir; });
     var maxDecode = Math.max.apply(null, rows.map(function (r) { return size(r, "medium", "decode_tps") || 0; }).concat([1]));
     var hasBy = state.rows.some(function (r) { return r.by; });
-    var head = [["select", ""], ["gpu", "GPU"], ["model", "Model"], ["engine", "Engine"]].concat(hasBy ? [["by", "By"]] : []).concat([["config_id", "Config"], ["prompt_medium", "Prompt medium", 1], ["prompt_long", "Prompt long", 1], ["prompt_xlong", "Prompt xlong", 1], ["decode", "Decode", 1], ["date", "Date"], ["open", ""]]);
+    var hasV2 = state.rows.some(function (r) { return r.protocol === "standard-v2"; });
+    var head = [["select", ""], ["gpu", "GPU"], ["model", "Model"], ["engine", "Engine"]].concat(hasBy ? [["by", "By"]] : []).concat([["config_id", "Config"], ["prompt_medium", "Prompt medium", 1], ["prompt_long", "Prompt long", 1], ["prompt_xlong", "Prompt xlong", 1], ["decode", "Decode", 1]]).concat(hasV2 ? [["ttft", "First token ms", 1], ["agent", "Agent cache %", 1], ["clients8", "8 clients tok/s", 1]] : []).concat([["date", "Date"], ["open", ""]]);
     var h = "<thead><tr>" + head.map(function (c) { return '<th data-key="' + c[0] + '"' + (c[2] ? ' class="num"' : "") + ">" + c[1] + (state.sort.key === c[0] ? (state.sort.dir > 0 ? " ▲" : " ▼") : "") + "</th>"; }).join("") + "</tr></thead>";
     var b = rows.map(function (r) {
       var dec = size(r, "medium", "decode_tps");
       var args = (r.args || []).join(" ");
       return "<tr class='openable' data-id='" + esc(r.id) + "'><td class='pick-cell'><input type='checkbox' class='pick' data-id='" + esc(r.id) + "' aria-label='Select for comparison'" + (state.selected.indexOf(r.id) >= 0 ? " checked" : "") + "></td><td>" + esc(r.gpu) + (r.vram_gb ? " <span class='hint'>" + esc(r.vram_gb) + " GB</span>" : "") + (r.gpu_count > 1 ? " <span class='hint'>×" + esc(r.gpu_count) + "</span>" : "") +
+        (r.protocol === "standard-v2" ? "<br><span class='hint'>v2 " + esc(r.suite) + "</span>" + (r.host_relation && r.host_relation !== "same-host" ? " <span class='pill warnings' title='The client ran on another machine, so first-token times include the network'>" + esc(r.host_relation) + "</span>" : "") : "") +
         "</td><td>" + esc(r.model) + (r.quant ? " <span class='hint'>" + esc(r.quant) + "</span>" : "") + "</td><td>" + esc(r.engine) + "</td>" +
         (hasBy ? "<td>" + (r.by ? "<a href='?by=" + encodeURIComponent(r.by) + "'>" + esc(r.by) + "</a>" : "–") + "</td>" : "") +
         "<td><details><summary>" + esc(r.config_id) + '</summary><pre>' + esc(args) + "</pre><a href='result.html?id=" + encodeURIComponent(r.id) + "'>details</a> · <a href='" + esc(r.id) + "'>raw file</a>" +
         (r.status === "warnings" ? " <span class='pill warnings'>" + esc(r.warnings) + " warning(s)</span>" : "") + "</details></td>" +
         ["medium", "long", "xlong"].map(function (n) { return "<td class='num'>" + fmt(size(r, n, "prompt_tps"), 0) + "</td>"; }).join("") +
-        "<td class='num'>" + (dec ? "<span class='bar' style='width:" + Math.round(60 * dec / maxDecode) + "px'></span>" : "") + fmt(dec) + "</td><td class='nowrap'>" + esc((r.date || "").slice(0, 10)) + "</td><td class='nowrap'><a class='open' href='result.html?id=" + encodeURIComponent(r.id) + "'>details →</a></td></tr>";
+        "<td class='num'>" + (dec ? "<span class='bar' style='width:" + Math.round(60 * dec / maxDecode) + "px'></span>" : "") + fmt(dec) + "</td>" + (hasV2 ? "<td class='num'>" + fmt(size(r, "medium", "ttft_ms"), 0) + "</td><td class='num'>" + fmt(r.agent && r.agent.hit_pct, 1) + "</td><td class='num'>" + fmt(clients8(r), 1) + "</td>" : "") + "<td class='nowrap'>" + esc((r.date || "").slice(0, 10)) + "</td><td class='nowrap'><a class='open' href='result.html?id=" + encodeURIComponent(r.id) + "'>details →</a></td></tr>";
     }).join("");
     $("perf").innerHTML = h + "<tbody>" + (b || "<tr><td colspan='" + head.length + "'>No result matches the filters.</td></tr>") + "</tbody>";
     wirePicks();

@@ -21,7 +21,7 @@ class Site(unittest.TestCase):
         (self.tmp / "results").mkdir()
         # real results from the core against the test server (never published): one ok, one failed
         TC.Fake.reset()
-        self.srv = TC.HTTPServer(("127.0.0.1", 0), TC.Fake)
+        self.srv = TC.Threaded(("127.0.0.1", 0), TC.Fake)
         TC.threading.Thread(target=self.srv.serve_forever, daemon=True).start()
         self.addCleanup(lambda: (self.srv.shutdown(), self.srv.server_close()))
         self.base = f"http://127.0.0.1:{self.srv.server_port}"
@@ -38,7 +38,7 @@ class Site(unittest.TestCase):
     def test_a_valid_result_becomes_a_whitelisted_row(self):
         self.make("good", identity=self.IDENT)
         data = build_site.build(self.tmp / "results")
-        self.assertEqual((data["count"], data["protocol"]), (1, "standard-v1"))
+        self.assertEqual((data["count"], data["protocols"]), (1, ["standard-v1"]))
         r = data["results"][0]
         self.assertEqual((r["status"], r["gpu"], r["engine"], r["model"], r["quant"]), ("ok", "RTX 5090", "0.1.40.2", "Swift", "IQ3_XXS"))
         self.assertEqual(r["sizes"]["medium"]["decode_tps"], 200.0)
@@ -46,6 +46,23 @@ class Site(unittest.TestCase):
         self.assertEqual(r["id"], "results/good.result.json")
         self.assertRegex(r["config_id"], r"^[0-9a-f]{16}$")
         self.assertNotIn("runs", r)                                                  # per-request data stays in the result file, not on the page
+
+    def test_a_v2_result_carries_first_token_agent_and_clients_numbers_and_v1_rows_stay_empty(self):
+        self.make("old", identity=self.IDENT)
+        core.run(self.base, TC.CFG, "setup-default", [], "new", self.tmp / "results", self.IDENT, protocol="standard-v2", suite="full",
+                 host_relation="lan", log=lambda *a: None)
+        data = build_site.build(self.tmp / "results")
+        self.assertEqual(data["protocols"], ["standard-v1", "standard-v2"])
+        old, new = (next(r for r in data["results"] if r["label"] == n) for n in ("old", "new"))
+        self.assertEqual((old["protocol"], old["suite"], old["host_relation"], old["agent"], old["clients"]), ("standard-v1", None, None, None, None))
+        self.assertNotIn("ttft_ms", {k for k, v in old["sizes"]["medium"].items() if v is not None})
+        self.assertEqual((new["protocol"], new["suite"], new["host_relation"]), ("standard-v2", "full", "lan"))
+        self.assertEqual(sorted(new["sizes"]), ["chat", "long", "medium", "xlong"])
+        self.assertIsNotNone(new["sizes"]["medium"]["ttft_ms"])
+        self.assertEqual(sorted(new["agent"]), ["hit_pct", "reread_tokens", "ttft_last_turn_ms", "ttft_turn1_ms"])
+        self.assertGreater(new["agent"]["hit_pct"], 90)
+        self.assertEqual([c["n"] for c in new["clients"]], [2, 4, 8])
+        self.assertEqual(sorted(new["clients"][0]), ["errors", "n", "total_tps", "ttft_p95_ms"])
 
     def test_a_failed_result_is_published_for_the_health_view(self):
         self.make("boom", mode="crash", identity=self.IDENT)
@@ -127,7 +144,7 @@ class Site(unittest.TestCase):
 
     def test_the_committed_data_file_is_well_formed(self):
         d = json.loads((ROOT / "docs" / "data.json").read_text())                  # rebuilt by CI after each merge; here only its shape
-        self.assertEqual((d["protocol"], d["count"]), ("standard-v1", len(d["results"])))
+        self.assertEqual((d["protocols"], d["count"]), (["standard-v1"], len(d["results"])))
 
     def test_the_empty_state_builds(self):
         data = build_site.build(self.tmp / "results")

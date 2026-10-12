@@ -41,6 +41,21 @@ python3 -m strata_bench run \
 - `--label` names this run. It becomes the file name, and an existing result is never overwritten.
 - Add `--sizes probe,medium,long,xlong,gprobe` to include the short agent-style prompts (about 150, 300 and 450 tokens).
 
+### Protocol v2: first token, agent session and several clients (optional)
+
+`standard-v2` measures more than speeds: the time to the first token, a five-turn agent conversation with the prompt cache on, and several clients at once. It is additive: your v1 results stay valid and v2 results sit beside them on the dashboard.
+
+```
+python3 -m strata_bench run --protocol standard-v2 --base http://127.0.0.1:18299 --config /path/to/strata-yourmodel.json \
+  --origin setup-default --label myrig-0142-default-v2 --out results/ --identity my-identity.json
+```
+
+- With no `--suite`, v2 runs the **standard** suite. `--suite quick` is a few minutes (chat, medium and long prompts); `--suite standard` adds the xlong prompt and the agent session; `--suite full` adds 2, 4 and 8 clients at once. The run prints how many requests it will send before it starts. The standard suite can take 30 to 60 minutes on a slow GPU.
+- The agent session needs a server context of at least 16,384 tokens; with less it is skipped and recorded as skipped, and the rest still runs. The clients block is skipped if the server says it has fewer than 2 slots.
+- First-token times include the network. A loopback `--base` is recorded as `same-host`; if the client runs on another machine pass `--host-relation lan` or `--host-relation remote`.
+- Thinking is switched off for v2 requests, so the first token is the start of the answer and not of the reasoning.
+- v1 is still the default when you do not pass `--protocol`. Everything about what v2 sends and records is in [PROTOCOL.md](PROTOCOL.md).
+
 The result is saved after every call. Exit codes: `0` done, `2` refused before measuring (wrong model or context, a modified prompt file, an existing result), `3` stopped early with a partial result kept.
 
 ## 5. Check it
