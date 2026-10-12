@@ -1,5 +1,7 @@
 """standard-v2, phase 1: streamed requests, time to the first token, the additive v2 schema and its validator."""
+import contextlib
 import copy
+import io
 import itertools
 import json
 import shutil
@@ -202,7 +204,7 @@ class V2Tests(V2Run):
                       broken(v1, lambda d: d.update(schema="strata-bench/v2")))
         self.assertIn("schema is not strata-bench/v1 or strata-bench/v2", broken(v2, lambda d: d.update(schema="strata-bench/v3")))
         self.assertIn("protocol 'standard-v3' is not public", broken(v2, lambda d: d["protocol"].update(id="standard-v3")))
-        self.assertIn("protocol ['standard-v2'] is not public", broken(v2, lambda d: d["protocol"].update(id=["standard-v2"])))
+        self.assertIn("protocol (value not shown) is not public", broken(v2, lambda d: d["protocol"].update(id=["standard-v2"])))
         for field, fn in (("runner.host_relation", lambda d: d["runner"].update(host_relation="cloud")),
                           ("runner.host_relation", lambda d: d["runner"].pop("host_relation")),
                           ("protocol.suite", lambda d: d["protocol"].update(suite="everything")),
@@ -511,7 +513,8 @@ class ClientsTests(V2Run):
         busy = [r for r in d["runs"] if "error_status" in r]
         self.assertTrue(busy and all(r["error_status"] == 429 and "stream" not in r and "timings" not in r for r in busy))
         self.assertEqual(d["validity"]["status"], "warnings")                         # fewer clients than N were served in some rounds: say so
-        self.assertEqual(len([w for w in d["validity"]["warnings"] if "turned away as busy" in w]), 3)
+        self.assertEqual(len([w for w in d["validity"]["warnings"] if "request(s) turned away as busy, so the total" in w]), 3)       # the measured rounds
+        self.assertEqual(len([w for w in d["validity"]["warnings"] if "warm-up request(s) turned away" in w]), 3)
         self.assertEqual(validate.problems(d), [])
         Fake.reset()
         Fake.st["busy_client"], Fake.st["busy_status"] = "2", 503                    # Strata answers 503 while its engine restarts or after it died
@@ -785,12 +788,12 @@ class ReviewTests(V2Run):
         self.assertEqual(self.go(("clients",), label="only", **V2), 3)
         self.assertEqual(self.doc("only")["validity"]["status"], "incomplete")
 
-    def canned(self, tokens=10, delay=0.03, busy_rounds=()):
+    def canned(self, tokens=10, delay=0.03, busy_rounds=(), busy_kinds=("run",)):
         """A call_stream stand-in: no network, a fixed answer after `delay`, a 429 for the measured rounds listed."""
         def fake(base, messages, max_tokens, extra=None, sink=None):
             first = messages[0]["content"].split("\n", 1)[0]                          # [strata-bench clients <n> <kind> <round> <k>]
             kind, rnd = first.split()[3], int(first.split()[4])
-            if kind == "run" and rnd in busy_rounds:
+            if kind in busy_kinds and (rnd in busy_rounds or kind == "warmup" and busy_rounds == ("all",)):
                 raise urllib.error.HTTPError("http://x", 429, "busy", {}, None)
             time.sleep(delay)
             return {"request_sha256": core.sha256(first.encode()), "wall_ms": delay * 1000, "timings": {"prompt_n": 100, "cache_n": 0, "prompt_ms": 5.0, "prompt_per_second": 1.0,
@@ -811,11 +814,15 @@ class ReviewTests(V2Run):
             core.measure_clients("http://x", res, lambda *a: None)
         return res.doc
 
-    def test_the_clock_starts_before_the_clients_are_released_not_when_the_main_thread_wakes(self):
-        d = self.run_clients(self.canned(tokens=10, delay=0.03), main_delay=0.12)
-        for row in d["clients"]:
-            self.assertLessEqual(row["total_tps"], row["n"] * 10 / 0.03)               # every client needs at least 30 ms: 2 x 10 tokens cannot be over ~667 tok/s
-            self.assertGreater(row["total_tps"], 0)
+    def test_the_round_ends_at_the_last_answer_and_starts_before_the_release_whatever_the_main_thread_does(self):
+        quick = self.run_clients(self.canned(tokens=10, delay=0.03), main_delay=0.0)
+        slow = self.run_clients(self.canned(tokens=10, delay=0.03), main_delay=0.15)       # the main thread wakes long after every client has finished
+        for a, b in zip(quick["clients"], slow["clients"]):
+            top, bottom = a["n"] * 10 / 0.03, a["n"] * 10 / 0.12                           # 10 tokens per client, answered in 30 ms plus scheduling slack
+            for row in (a, b):
+                self.assertLessEqual(row["total_tps"], top)
+                self.assertGreaterEqual(row["total_tps"], bottom)
+            self.assertGreater(b["total_tps"], 0.5 * a["total_tps"])                       # the main thread's sleep is not in the denominator
 
     def test_a_round_in_which_nothing_was_generated_counts_as_zero_in_the_median(self):
         both = self.run_clients(self.canned(tokens=10, delay=0.05))
@@ -831,6 +838,69 @@ class ReviewTests(V2Run):
         d = self.doc("r")
         self.assertEqual(d["validity"]["status"], "warnings")
         self.assertEqual([w for w in d["validity"]["warnings"] if "reused" in w], [f"clients {n}: 500 prompt tokens reused, the prompt was not read fresh" for n in (2, 4, 8)])
+
+    def test_two_clients_failing_the_same_way_through_different_channels_is_still_a_failure_not_a_crash_of_the_runner(self):
+        def fail_with(by_client):
+            def fake(base, messages, max_tokens, extra=None, sink=None):
+                k = int(messages[0]["content"].split("\n", 1)[0].rstrip("]").split()[-1])
+                time.sleep(0.01)
+                if k in by_client:
+                    raise by_client[k]()
+                return self.canned()(base, messages, max_tokens, extra, sink)
+            return fake
+        sse = lambda kind: (lambda: core.MeasureFailure(kind))                          # an error event in the stream: no HTTP status
+        http = lambda body: (lambda: urllib.error.HTTPError("http://x", 503, "unavailable", {}, io.BytesIO(body)))
+        cases = [("server_error", 503, {1: sse("server_error"), 2: http(b"engine is starting")}), ("server_error", 503, {1: http(b"engine is starting"), 2: sse("server_error")}),
+                 ("oom", 503, {1: sse("oom"), 2: http(b"CUDA out of memory")}), ("oom", 503, {1: http(b"CUDA out of memory"), 2: sse("oom")}),
+                 ("crash", None, {1: sse("server_error"), 2: lambda: core.MeasureFailure("crash")}), ("oom", 503, {1: http(b"engine is starting"), 2: http(b"CUDA out of memory")})]
+        for kind, status, by_client in cases:
+            res = core.Result(self.tmp / "m.result.json", {"runs": [], "validity": {"warnings": []}})
+            with mock.patch.object(core, "call_stream", fail_with(by_client)), self.assertRaises(core.MeasureFailure) as cm:
+                core.measure_clients("http://x", res, lambda *a: None)
+            self.assertEqual((cm.exception.kind, cm.exception.http_status, res.where), (kind, status, "clients 2 warmup 1"), by_client)
+
+    def test_a_connection_that_ends_after_only_keep_alives_or_inside_the_first_event_is_a_crash(self):
+        for opts in ({"keepalive": True, "drop_before_first": True}, {"truncate_after": 0}):
+            Fake.reset()
+            self.sse(**opts)
+            self.assertEqual(self.v2c(label="d"), 3, opts)
+            self.assertEqual(self.doc("d")["validity"]["failure"], {"kind": "crash", "where": "medium warmup 1", "http_status": None}, opts)
+            (self.tmp / "d.result.json").unlink()
+        Fake.reset()
+        self.sse(plain_json=True)                                                       # a 200 answer that is not an event stream stays incomplete
+        self.assertEqual(self.v2c(label="d"), 3)
+        self.assertEqual(self.doc("d")["validity"]["status"], "incomplete")
+
+    def test_a_refusal_during_the_warm_up_alone_still_makes_the_result_a_warning(self):
+        res = core.Result(self.tmp / "w.result.json", {"runs": [], "validity": {"warnings": []}})
+        with mock.patch.object(core, "call_stream", self.canned(busy_rounds=("all",), busy_kinds=("warmup",))):
+            core.measure_clients("http://x", res, lambda *a: None)
+        d = res.doc
+        self.assertEqual([(c["requests"], c["errors"]) for c in d["clients"]], [(4, 0), (8, 0), (16, 0)])      # the measured counters are untouched
+        self.assertEqual(len([w for w in d["validity"]["warnings"] if "warm-up request(s) turned away" in w]), 3)
+        self.assertEqual(len([r for r in d["runs"] if r.get("error_status") == 429 and r["kind"] == "warmup"]), 2 + 4 + 8)
+
+    def test_nan_and_infinity_are_not_json_and_never_reach_a_result_or_the_dashboard_data(self):
+        self.assertEqual(self.go(("medium",), label="n"), 0)
+        text = (self.tmp / "n.result.json").read_text()
+        for literal in ("NaN", "Infinity", "-Infinity"):
+            bad = self.tmp / "bad.result.json"
+            bad.write_text(text.replace('"os": "', f'"vram_gb": {literal}, "os": "', 1) if '"os": "' in text else text.replace('"machine": {', f'"machine": {{"vram_gb": {literal}, ', 1))
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(main(["validate", str(bad)]), 1, literal)
+            self.assertIn("not valid JSON", out.getvalue(), literal)                      # refused when read, before any check of its content
+            with self.assertRaises(ValueError):
+                schema.strict_loads(bad.read_text())
+        doc = json.loads(text)
+        doc["machine"] = {"gpus": [{"name": "x", "vram_gb": float("nan")}], "ram_gb": float("inf")}
+        self.assertEqual(len([p for p in validate.problems(doc) if "not a scalar" in p]), 2)
+        self.assertEqual(schema.prune({"a": float("nan"), "b": 1}, {"a": schema.SCALAR, "b": schema.SCALAR}), {"a": None, "b": 1})
+        import sys
+        sys.path.insert(0, str(core.PROMPTS.parent.parent / "tools"))
+        import build_site
+        with self.assertRaises(ValueError):
+            build_site.dump({"x": float("nan")})
 
 
 def schema_kind_order(kind):

@@ -6,6 +6,20 @@ const isScalar = (v) => v === null || ["string", "number", "boolean"].includes(t
 const isObj = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);        // own keys only: "constructor" or "toString" are not fields of any object
 const isNum = (v) => v === null || (typeof v === "number" && Number.isFinite(v));
+const tnum = (v) => typeof v === "number";
+const byUnit = ([a], [b]) => (a < b ? -1 : a > b ? 1 : 0);                      // UTF-16 code unit order: the order Python's validator sorts in
+const SAFE = /^[A-Za-z0-9._ -]{0,40}$/;
+// A value for a message, only when it is short and plain; anything else is not echoed (so no spelling of an exotic value can differ from Python's).
+const shown = (v) => (v === undefined || v === null ? "None" : v === true ? "True" : v === false ? "False" : typeof v === "number" && Number.isInteger(v) && Math.abs(v) < 2 ** 53 ? String(v) : typeof v === "string" && SAFE.test(v) ? `'${v}'` : "(value not shown)");
+const LONE = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/;
+function loneSurrogate(x) {
+  if (typeof x === "string") return LONE.test(x);
+  if (Array.isArray(x)) return x.some(loneSurrogate);
+  if (isObj(x)) return Object.entries(x).some(([k, v]) => LONE.test(k) || loneSurrogate(v));
+  return false;
+}
+// [a, b, ...] as "a:b:..." when every part is an integer-valued number, else null: how a request names itself.
+const ident = (...parts) => (parts.every((p) => tnum(p) && Number.isInteger(p)) ? parts.join(":") : null);
 
 function check(value, spec, where, problems, data) {
   const hex = new RegExp(data.hex_re);
@@ -13,6 +27,8 @@ function check(value, spec, where, problems, data) {
     if (!isScalar(value)) problems.push(`${where}: not a scalar`);
   } else if (spec === "num") {
     if (!isNum(value)) problems.push(`${where}: not a number`);
+  } else if (spec.t === "enum") {
+    if (!(typeof value === "string" ? spec.v.includes(value) : value === null && spec.v.includes(null))) problems.push(`${where}: not one of ` + spec.v.filter((x) => x !== null).join(", ") + (spec.v.includes(null) ? ", null" : ""));
   } else if (spec === "hex") {
     if (!(typeof value === "string" && hex.test(value))) problems.push(`${where}: not a hex digest`);
   } else if (spec.t === "list") {
@@ -22,7 +38,7 @@ function check(value, spec, where, problems, data) {
     if (!isObj(value)) problems.push(`${where}: not an object`);
     else {
       const key = new RegExp(spec.re);
-      for (const [k, v] of Object.entries(value)) {
+      for (const [k, v] of Object.entries(value).sort(byUnit)) {
         if (!key.test(String(k))) problems.push(`${where}.${k}: key not allowed`);
         else check(v, spec.s, `${where}.${k}`, problems, data);
       }
@@ -30,7 +46,7 @@ function check(value, spec, where, problems, data) {
   } else if (spec.t === "obj") {
     if (!isObj(value)) problems.push(`${where}: not an object`);
     else {
-      for (const [k, v] of Object.entries(value)) {
+      for (const [k, v] of Object.entries(value).sort(byUnit)) {
         if (!has(spec.k, k)) problems.push(`${where}.${k}: not in the public schema`.replace(/^\./, ""));
         else check(v, spec.k[k], `${where}.${k}`.replace(/^\./, ""), problems, data);
       }
@@ -83,16 +99,43 @@ function versionProblems(doc, proto, data, out) {
   }
   const skippedBlocks = (Array.isArray(skipped) ? skipped : []).map((k) => (isObj(k) ? k.block : undefined));
   const status = isObj(doc.validity) ? doc.validity.status : undefined;
-  const nRuns = (size) => runs.filter((r) => r.size === size && r.kind === "run").length;
   const agent = doc.agent, clients = doc.clients, P = data.block_protocols;
+  const of = (size, kind = "run") => runs.filter((r) => r.size === size && r.kind === kind);
+  const streamed = (r) => isObj(r.stream) && tnum(r.stream.ttft_ms);
+  // the runs name exactly the wanted requests, each once (`entries` are the idents of the runs, null when a run does not name itself)
+  const exactly = (entries, wanted) => !entries.includes(null) && entries.length === new Set(entries).size && entries.length === wanted.length && wanted.every((w) => entries.includes(w));
+  const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
   const sessions = isObj(agent) ? agent.sessions : undefined;
   const counts = P.clients.counts.split(",").map(Number);
-  // per block: [the data a finished result must carry, where that data is, what it is called in the message]
+  const agentOk = Array.isArray(sessions) && sessions.length === P.agent.sessions && sessions.every((x) => isObj(x) && data.agent_session_keys.every((k) => has(x, k)))
+    && exactly(sessions.map((x) => ident(x.index)), range(1, P.agent.sessions).map(String))
+    && exactly(of("agent").map((r) => ident(r.index, r.turn)), range(1, P.agent.sessions).flatMap((i) => range(1, P.agent.turns).map((t) => `${i}:${t}`)))
+    && of("agent").every(streamed);
+  const chat = sizes.chat;
+  const chatOk = isObj(chat) && isObj(chat.ttft_ms) && tnum(chat.ttft_ms.median) && exactly(of("chat").map((r) => ident(r.index)), range(1, P.chat.runs).map(String)) && of("chat").every(streamed);
+  const clientsOk = () => {
+    if (!(Array.isArray(clients) && clients.length === counts.length)) return false;
+    const pool = of("clients");
+    if (pool.length !== counts.reduce((t, n) => t + n * P.clients.rounds, 0)) return false;
+    if (runs.some((r) => r.size === "clients" && has(r, "error_status") && (!data.busy_status.includes(r.error_status) || has(r, "stream")))) return false;       // warm-ups too
+    for (const [i, n] of counts.entries()) {
+      const row = clients[i], mine = pool.filter((r) => r.clients === n);
+      if (!(isObj(row) && data.clients_row_keys.every((k) => has(row, k)) && row.n === n && row.requests === n * P.clients.rounds
+        && exactly(mine.map((r) => ident(r.index, r.client)), range(1, P.clients.rounds).flatMap((rd) => range(1, n).map((k) => `${rd}:${k}`))))) return false;
+      const refused = mine.filter((r) => has(r, "error_status"));
+      if (refused.some((r) => !data.busy_status.includes(r.error_status) || has(r, "stream")) || !mine.filter((r) => !has(r, "error_status")).every(streamed)) return false;
+      if (!(tnum(row.errors) && row.errors === refused.length)) return false;
+    }
+    return true;
+  };
+  const summarized = data.text_sizes.filter((z) => isObj(sizes[z]) && isObj(sizes[z].ttft_ms));
+  const firstOk = summarized.length > 0 && summarized.every((z) => tnum(sizes[z].ttft_ms.median) && of(z).some(streamed));
+  // per block: [the content a finished result must carry, where that data is, what it is called in the message]
   const parts = {
-    agent: [Array.isArray(sessions) && sessions.length === P.agent.sessions && nRuns("agent") === P.agent.sessions * P.agent.turns, "agent" in doc, "agent.sessions"],
-    chat: [isObj(sizes.chat) && isObj(sizes.chat.ttft_ms) && nRuns("chat") === P.chat.runs, "chat" in sizes, "sizes.chat"],
-    clients: [Array.isArray(clients) && clients.length === counts.length && clients.every((c, i) => isObj(c) && c.n === counts[i] && c.requests === c.n * P.clients.rounds), "clients" in doc, "clients"],
-    "first-token": [data.text_sizes.some((z) => isObj(sizes[z]) && isObj(sizes[z].ttft_ms)) && runs.some((r) => data.text_sizes.includes(r.size) && isObj(r.stream)), false, "ttft_ms in a text size and its streamed runs"],
+    agent: [agentOk, has(doc, "agent"), "agent.sessions"],
+    chat: [chatOk, has(sizes, "chat"), "sizes.chat"],
+    clients: [clientsOk(), has(doc, "clients"), "clients"],
+    "first-token": [firstOk, false, "ttft_ms in a text size and its streamed runs"],
   };
   for (const [block, [complete, hasData, label]] of Object.entries(parts)) {
     const ran = blocks.includes(block) && !skippedBlocks.includes(block);
@@ -100,6 +143,7 @@ function versionProblems(doc, proto, data, out) {
     else if (ran && status !== "failed" && !complete) out.push(`a result with the ${block} block needs ${label}`);
     if (block !== "first-token" && ran && !sameFlat(proto[block], P[block])) out.push(`protocol.${block} is not standard-v2's`);
   }
+  if (skippedBlocks.includes("agent") && !(tnum(doc.n_ctx) && doc.n_ctx < data.agent_min_ctx)) out.push(`protocol.skipped agent needs a server context under ${data.agent_min_ctx} tokens`);
 }
 
 // Two flat objects with equal values; a boolean never equals a number (Python's True == 1 would, JavaScript's does not).
@@ -115,12 +159,13 @@ export function problems(doc, data) {
   if (!schemaKnown) out.push("schema is not strata-bench/v1 or strata-bench/v2");
   const proto = isObj(doc.protocol) ? doc.protocol : {};
   const pid = proto.id;
-  if (!(typeof pid === "string" && Object.prototype.hasOwnProperty.call(schemaIds, pid))) out.push(`protocol ${pyRepr(pid)} is not public`);
+  if (!(typeof pid === "string" && Object.prototype.hasOwnProperty.call(schemaIds, pid))) out.push(`protocol ${shown(pid)} is not public`);
   else if (schemaKnown && schemaIds[pid] !== doc.schema) out.push(`protocol ${pid} is written in ${schemaIds[pid]}, not ${doc.schema}`);
   versionProblems(doc, proto, data, out);
   if (isObj(proto.prompt_sha256)) {
     const known = pid === "standard-v2" ? { ...data.prompts, ...data.prompts_v2 } : data.prompts;
-    for (const [name, h] of Object.entries(proto.prompt_sha256)) if (!Object.prototype.hasOwnProperty.call(known, name) || known[name] !== h) out.push(`prompt ${name} is not ${typeof pid === "string" ? pid : pyRepr(pid)}'s`);
+    const label = typeof pid === "string" && has(schemaIds, pid) ? pid : "standard-v1";
+    for (const [name, h] of Object.entries(proto.prompt_sha256).sort(byUnit)) if (!has(known, name) || known[name] !== h) out.push(`prompt ${name} is not ${label}'s`);
   }
   if (proto.probe_system_sha256 !== undefined && proto.probe_system_sha256 !== null && proto.probe_system_sha256 !== data.probe_system_sha256) out.push("probe system prompt is not standard-v1's");
   const gp = isObj(proto.gprobe) ? proto.gprobe : {};
@@ -132,7 +177,7 @@ export function problems(doc, data) {
   const validity = isObj(doc.validity) ? doc.validity : {};
   const status = validity.status;
   const failure = validity.failure;
-  if (!data.statuses.includes(status)) out.push(`result is not complete (status ${pyRepr(status)})`);
+  if (!data.statuses.includes(status)) out.push(`result is not complete (status ${shown(status)})`);
   if (status === "failed") {
     if (!isObj(failure) || !data.failure_kinds.includes(failure.kind)) out.push("a failed result needs failure.kind from " + data.failure_kinds.join(", "));
     else if (!(typeof failure.where === "string" && new RegExp(data.failure_where_re).test(failure.where))) out.push("failure.where is not one of the protocol's call names");
@@ -141,10 +186,13 @@ export function problems(doc, data) {
     const section = doc[block];
     if (isObj(section) && section[key] !== undefined && section[key] !== null && !(typeof section[key] === "string" && new RegExp("^(?:" + data.id_re + ")$").test(section[key]))) out.push(`${block}.${key} must be a short name (letters, digits, '.', '_' and '-')`);
   }
-  const text = JSON.stringify(doc);
-  for (const [re, what] of data.leaks) {
-    const m = new RegExp(re).exec(text);
-    if (m) out.push(`contains ${what}: ${pyRepr(m[0])}`);
+  if (loneSurrogate(doc)) out.push("contains text that is not valid Unicode");
+  else {
+    const text = JSON.stringify(doc);
+    for (const [re, what] of data.leaks) {
+      const m = new RegExp(re).exec(text);
+      if (m) out.push(`contains ${what}: ${pyRepr(m[0])}`);
+    }
   }
   return out;
 }

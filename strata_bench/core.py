@@ -20,7 +20,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import SCHEMA, SCHEMA_V2, VERSION
-from .schema import (AGENT_MIN_CTX, AGENT_PROTOCOL, BLOCK_PROTOCOLS, SUITE_SIZES, BUSY_STATUS, CHAT_PROTOCOL, CLIENTS_PROTOCOL, FAILURE_KINDS, HOST_RELATIONS, ID_RE, IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS,
+from .schema import (AGENT_MIN_CTX, AGENT_PROTOCOL, BLOCK_PROTOCOLS, SUITE_SIZES, BUSY_STATUS, CHAT_PROTOCOL, CLIENTS_PROTOCOL, FAILURE_KINDS, FINISH_REASONS, HOST_RELATIONS, ID_RE, IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS,
                      SHARED_KEYS, STANDARD_V1_PROMPTS, STANDARD_V2_PROMPTS, prune)
 
 PROMPTS = Path(__file__).parent / "prompts"
@@ -250,9 +250,6 @@ def call(base: str, messages: list, max_tokens: int, extra=None) -> dict:
                                                 finish]).encode())}
 
 
-FINISH_REASONS = ("stop", "length", "tool_calls", "content_filter", "function_call")
-
-
 def closed_finish(v):
     """The server's finish_reason from a closed list; anything else is recorded as "other", never the server's own words."""
     return v if v is None or v in FINISH_REASONS else "other"
@@ -314,6 +311,7 @@ def call_stream(base: str, messages: list, max_tokens: int, extra=None, sink=Non
         return False
 
     with urllib.request.urlopen(req, timeout=1800) as r:
+        ctype = r.headers.get_content_type()
         pending = []                                   # the data lines of the event being read; a blank line ends it (SSE framing)
         for raw in r:
             seen["bytes"] += len(raw)
@@ -337,9 +335,9 @@ def call_stream(base: str, messages: list, max_tokens: int, extra=None, sink=Non
                 done = handle("\n".join(pending))
     wall = time.perf_counter() - t0
     if not done and finish is None:
-        if seen["bytes"] and not seen["events"]:       # a 200 answer that is not an event stream at all (the server ignored "stream")
-            raise MeasureError("the server did not stream: the answer had no data events")
-        raise MeasureFailure("crash")                  # ended with no finish_reason and no [DONE]: the server died
+        if ctype != "text/event-stream" and not seen["events"]:     # a 200 answer that is not an event stream at all (the server ignored "stream")
+            raise MeasureError("the server did not stream: the answer is not an event stream")
+        raise MeasureFailure("crash")                  # an event stream that ended with no finish_reason and no [DONE], even before its first event: the server died
     if not done and not timings:                       # cut after the last text but before the closing chunk with the timings
         raise MeasureFailure("crash")
     text, rtext = "".join(content), "".join(reasoning)
@@ -708,11 +706,12 @@ def client_request(base: str, messages: list, results: list, k: int, barrier: th
     """One client of the clients block, in its own thread: wait for the others, send one streamed request, store the outcome in results[k]."""
     try:
         barrier.wait(timeout=60)
-        results[k] = ("ok", call_stream(base, messages, CLIENTS_PROTOCOL["max_tokens"], {"cache_prompt": False}))
+        results[k] = ["ok", call_stream(base, messages, CLIENTS_PROTOCOL["max_tokens"], {"cache_prompt": False})]
     except urllib.error.HTTPError as e:
-        results[k] = ("busy", e.code) if e.code in BUSY_STATUS else ("fail", e)
+        results[k] = ["busy", e.code] if e.code in BUSY_STATUS else ["fail", e]
     except Exception as e:                                  # a closed connection, a timeout, a bad stream: judged by the caller
-        results[k] = ("fail", e)
+        results[k] = ["fail", e]
+    results[k].append(time.perf_counter())                  # when this client's answer (or refusal, or failure) was complete: the round ends at the latest of these
 
 
 def measure_clients(base: str, res: Result, log):
@@ -725,7 +724,7 @@ def measure_clients(base: str, res: Result, log):
     text = (PROMPTS / "medium.txt").read_text(encoding="utf-8")
     rows = []
     for n in (int(x) for x in P["counts"].split(",")):
-        ttft, latency, tps, errors, requests, reuse_warned = [], [], [], 0, 0, False
+        ttft, latency, tps, errors, requests, reuse_warned, warm_refused = [], [], [], 0, 0, False, 0
         for kind, rounds in (("warmup", P["warmup"]), ("run", P["rounds"])):
             for rnd in range(1, rounds + 1):
                 res.where = f"clients {n} {'warmup' if kind == 'warmup' else 'round'} {rnd}"
@@ -742,9 +741,9 @@ def measure_clients(base: str, res: Result, log):
                     raise MeasureError(f"{res.where}: the clients did not start together")
                 for t in threads:
                     t.join()
-                wall = time.perf_counter() - start[0]
+                wall = max(done for _, _, done in results) - start[0]
                 generated, fatals, late = 0, [], []
-                for k, (state, r) in enumerate(results):          # record every outcome first, judge afterwards, so no failure hides another
+                for k, (state, r, _) in enumerate(results):          # record every outcome first, judge afterwards, so no failure hides another
                     run = {"size": "clients", "kind": kind, "index": rnd, "clients": n, "client": k + 1}
                     requests += kind == "run"
                     if state == "ok":
@@ -768,20 +767,26 @@ def measure_clients(base: str, res: Result, log):
                     elif state == "busy":
                         d["runs"].append({**run, "error_status": r})
                         errors += kind == "run"
+                        warm_refused += kind == "warmup"
                     else:
                         fatals.append(r)
                 res.save()
                 judged = [(classify_failure(e), e) for e in fatals]       # each exception is classified once: reading an HTTP error body twice would lose it
-                health = sorted(((FAILURE_KINDS.index(k), k, st) for (k, st), _ in judged if k in FAILURE_KINDS))
-                if health:                                                 # the same answer whatever order the clients finished in
-                    raise MeasureFailure(health[0][1], res.where, health[0][2])
+                health = [(FAILURE_KINDS.index(k), pos, st) for pos, ((k, st), _) in enumerate(judged) if k in FAILURE_KINDS]
+                if health:                                                 # the first kind in FAILURE_KINDS, then the first client with a status: the same answer whatever order they finished in
+                    best = min(kind for kind, _, _ in health)
+                    same = [h for h in health if h[0] == best]
+                    status = next((h[2] for h in same if h[2] is not None), None)
+                    raise MeasureFailure(FAILURE_KINDS[best], res.where, status)
                 if judged:
                     raise judged[0][1]
                 if late:
                     raise late[0]
                 if kind == "run":
                     tps.append(generated / max(wall, 1e-9))
-                log(f"clients {n} {kind} {rnd}: {sum(1 for s_, _ in results if s_ == 'ok')} of {n} answered in {round(wall * 1000)} ms")
+                log(f"clients {n} {kind} {rnd}: {sum(1 for s_, _, _ in results if s_ == 'ok')} of {n} answered in {round(wall * 1000)} ms")
+        if warm_refused:
+            d["validity"]["warnings"].append(f"clients {n}: {warm_refused} warm-up request(s) turned away as busy (the measured rounds are not affected)")
         if not ttft:
             d["validity"]["warnings"].append(f"clients {n}: every request was turned away as busy")
         elif errors:

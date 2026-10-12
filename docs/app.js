@@ -41,7 +41,7 @@
     } catch (e) { /* file:// */ }
   }
 
-  var clients8 = function (r) { var c = (r.clients || []).filter(function (x) { return x.n === 8; })[0]; return c ? c.total_tps : null; };
+  var clients8 = function (r) { var c = (Array.isArray(r.clients) ? r.clients : []).filter(function (x) { return x && x.n === 8; })[0]; return c ? c.total_tps : null; };
 
   function sortVal(r, key) {
     if (key === "date") return r.date || "";
@@ -68,7 +68,7 @@
     var h = "<thead><tr>" + head.map(function (c) { return '<th data-key="' + c[0] + '"' + (c[2] ? ' class="num"' : "") + ">" + c[1] + (state.sort.key === c[0] ? (state.sort.dir > 0 ? " ▲" : " ▼") : "") + "</th>"; }).join("") + "</tr></thead>";
     var b = rows.map(function (r) {
       var dec = size(r, "medium", "decode_tps"); if (typeof dec !== "number") dec = null;
-      var args = (r.args || []).join(" ");
+      var args = (Array.isArray(r.args) ? r.args : []).join(" ");
       return "<tr class='openable' data-id='" + esc(r.id) + "'><td class='pick-cell'><input type='checkbox' class='pick' data-id='" + esc(r.id) + "' aria-label='Select for comparison'" + (state.selected.indexOf(r.id) >= 0 ? " checked" : "") + "></td><td>" + esc(r.gpu) + (r.vram_gb ? " <span class='hint'>" + esc(r.vram_gb) + " GB</span>" : "") + (r.gpu_count > 1 ? " <span class='hint'>×" + esc(r.gpu_count) + "</span>" : "") +
         (r.protocol === "standard-v2" ? "<br><span class='hint'>v2 " + esc(r.suite) + "</span>" + (r.host_relation && r.host_relation !== "same-host" ? " <span class='pill warnings' title='The client ran on another machine, so first-token times include the network'>" + esc(r.host_relation) + "</span>" : "") : "") +
         "</td><td>" + esc(r.model) + (r.quant ? " <span class='hint'>" + esc(r.quant) + "</span>" : "") + "</td><td>" + esc(r.engine) + "</td>" +

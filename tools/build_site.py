@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from strata_bench import validate  # noqa: E402
+from strata_bench import schema, validate  # noqa: E402
 
 SIZE_ORDER = ("short", "medium", "long", "xlong", "chat", "probe", "gprobe150", "gprobe300", "gprobe450")
 
@@ -64,7 +64,7 @@ def build(results_dir: Path = ROOT / "results", copies: dict = None) -> dict:
     for path in sorted(results_dir.rglob("*.result.json")):
         rel = path.relative_to(results_dir.parent).as_posix()
         try:
-            doc = json.loads(path.read_text(encoding="utf-8"))
+            doc = schema.strict_loads(path.read_text(encoding="utf-8"))
         except ValueError as e:
             bad.append(f"{rel}: not JSON ({e})")
             continue
@@ -82,7 +82,7 @@ def build(results_dir: Path = ROOT / "results", copies: dict = None) -> dict:
 
 
 def dump(data: dict) -> str:
-    return json.dumps(data, indent=1, sort_keys=True, ensure_ascii=False) + "\n"
+    return json.dumps(data, indent=1, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n"
 
 
 def sync_copies(copies: dict, dest: Path, check: bool) -> list:

@@ -140,6 +140,7 @@ class JsParity(unittest.TestCase):
             d.pop("agent")
             d["protocol"].pop("agent")
             d["protocol"]["skipped"] = [{"block": "agent", "reason": "context_too_small"}]
+            d["n_ctx"] = 8192
             d["runs"] = []
         mut("agent skipped", skip_agent, agent)
         mut("agent skipped with data", lambda d: (skip_agent(d), d.update(agent={"sessions": [{"index": 1}]}))[0], agent)
@@ -293,6 +294,51 @@ class JsParity(unittest.TestCase):
         mut("clients wrong requests", lambda d: d["clients"][1].update(requests=9), clients)
         mut("clients reordered", lambda d: d["clients"].reverse(), clients)
         mut("full emptied", lambda d: d.update(runs=[], sizes={"chat": {}}, agent={"sessions": [{}, {}, {}]}, clients=[{}]), full)
+        # the closed values of a run, and no text in them
+        for key, value in (("finish_reason", "internal-host.example:opaque-secret"), ("finish_reason", "<b>x</b>"), ("finish_reason", True), ("finish_reason", 5), ("finish_reason", {"a": 1}),
+                           ("output_check", "<b>x</b>"), ("output_check", 1), ("kind", "x"), ("kind", None), ("size", "x"), ("size", None), ("size", ["medium"])):
+            mut(f"run {key} {value!r}", lambda d, key=key, value=value: d["runs"][0].update({key: value}))
+        for value in ("length", "tool_calls", "other", None):
+            mut(f"run finish_reason {value!r} is fine", lambda d, value=value: d["runs"][0].update(finish_reason=value))
+        # a lone surrogate (it cannot be UTF-8; JavaScript would escape it where Python would not), and a proper pair
+        for name, text in (("path", "\ud800C:\\x"), ("ip", "\ud80010.1.2.3"), ("token", "\ud800sk-abcdefgh1234"), ("low", "\udc00 /usr/lib/x/"), ("plain", "\ud800")):
+            mut(f"lone surrogate {name}", lambda d, text=text: d.update(label=text))
+        mut("lone surrogate in a key", lambda d: d["config"]["env"].update({"\ud800": "1"}))
+        mut("surrogate pair is fine", lambda d: d.update(label="ok \U0001F600"))
+        # messages never echo an exotic value: the same text whatever the value
+        for value in (1.0, -0.0, 1e22, "\u0085", "a\u2028b", 12345678901234567890, "x" * 60):
+            mut(f"status {value!r} message", lambda d, value=value: d["validity"].update(status=value))
+            mut(f"protocol id {value!r} message", lambda d, value=value: d["protocol"].update(id=value))
+        mut("extra keys that look like numbers", lambda d: d.update({"2": "x", "1": "y", "10": "z", "b": 1, "a": 1}))
+        # a block that names itself but is a shell: the runs must be the requests the block promises
+        mut("clients without its runs", lambda d: d.update(runs=[r for r in d["runs"] if r["size"] != "clients"]), clients)
+        mut("agent runs all the same request", lambda d: [r.update(index=1, turn=1) for r in d["runs"] if r["size"] == "agent"], agent)
+        mut("agent sessions empty objects", lambda d: d["agent"].update(sessions=[{}, {}, {}]), agent)
+        mut("agent sessions without an index", lambda d: [x.pop("index") for x in d["agent"]["sessions"]], agent)
+        mut("agent sessions same index", lambda d: [x.update(index=1) for x in d["agent"]["sessions"]], agent)
+        mut("agent run turn out of range", lambda d: [r for r in d["runs"] if r["size"] == "agent"][-1].update(turn=6), agent)
+        mut("agent one run replaced by another", lambda d: d["runs"].__setitem__(d["runs"].index([r for r in d["runs"] if r["size"] == "agent" and r["kind"] == "run"][0]), copy.deepcopy([r for r in d["runs"] if r["size"] == "agent" and r["kind"] == "run"][1])), agent)
+        mut("agent run without a stream", lambda d: [r for r in d["runs"] if r["size"] == "agent" and r["kind"] == "run"][0].pop("stream"), agent)
+        mut("agent run with a null ttft", lambda d: [r for r in d["runs"] if r["size"] == "agent" and r["kind"] == "run"][0]["stream"].update(ttft_ms=None), agent)
+        mut("all ttft null", lambda d: [r["stream"].update(ttft_ms=None) for r in d["runs"] if "stream" in r], v2)
+        mut("size ttft summary empty", lambda d: [z.update(ttft_ms={}) for z in d["sizes"].values() if "ttft_ms" in z], v2)
+        mut("size ttft summary without runs", lambda d: d.update(runs=[r for r in d["runs"] if r["size"] != "medium"]), v2)
+        mut("chat duplicate run", lambda d: [r for r in d["runs"] if r["size"] == "chat" and r["kind"] == "run"][1].update(index=1), chat)
+        mut("chat run index out of range", lambda d: [r for r in d["runs"] if r["size"] == "chat" and r["kind"] == "run"][0].update(index=10), chat)
+        mut("chat median null", lambda d: d["sizes"]["chat"]["ttft_ms"].update(median=None), chat)
+        mut("clients duplicate request", lambda d: [r for r in d["runs"] if r["size"] == "clients" and r["kind"] == "run"][1].update(client=1, index=1, clients=2), clients)
+        mut("clients errors do not match", lambda d: d["clients"][0].update(errors=1), clients)
+        mut("clients row missing a key", lambda d: d["clients"][0].pop("total_tps"), clients)
+        mut("clients refusal with a 503", lambda d: [r for r in d["runs"] if "error_status" in r and r["kind"] == "run"][0].update(error_status=503), busy)
+        mut("clients refusal that has a stream", lambda d: [r for r in d["runs"] if "error_status" in r and r["kind"] == "run"][0].update(stream={"ttft_ms": 1}), busy)
+        mut("clients warm-up refusal with a 503", lambda d: [r for r in d["runs"] if "error_status" in r and r["kind"] == "warmup"][0].update(error_status=503), busy)
+        mut("clients warm-up refusal that has a stream", lambda d: [r for r in d["runs"] if "error_status" in r and r["kind"] == "warmup"][0].update(stream={"ttft_ms": 1}), busy)
+        mut("clients extra run", lambda d: d["runs"].append(copy.deepcopy([r for r in d["runs"] if r["size"] == "clients" and r["kind"] == "run"][0])), clients)
+        mut("agent skip with a big context", lambda d: (skip_agent(d), d.update(n_ctx=32768))[0], agent)
+        mut("agent skip with a text context", lambda d: (skip_agent(d), d.update(n_ctx="8192"))[0], agent)
+        mut("agent skip with a null context", lambda d: (skip_agent(d), d.update(n_ctx=None))[0], agent)
+        mut("agent skip at the limit", lambda d: (skip_agent(d), d.update(n_ctx=16384))[0], agent)
+        mut("agent skip just under the limit", lambda d: (skip_agent(d), d.update(n_ctx=16383))[0], agent)
         mut("v2 prompt hash", lambda d: d["protocol"]["prompt_sha256"].update({"medium.txt": "0" * 64}), v2)
         mut("unicode label", lambda d: d.update(label="résultat ✓ 测试"))
         mut("quote in label with leak", lambda d: d.update(label="it's /usr/local/x"))
@@ -309,7 +355,7 @@ class JsParity(unittest.TestCase):
         for c, got in zip(cases, js):
             self.assertEqual(got, validate.problems(c["doc"]), c["name"])
         self.assertGreater(sum(1 for c in cases if validate.problems(c["doc"])), 30)        # the tampering cases really are rejected
-        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "v2 ok", "v2 failed", "v2 agent ok", "v2 agent failed", "v2 chat ok", "v2 clients ok", "v2 clients busy", "v2 clients failed", "v2 quick", "v2 full", "by set", "by 39 chars", "machine id set", "host relation lan", "agent skipped", "where agent run 2 turn 3", "where agent warmup 1 turn 5", "clients skipped", "where clients 4 round 2", "where clients 8 warmup 1", "where chat run 9", "where chat warmup 1", "custom with the quick blocks", "container runs as empty list", "v2 container protocol skipped as empty list", "share after a non-ascii letter", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
+        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "v2 ok", "v2 failed", "v2 agent ok", "v2 agent failed", "v2 chat ok", "v2 clients ok", "v2 clients busy", "v2 clients failed", "v2 quick", "v2 full", "by set", "by 39 chars", "machine id set", "host relation lan", "agent skipped", "where agent run 2 turn 3", "where agent warmup 1 turn 5", "clients skipped", "where clients 4 round 2", "where clients 8 warmup 1", "where chat run 9", "where chat warmup 1", "custom with the quick blocks", "container runs as empty list", "v2 container protocol skipped as empty list", "share after a non-ascii letter", "run finish_reason 'length' is fine", "run finish_reason 'tool_calls' is fine", "run finish_reason 'other' is fine", "run finish_reason None is fine", "surrogate pair is fine", "agent skip just under the limit", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
 
     def test_a_seeded_fuzz_of_mutations_gets_the_same_problems_from_both_validators(self):
         """Random edits (a value replaced, a key removed, an own or inherited key added) of a v1 result and of v2 results; whatever the edit, both
@@ -320,7 +366,7 @@ class JsParity(unittest.TestCase):
         bases = [real(tmp, "f1"), real(tmp, "f2", sizes=("medium", "chat", "agent", "clients"), run_kw={"protocol": core.PROTOCOL_V2, "suite": "full"}),
                  real(tmp, "f3", mode="crash", sizes=("clients",), run_kw={"protocol": core.PROTOCOL_V2})]
         pool = [None, True, False, 0, 7, -3, 1.5, 0.25, "x", "", "a\nb", "\u00e9", "\u00e9/tmp/", "/abs/path/x", "C:\\x", "10.1.2.3", "sk-abcdefgh12345", "ab" * 32, "failed", "ok",
-                "standard-v2", "strata-bench/v2", "agent", "clients", [], [1], ["agent"], [{"block": "agent", "reason": "context_too_small"}], {}, {"a": 1}, {"sessions": [{}]}]
+                "standard-v2", "strata-bench/v2", "agent", "clients", 1.0, -0.0, 1e22, "\u0085", "a\u2028b", "\ud800", "\ud800C:\\x", "\udc00sk-abcdefgh1234", {"2": "x", "1": "y"}, "other", "length", [], [1], ["agent"], [{"block": "agent", "reason": "context_too_small"}], {}, {"a": 1}, {"sessions": [{}]}]
         keys = ["constructor", "__proto__", "toString", "extra", "stream", "turn", "agent", "clients", "suite", "blocks", "skipped", "host_relation", "chat", "ttft_ms"]
         rng = random.Random(20261012)
 

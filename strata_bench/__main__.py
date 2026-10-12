@@ -50,14 +50,17 @@ def main(argv=None) -> int:
         bad = [s for s in sizes if s not in ("probe", "gprobe") and s not in core.MEASURED]
         if bad:
             p.error(f"unknown sizes: {bad}")
-        cfg = json.loads(a.config.read_text(encoding="utf-8-sig"))
-        ident = json.loads(a.identity.read_text(encoding="utf-8")) if a.identity else None
+        cfg = schema.strict_loads(a.config.read_text(encoding="utf-8-sig"))
+        ident = schema.strict_loads(a.identity.read_text(encoding="utf-8")) if a.identity else None
         return core.run(a.base.rstrip("/"), cfg, a.origin, sizes, a.label, a.out, ident,
                         probe_offset=a.probe_offset, api_key=a.api_key, by=a.by, protocol=a.protocol,
                         host_relation=a.host_relation, suite=suite)
     rc = 0
     for f in a.files:
-        probs = validate.problems(json.loads(f.read_text(encoding="utf-8")))
+        try:
+            probs = validate.problems(schema.strict_loads(f.read_text(encoding="utf-8")))
+        except ValueError as e:
+            probs = [f"not valid JSON: {e}"]
         print(f"{f}: {'OK' if not probs else 'REJECTED'}")
         for x in probs:
             print("  -", x)

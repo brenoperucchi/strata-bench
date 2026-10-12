@@ -120,7 +120,7 @@ class Fake(BaseHTTPRequestHandler):
     def stream(self, body, probe):
         """An SSE answer (standard-v2). st["sse"] shapes it: header_delay (s before the response starts), keepalive, empty_deltas, pieces, gap (s between pieces), first_delay (s
         before the first piece), drop_after (pieces, then the connection closes), error (an error event after one piece),
-        garbage, no_timings, no_done, truncate_after (a piece cut in the middle of its event), multiline, bad_event, plain_json."""
+        garbage, no_timings, no_done, drop_before_first (after the keep-alive), truncate_after (a piece cut in the middle of its event), multiline, bad_event, plain_json."""
         o = dict(Fake.st["sse"])
         first = str(body["messages"][0].get("content") or "").split("\n", 1)[0]
         if first.startswith("[strata-bench clients "):
@@ -141,6 +141,9 @@ class Fake(BaseHTTPRequestHandler):
             self.wfile.write(b": keep-alive\n\n")
             self.wfile.flush()
             time.sleep(o.get("keepalive_delay", 0))
+        if o.get("drop_before_first"):                       # keep-alives (Strata sends one per line of prompt processing) and then the server dies
+            self.close_connection = True
+            return
         if o.get("multiline"):                               # one event whose JSON is split over two data: lines
             self.wfile.write(b'data: {"choices": [{"delta":\ndata: {"content": "SAFE"}}]}\n\n')
             self.wfile.flush()

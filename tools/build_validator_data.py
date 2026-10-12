@@ -24,6 +24,8 @@ def spec(s):
         return {"t": "list", "s": spec(s[0])}
     if s == schema.NUM:
         return "num"
+    if isinstance(s, schema.Enum):
+        return {"t": "enum", "v": list(s.values)}
     if isinstance(s, schema.Map):
         return {"t": "map", "re": s.key.pattern, "s": spec(s.spec)}
     if isinstance(s, dict):
@@ -43,6 +45,10 @@ def data() -> dict:
         "prompts": schema.STANDARD_V1_PROMPTS,
         "prompts_v2": schema.STANDARD_V2_PROMPTS,
         "skip_pairs": schema.SKIP_PAIRS,
+        "agent_session_keys": list(schema.AGENT_SESSION_KEYS),
+        "clients_row_keys": list(schema.CLIENTS_ROW),
+        "busy_status": list(schema.BUSY_STATUS),
+        "agent_min_ctx": schema.AGENT_MIN_CTX,
         "text_sizes": list(schema.TEXT_SIZES),
         "block_protocols": schema.BLOCK_PROTOCOLS,
         "v2_run_keys": list(schema.V2_RUN_KEYS),

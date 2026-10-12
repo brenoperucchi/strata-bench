@@ -1,4 +1,11 @@
 {
+ "agent_min_ctx": 16384,
+ "agent_session_keys": [
+  "index",
+  "hit_pct",
+  "reread_tokens",
+  "new_tokens"
+ ],
  "block_protocols": {
   "agent": {
    "cache_prompt": "true",
@@ -25,6 +32,20 @@
   "chat",
   "agent",
   "clients"
+ ],
+ "busy_status": [
+  429
+ ],
+ "clients_row_keys": [
+  "n",
+  "rounds",
+  "requests",
+  "errors",
+  "total_tps",
+  "ttft_p50_ms",
+  "ttft_p95_ms",
+  "latency_p50_ms",
+  "latency_p95_ms"
  ],
  "failure_kinds": [
   "crash",
@@ -457,14 +478,52 @@
       "clients": "num",
       "content_chars": "num",
       "error_status": "num",
-      "finish_reason": "scalar",
+      "finish_reason": {
+       "t": "enum",
+       "v": [
+        "stop",
+        "length",
+        "tool_calls",
+        "content_filter",
+        "function_call",
+        "other",
+        null
+       ]
+      },
       "index": "num",
-      "kind": "scalar",
-      "output_check": "scalar",
+      "kind": {
+       "t": "enum",
+       "v": [
+        "warmup",
+        "run"
+       ]
+      },
+      "output_check": {
+       "t": "enum",
+       "v": [
+        "ok",
+        "garbage"
+       ]
+      },
       "output_sha256": "hex",
       "reasoning_chars": "num",
       "request_sha256": "hex",
-      "size": "scalar",
+      "size": {
+       "t": "enum",
+       "v": [
+        "short",
+        "medium",
+        "long",
+        "xlong",
+        "chat",
+        "probe",
+        "gprobe150",
+        "gprobe300",
+        "gprobe450",
+        "agent",
+        "clients"
+       ]
+      },
       "stream": {
        "k": {
         "gap_ms": {

@@ -10,6 +10,12 @@ import re
 SCALAR, HEX, NUM = "scalar", "hex", "num"          # NUM: a finite number or null (never a string or a boolean): the measured metrics
 
 
+class Enum:
+    """A closed list of allowed values (strings, or None): nothing else, whatever it says."""
+    def __init__(self, *values):
+        self.values = tuple(values)
+
+
 class Map:
     def __init__(self, key_regex: str, spec):
         self.key, self.spec = re.compile(key_regex, re.ASCII), spec       # ASCII: \w and \d mean what they mean in JavaScript
@@ -40,6 +46,7 @@ V2_RUN_KEYS = ("stream", "turn", "clients", "client", "error_status")           
 BUSY_STATUS = (429,)             # a server that answers 429 (too many requests) to a client of the clients block: counted in errors, not a failure. A 503 is not busy:
 #                                  Strata answers 503 while its engine restarts or after it died, so it is a server failure
 AGENT_MIN_CTX = 16384            # the five documents, the answers and the tool text need about 14K tokens: a smaller context skips the block
+AGENT_SESSION_KEYS = ("index", "hit_pct", "reread_tokens", "new_tokens")
 SKIP_PAIRS = {"agent": "context_too_small", "clients": "no_parallel_slots"}     # a skipped block and its one closed reason
 TEXT_SIZES = ("short", "medium", "long", "xlong")
 SERVER_FIELDS = ("reasoning_budget_tokens", "sampling", "draft_vocab", "fit_max_tokens", "gpu", "layer_split")
@@ -76,6 +83,8 @@ IDENTITY = {
 ID_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,38}")   # submission.by and machine.machine_id: a short name, never free text
 OBSERVED = {"engine": {"build_info"}, "model": {"file", "n_ctx"}}
 
+FINISH_REASONS = ("stop", "length", "tool_calls", "content_filter", "function_call")      # the server's finish_reason; anything else is recorded as "other"
+RUN_SIZES = ("short", "medium", "long", "xlong", "chat", "probe", "gprobe150", "gprobe300", "gprobe450", "agent", "clients")
 SCHEMA_IDS = {"standard-v1": "strata-bench/v1", "standard-v2": "strata-bench/v2"}   # protocol id -> the schema it is written in
 HOST_RELATIONS = ("same-host", "lan", "remote")       # v2: where the client ran relative to the server (declared); first-token time includes the network
 SUITES = ("custom", "quick", "standard", "full")      # v2: which profile of blocks was run ("custom" = the sizes picked with --sizes)
@@ -96,9 +105,9 @@ CLIENTS_ROW = {k: NUM for k in ("n", "rounds", "requests", "errors", "total_tps"
 
 STREAM = {"ttft_ms": NUM, "total_ms": NUM, "pieces": NUM, "gap_ms": {"p50": NUM, "p95": NUM, "max": NUM}}
 
-RUN = {"size": SCALAR, "kind": SCALAR, "index": NUM, "turn": NUM, "clients": NUM, "client": NUM, "error_status": NUM, "request_sha256": HEX, "wall_ms": NUM, "timings": TIMINGS,
+RUN = {"size": Enum(*RUN_SIZES), "kind": Enum("warmup", "run"), "index": NUM, "turn": NUM, "clients": NUM, "client": NUM, "error_status": NUM, "request_sha256": HEX, "wall_ms": NUM, "timings": TIMINGS,
        "usage": USAGE, "tokens": {"prompt": NUM, "reused": NUM, "generated": NUM},
-       "reasoning_chars": NUM, "content_chars": NUM, "finish_reason": SCALAR, "output_sha256": HEX, "output_check": SCALAR,
+       "reasoning_chars": NUM, "content_chars": NUM, "finish_reason": Enum(*FINISH_REASONS, "other", None), "output_sha256": HEX, "output_check": Enum("ok", "garbage"),
        "stream": STREAM}
 
 PUBLIC = {
@@ -138,6 +147,23 @@ PUBLIC = {
 _HEX = re.compile(r"[0-9a-f]{8,64}")
 
 
+def _no_constant(name):
+    raise ValueError(f"{name} is not valid JSON")
+
+
+def strict_loads(text: str):
+    """json.loads that refuses the NaN, Infinity and -Infinity literals Python accepts and JavaScript's JSON.parse does not."""
+    import json
+    return json.loads(text, parse_constant=_no_constant)
+
+
+def is_scalar(value) -> bool:
+    """null, a string, a boolean or a finite number (a NaN or Infinity literal is not JSON: JavaScript cannot read it)."""
+    if isinstance(value, float):
+        return math.isfinite(value)
+    return value is None or isinstance(value, (str, int, bool))
+
+
 def is_num(value) -> bool:
     """null or a finite number; a string, a boolean, a list or NaN is not (JSON.parse in JavaScript rejects the NaN and Infinity literals too)."""
     if value is None:
@@ -150,15 +176,23 @@ def is_num(value) -> bool:
         return False
 
 
+def ordered(d: dict) -> list:
+    """The items of an object in one fixed order, UTF-16 code unit order like JavaScript's sort, so both validators list problems the same way."""
+    return sorted(d.items(), key=lambda kv: str(kv[0]).encode("utf-16-be", "surrogatepass"))
+
+
 def check(value, spec, where="", problems=None) -> list:
     """Every key and value that does not fit spec, as 'where: why'."""
     problems = [] if problems is None else problems
     if spec == SCALAR:
-        if not (value is None or isinstance(value, (str, int, float, bool))):
+        if not is_scalar(value):
             problems.append(f"{where}: not a scalar")
     elif spec == NUM:
         if not is_num(value):
             problems.append(f"{where}: not a number")
+    elif isinstance(spec, Enum):
+        if not (value is None and None in spec.values or isinstance(value, str) and value in spec.values):
+            problems.append(f"{where}: not one of " + ", ".join(v for v in spec.values if v is not None) + (", null" if None in spec.values else ""))
     elif spec == HEX:
         if not (isinstance(value, str) and _HEX.fullmatch(value)):
             problems.append(f"{where}: not a hex digest")
@@ -172,7 +206,7 @@ def check(value, spec, where="", problems=None) -> list:
         if not isinstance(value, dict):
             problems.append(f"{where}: not an object")
         else:
-            for k, v in value.items():
+            for k, v in ordered(value):
                 if not spec.key.fullmatch(str(k)):
                     problems.append(f"{where}.{k}: key not allowed")
                 else:
@@ -181,7 +215,7 @@ def check(value, spec, where="", problems=None) -> list:
         if not isinstance(value, dict):
             problems.append(f"{where}: not an object")
         else:
-            for k, v in value.items():
+            for k, v in ordered(value):
                 if k not in spec:
                     problems.append(f"{where}.{k}: not in the public schema".lstrip("."))
                 else:
@@ -192,9 +226,11 @@ def check(value, spec, where="", problems=None) -> list:
 def prune(value, spec):
     """value with everything outside spec removed (None when value itself does not fit)."""
     if spec == SCALAR:
-        return value if value is None or isinstance(value, (str, int, float, bool)) else None
+        return value if is_scalar(value) else None
     if spec == NUM:
         return value if is_num(value) else None
+    if isinstance(spec, Enum):
+        return value if (value is None and None in spec.values) or (isinstance(value, str) and value in spec.values) else None
     if spec == HEX:
         return value if isinstance(value, str) and _HEX.fullmatch(value) else None
     if isinstance(spec, list):
