@@ -46,6 +46,15 @@ V2_RUN_KEYS = ("stream", "turn", "clients", "client", "error_status")           
 BUSY_STATUS = (429,)             # a server that answers 429 (too many requests) to a client of the clients block: counted in errors, not a failure. A 503 is not busy:
 #                                  Strata answers 503 while its engine restarts or after it died, so it is a server failure
 AGENT_MIN_CTX = 16384            # the five documents, the answers and the tool text need about 14K tokens: a smaller context skips the block
+MAX_STRING = 200                 # the longest string or key a result may carry, in characters (the longest real one is a 64-character hash)
+PRIVATE_TLDS = ("internal", "local", "lan", "corp", "home", "intranet", "localdomain", "private")      # a name ending in one of these is a private hostname
+MAX_DEPTH = 20                   # how deep a result may nest; real ones reach about 6, and a walker must never meet a stack-sized one
+REQUIRED_TIMINGS = ("prompt_n", "prompt_ms", "prompt_per_second", "predicted_n", "predicted_per_second")    # what the engine must have reported for a finished request
+SIZE_SUMMARIES = ("prompt_tps", "decode_tps", "prompt_ms", "ttft_ms")
+CLIENTS_METRICS = ("total_tps", "ttft_p50_ms", "ttft_p95_ms", "latency_p50_ms", "latency_p95_ms")
+SECRET_FLAG_WORDS = ("api-key", "apikey", "api_key", "token", "secret", "passw", "credential", "bearer", "auth")      # a flag whose name has one of these carries a credential
+HOST_FLAG_WORDS = ("host", "url", "uri", "endpoint", "proxy", "bind", "address")                                      # a flag whose name has one of these carries an address
+FLAG_PLACEHOLDERS = ("<redacted>", "<host>")
 AGENT_SESSION_KEYS = ("index", "hit_pct", "reread_tokens", "new_tokens")
 SKIP_PAIRS = {"agent": "context_too_small", "clients": "no_parallel_slots"}     # a skipped block and its one closed reason
 TEXT_SIZES = ("short", "medium", "long", "xlong")
@@ -152,16 +161,24 @@ def _no_constant(name):
 
 
 def strict_loads(text: str):
-    """json.loads that refuses the NaN, Infinity and -Infinity literals Python accepts and JavaScript's JSON.parse does not."""
+    """json.loads that refuses the NaN, Infinity and -Infinity literals Python accepts and JavaScript's JSON.parse does not, and text nested too deeply to read."""
     import json
-    return json.loads(text, parse_constant=_no_constant)
+    try:
+        return json.loads(text, parse_constant=_no_constant)
+    except RecursionError:
+        raise ValueError("nested too deeply to read")
 
 
 def is_scalar(value) -> bool:
     """null, a string, a boolean or a finite number (a NaN or Infinity literal is not JSON: JavaScript cannot read it)."""
-    if isinstance(value, float):
-        return math.isfinite(value)
-    return value is None or isinstance(value, (str, int, bool))
+    if value is None or isinstance(value, (str, bool)):
+        return True
+    if isinstance(value, (int, float)):
+        try:
+            return math.isfinite(float(value))               # an integer too big for a float is not a number JavaScript can read either
+        except OverflowError:
+            return False
+    return False
 
 
 def is_num(value) -> bool:
@@ -174,6 +191,16 @@ def is_num(value) -> bool:
         return math.isfinite(float(value))
     except OverflowError:
         return False
+
+
+def flag_kind(arg: str):
+    """'secret' or 'host' when a command-line flag's name says it carries a credential or an address, else None."""
+    name = arg.split("=", 1)[0].lstrip("-").lower()
+    if any(w in name for w in SECRET_FLAG_WORDS):
+        return "secret"
+    if any(w in name for w in HOST_FLAG_WORDS):
+        return "host"
+    return None
 
 
 def ordered(d: dict) -> list:

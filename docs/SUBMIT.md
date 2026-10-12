@@ -64,7 +64,7 @@ The result is saved after every call. Exit codes: `0` done, `2` refused before m
 python3 -m strata_bench validate results/*.result.json
 ```
 
-The validator is the same gate the dashboard uses. It rejects anything outside the public schema and any value that looks like a local path, a private network address or a secret. Read the file once before you share it.
+The validator is the same gate the dashboard uses. It rejects anything outside the public schema and any value that looks like a local path, a private network address or hostname, or a secret, and any string over 200 characters. It is a filter, not a proof that a free-text field is harmless: read the file once before you share it, and keep the label and the identity file to plain names.
 
 ## 6. Submit
 

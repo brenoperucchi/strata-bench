@@ -75,3 +75,6 @@ td.nowrap { white-space: nowrap; }
 tr.openable { cursor: pointer; }
 tr.openable:hover td { background: var(--hover, rgba(127,127,127,.08)); }
 #perf td:nth-child(2), #perf td:nth-child(3) { white-space: nowrap; }
+#perf th, #perf td { padding-left: 8px; padding-right: 8px; }
+#perf td:nth-child(2), #perf td:nth-child(3), #perf td:nth-child(4), #perf td.num { white-space: nowrap; }
+#perf th { font-size: .86rem; }

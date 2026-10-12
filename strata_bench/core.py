@@ -21,7 +21,7 @@ from pathlib import Path
 
 from . import SCHEMA, SCHEMA_V2, VERSION
 from .schema import (AGENT_MIN_CTX, AGENT_PROTOCOL, BLOCK_PROTOCOLS, SUITE_SIZES, BUSY_STATUS, CHAT_PROTOCOL, CLIENTS_PROTOCOL, FAILURE_KINDS, FINISH_REASONS, HOST_RELATIONS, ID_RE, IDENTITY, OBSERVED, PUBLIC, RUN, SERVER_FIELDS,
-                     SHARED_KEYS, STANDARD_V1_PROMPTS, STANDARD_V2_PROMPTS, prune)
+                     SHARED_KEYS, STANDARD_V1_PROMPTS, STANDARD_V2_PROMPTS, flag_kind, prune)
 
 PROMPTS = Path(__file__).parent / "prompts"
 SIZES = ("short", "medium", "long", "xlong")
@@ -138,7 +138,12 @@ def scrub_config(cfg: dict) -> dict:
     args, out = [str(x) for x in cfg.get("args", [])], []
     for i, a in enumerate(args):
         prev = args[i - 1] if i else ""
-        out.append(f"<{prev.lstrip('-')}>" if is_path(a) and prev.startswith("--") else "<path>" if is_path(a) else a)
+        if a.startswith("-") and "=" in a and flag_kind(a):                 # --flag=value for a credential or an address
+            out.append(a.split("=", 1)[0] + "=" + ("<redacted>" if flag_kind(a) == "secret" else "<host>"))
+        elif prev.startswith("-") and "=" not in prev and flag_kind(prev) and not a.startswith("-"):    # --flag value
+            out.append("<redacted>" if flag_kind(prev) == "secret" else "<host>")
+        else:
+            out.append(f"<{prev.lstrip('-')}>" if is_path(a) and prev.startswith("--") else "<path>" if is_path(a) else a)
     env = {k: "<redacted>" if secret_env(k) else depath(str(v)) for k, v in sorted((cfg.get("env") or {}).items())}
     server = prune(depath({k: cfg[k] for k in SERVER_FIELDS if k in cfg}), PUBLIC["config"]["server"])
     return {"args": out, "env": env, "server": server}

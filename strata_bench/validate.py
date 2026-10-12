@@ -13,8 +13,38 @@ LEAKS = [
     (re.compile(r"\b(10|127)(\.\d{1,3}){3}\b|\b192\.168(\.\d{1,3}){2}\b|\b172\.(1[6-9]|2\d|3[01])(\.\d{1,3}){2}\b", re.ASCII),
      "a private network address"),
     (re.compile(r"\\\\[\w.-]+\\", re.ASCII), "a network share"),
+    (re.compile(r"\b[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*\.(?:" + "|".join("".join(f"[{c.upper()}{c}]" for c in tld) for tld in schema.PRIVATE_TLDS) + r")\b", re.ASCII), "a private hostname"),
     (re.compile(r"\b(sk-[A-Za-z0-9_-]{8,}|hf_[A-Za-z0-9]{8,}|gh[pousr]_[A-Za-z0-9]{8,})", re.ASCII), "a token"),
 ]
+
+
+def too_deep(x, limit=schema.MAX_DEPTH) -> bool:
+    """True when containers nest more than `limit` levels (checked without recursion, before any walker meets the result)."""
+    stack = [(x, 1)]
+    while stack:
+        node, depth = stack.pop()
+        if depth > limit and isinstance(node, (dict, list)):
+            return True
+        if isinstance(node, dict):
+            stack.extend((v, depth + 1) for v in node.values())
+        elif isinstance(node, list):
+            stack.extend((v, depth + 1) for v in node)
+    return False
+
+
+def strings(doc):
+    """Every string and every key of the result, decoded, in one fixed order (keys in UTF-16 code unit order, lists in order), without recursion."""
+    stack = [doc]
+    while stack:
+        node = stack.pop()
+        if isinstance(node, str):
+            yield node
+        elif isinstance(node, dict):
+            for k, v in reversed(schema.ordered(node)):
+                stack.append(v)
+                stack.append(str(k))
+        elif isinstance(node, list):
+            stack.extend(reversed(node))
 
 
 def view(x) -> dict:
@@ -32,26 +62,23 @@ def shown(v) -> str:
         return "None"
     if isinstance(v, bool):
         return "True" if v else "False"
-    if isinstance(v, (int, float)) and float(v).is_integer() and abs(v) < 2 ** 53:      # 1.0 and 1 are the same number in JSON, and in JavaScript
-        return str(int(v))
+    if isinstance(v, int):
+        return str(v) if abs(v) < 2 ** 53 else "(value not shown)"
+    if isinstance(v, float):
+        return str(int(v)) if v.is_integer() and abs(v) < 2 ** 53 else "(value not shown)"      # 1.0 and 1 are the same number in JSON, and in JavaScript
     if isinstance(v, str) and _SAFE.fullmatch(v):
         return "'" + v + "'"
     return "(value not shown)"
 
 
-def lone_surrogate(x) -> bool:
-    """A string or a key anywhere in x with a UTF-16 surrogate that has no partner: it cannot be written as UTF-8, and JavaScript would escape it
-    where Python would not, so both refuse it before any text scan."""
-    if isinstance(x, str):
+def lone_surrogate(doc) -> bool:
+    """A string or a key anywhere in the result with a UTF-16 surrogate that has no partner: it cannot be written as UTF-8, and JavaScript would
+    escape it where Python would not, so both refuse it before any text scan."""
+    for text in strings(doc):
         try:
-            x.encode("utf-8")
+            text.encode("utf-8")
         except UnicodeEncodeError:
             return True
-        return False
-    if isinstance(x, dict):
-        return any(lone_surrogate(k) or lone_surrogate(v) for k, v in x.items())
-    if isinstance(x, list):
-        return any(lone_surrogate(v) for v in x)
     return False
 
 
@@ -59,11 +86,18 @@ def tnum(x) -> bool:
     return isinstance(x, (int, float)) and not isinstance(x, bool)
 
 
+def safe_int(p) -> bool:
+    """An integer-valued number JavaScript represents exactly (what a request uses to name itself)."""
+    if isinstance(p, bool) or not isinstance(p, (int, float)):
+        return False
+    if isinstance(p, float) and not p.is_integer():
+        return False
+    return abs(p) <= 2 ** 53
+
+
 def ident(*parts):
-    """(a, b, ...) when every part is an integer-valued number, else None: how a request names itself (session and turn, round and client, ...)."""
-    if all(tnum(p) and float(p).is_integer() for p in parts):
-        return tuple(int(p) for p in parts)
-    return None
+    """(a, b, ...) when every part is a safe integer, else None: how a request names itself (session and turn, round and client, ...)."""
+    return tuple(int(p) for p in parts) if all(safe_int(p) for p in parts) else None
 
 
 def same_map(a, b) -> bool:
@@ -118,8 +152,18 @@ def version_problems(doc: dict, proto: dict) -> list:
         return [r for r in runs if r.get("size") == size and r.get("kind") == kind]
 
     def streamed(r):
-        st = r.get("stream")
-        return isinstance(st, dict) and tnum(st.get("ttft_ms"))
+        """A finished request: its first-token time, total time, the engine's timings and token counts, and both hashes."""
+        st, t, k = r.get("stream"), r.get("timings"), r.get("tokens")
+        return (isinstance(st, dict) and tnum(st.get("ttft_ms")) and tnum(r.get("wall_ms"))
+                and isinstance(t, dict) and all(tnum(t.get(x)) for x in schema.REQUIRED_TIMINGS)
+                and isinstance(k, dict) and tnum(k.get("prompt")) and tnum(k.get("generated"))
+                and all(isinstance(r.get(h), str) and schema._HEX.fullmatch(r[h]) for h in ("request_sha256", "output_sha256")))
+
+    def summary(sz, key="ttft_ms"):
+        return isinstance(sz, dict) and isinstance(sz.get(key), dict) and tnum(sz[key].get("median"))
+
+    def summaries(sz):
+        return all(summary(sz, k) for k in schema.SIZE_SUMMARIES)
 
     def exactly(entries, wanted):
         """The runs name exactly the wanted requests, each once (`entries` are the idents of the runs, None when a run does not name itself)."""
@@ -129,13 +173,16 @@ def version_problems(doc: dict, proto: dict) -> list:
     sessions = agent.get("sessions") if isinstance(agent, dict) else None
     counts = [int(n) for n in C["counts"].split(",")]
     agent_ok = (isinstance(sessions, list) and len(sessions) == A["sessions"]
-                and all(isinstance(x, dict) and all(k in x for k in schema.AGENT_SESSION_KEYS) for x in sessions)
+                and all(isinstance(x, dict) and all(tnum(x.get(k)) for k in schema.AGENT_SESSION_KEYS) for x in sessions)
+                and isinstance(agent.get("turns"), dict) and sorted(agent["turns"]) == [str(t) for t in range(1, A["turns"] + 1)]
+                and all(isinstance(v, dict) and all(summary(v, k) for k in ("prompt_n", "cache_n", "ttft_ms")) for v in agent["turns"].values())
+                and summary(agent, "hit_pct") and summary(agent, "reread_tokens")
                 and exactly([ident(x.get("index")) for x in sessions], {(i,) for i in range(1, A["sessions"] + 1)})
                 and exactly([ident(r.get("index"), r.get("turn")) for r in of("agent")],
                             {(i, t) for i in range(1, A["sessions"] + 1) for t in range(1, A["turns"] + 1)})
                 and all(streamed(r) for r in of("agent")))
     chat = sizes.get("chat")
-    chat_ok = (isinstance(chat, dict) and isinstance(chat.get("ttft_ms"), dict) and tnum(chat["ttft_ms"].get("median"))
+    chat_ok = (summaries(chat)
                and exactly([ident(r.get("index")) for r in of("chat")], {(i,) for i in range(1, H["runs"] + 1)}) and all(streamed(r) for r in of("chat")))
 
     def clients_ok():
@@ -149,6 +196,8 @@ def version_problems(doc: dict, proto: dict) -> list:
         for row, n in zip(clients, counts):
             mine = [r for r in pool if r.get("clients") == n]
             if not (isinstance(row, dict) and all(k in row for k in schema.CLIENTS_ROW) and row.get("n") == n and row.get("requests") == n * C["rounds"]
+                    and tnum(row.get("rounds")) and row["rounds"] == C["rounds"] and tnum(row.get("errors"))
+                    and all((tnum(row.get(k)) if row["requests"] - row["errors"] > 0 else row.get(k) is None) for k in schema.CLIENTS_METRICS)
                     and exactly([ident(r.get("index"), r.get("client")) for r in mine], {(i, k) for i in range(1, C["rounds"] + 1) for k in range(1, n + 1)})):
                 return False
             refused = [r for r in mine if "error_status" in r]
@@ -158,7 +207,7 @@ def version_problems(doc: dict, proto: dict) -> list:
                 return False
         return True
     summarized = [z for z in schema.TEXT_SIZES if isinstance(sizes.get(z), dict) and isinstance(sizes[z].get("ttft_ms"), dict)]
-    first_ok = bool(summarized) and all(tnum(sizes[z]["ttft_ms"].get("median")) and any(streamed(r) for r in of(z)) for z in summarized)
+    first_ok = bool(summarized) and all(summaries(sizes[z]) and tnum(proto.get("runs")) and len(of(z)) == proto["runs"] and all(streamed(r) for r in of(z)) for z in summarized)
     parts = {"agent": (agent_ok, "agent" in doc, "agent.sessions"), "chat": (chat_ok, "chat" in sizes, "sizes.chat"),
              "clients": (clients_ok(), "clients" in doc, "clients"), "first-token": (first_ok, False, "ttft_ms in a text size and its streamed runs")}
     for block, (complete, has_data, label) in parts.items():
@@ -174,7 +223,43 @@ def version_problems(doc: dict, proto: dict) -> list:
     return out
 
 
+def config_args_problems(doc: dict) -> list:
+    """The runner replaces the value of a credential or address flag; a result whose args still carry one is refused."""
+    args = view(doc.get("config")).get("args")
+    out = []
+    if isinstance(args, list):
+        for i, a in enumerate(args):
+            if isinstance(a, str) and a.startswith("-") and schema.flag_kind(a):
+                value = a.split("=", 1)[1] if "=" in a else (args[i + 1] if i + 1 < len(args) and not (isinstance(args[i + 1], str) and args[i + 1].startswith("-")) else None)
+                if value is not None and value not in schema.FLAG_PLACEHOLDERS:
+                    out.append(f"config.args[{i}] carries a credential or an address")
+    return out
+
+
+def health_problems(doc: dict) -> list:
+    """What a result says about its health must agree with itself: a degenerate answer is a failed result, a refusal is a warning, and a status
+    and its warnings and error describe the same thing."""
+    out = []
+    validity = view(doc.get("validity"))
+    status, failure, warnings = validity.get("status"), validity.get("failure"), validity.get("warnings")
+    runs = [r for r in doc.get("runs") or [] if isinstance(r, dict)] if isinstance(doc.get("runs"), list) else []
+    if any(r.get("output_check") == "garbage" for r in runs) and status != "failed":
+        out.append("a run with degenerate output needs a failed result")
+    if status == "ok" and any("error_status" in r for r in runs):
+        out.append("a result with refused requests needs status warnings")
+    listed = isinstance(warnings, list) and len(warnings) > 0
+    if status == "ok" and listed:
+        out.append("status ok cannot carry warnings")
+    if status == "warnings" and not listed:
+        out.append("status warnings needs at least one warning")
+    if validity.get("error") is not None and status != "failed":
+        out.append("validity.error is only allowed on a failed result")
+    return out
+
+
 def problems(doc: dict) -> list:
+    if too_deep(doc):                            # before any walker: a result nested this deep is not a result, and a recursive check would meet the end of the stack
+        return [f"nested more than {schema.MAX_DEPTH} levels deep"]
     out = schema.check(doc, schema.PUBLIC)
     if not isinstance(doc, dict):
         return out
@@ -216,12 +301,19 @@ def problems(doc: dict) -> list:
         if isinstance(section, dict) and section.get(key) is not None and not (
                 isinstance(section[key], str) and schema.ID_RE.fullmatch(section[key])):
             out.append(f"{block}.{key} must be a short name (letters, digits, '.', '_' and '-')")
+    out.extend(config_args_problems(doc))
+    out.extend(health_problems(doc))
     if lone_surrogate(doc):
         out.append("contains text that is not valid Unicode")
+    elif any(len(text) > schema.MAX_STRING for text in strings(doc)):                 # declared text is limited: a name, a label, a short note, never a document
+        out.append(f"contains a string longer than {schema.MAX_STRING} characters")
     else:
-        text = json.dumps(doc, ensure_ascii=False)
-        for rx, what in LEAKS:
-            m = rx.search(text)
-            if m:
-                out.append(f"contains {what}: {m.group(0)!r}")
+        found = {}
+        for text in strings(doc):                # the decoded strings and keys, not their JSON spelling: a newline or a NUL in front of a token hides nothing
+            for rx, what in LEAKS:
+                if what not in found:
+                    m = rx.search(text)
+                    if m:
+                        found[what] = m.group(0)
+        out.extend(f"contains {what}: {found[what]!r}" for _, what in LEAKS if what in found)
     return out

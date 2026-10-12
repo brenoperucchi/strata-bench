@@ -281,3 +281,28 @@ test("a field every object inherits is not a field of the schema, and a number i
   assert.ok(out.problems.some((p) => p.includes("clients[0].total_tps: not a number")));
   assert.equal(calls.filter((c) => c.url.includes("api.github.com")).length, 0);
 });
+
+test("a token behind a newline or a NUL is still a token, and a result nested a thousand deep is refused, not a crash", async () => {
+  for (const prefix of ["\n", "\u0000", "\t"]) {
+    const calls = mockFetch(goodRoutes());
+    const bad = structuredClone(VALID_V2);
+    bad.label = prefix + "sk-abcdefgh12345";
+    const res = await submit(bad);
+    const out = await res.json();
+    assert.equal(res.status, 422, JSON.stringify(prefix));
+    assert.ok(out.problems.some((p) => p.includes("contains a token")), JSON.stringify(prefix));
+    assert.equal(calls.filter((c) => c.url.includes("api.github.com")).length, 0);
+  }
+  const calls = mockFetch(goodRoutes());
+  const body = '{"turnstile":"t","result":' + '{"x":'.repeat(5000) + "1" + "}".repeat(5000) + "}";
+  const deep = await call(req(body));
+  assert.equal(deep.status, 422);
+  assert.ok((await deep.json()).problems.some((p) => p.includes("nested more than")));
+  assert.equal(calls.filter((c) => c.url.includes("api.github.com")).length, 0);
+  const huge = structuredClone(VALID_V2);
+  huge.n_ctx = 1e400;
+  const text = JSON.stringify(huge).replace('"n_ctx":null', '"n_ctx":1e400');
+  const res = await call(req('{"turnstile":"t","result":' + text.replace("null", "1e400") + "}"));
+  assert.equal(res.status, 422);
+  assert.equal(calls.filter((c) => c.url.includes("api.github.com")).length, 0);
+});

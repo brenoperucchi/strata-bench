@@ -339,6 +339,82 @@ class JsParity(unittest.TestCase):
         mut("agent skip with a null context", lambda d: (skip_agent(d), d.update(n_ctx=None))[0], agent)
         mut("agent skip at the limit", lambda d: (skip_agent(d), d.update(n_ctx=16384))[0], agent)
         mut("agent skip just under the limit", lambda d: (skip_agent(d), d.update(n_ctx=16383))[0], agent)
+        # the scout's findings: a leak is judged on the decoded text, a credential flag keeps no value, numbers stay in range, health agrees with itself, nesting is bounded
+        for name, text in (("newline then token", "\nsk-abcdefgh12345"), ("newline then path", "\n/home/alice/secret"), ("newline then ip", "\n10.1.2.3"), ("nul then token", "\x00sk-abcdefgh12345"),
+                           ("tab then token", "\tsk-abcdefgh12345"), ("letters then token", "xsk-abcdefgh12345 sk-abcdefgh12345"), ("unc share", "\\\\server\\share\\x"), ("windows path", "see E:\\private\\x")):
+            mut(f"leak {name}", lambda d, text=text: d.update(label=text))
+        mut("leak in a key", lambda d: d["config"]["env"].update({"/home/alice/x/": "1"}))
+        mut("leak in a list", lambda d: d["config"].update(args=["--a", "\nsk-abcdefgh12345"]))
+        mut("leaks in two keys, numeric names", lambda d: d.update({"2": "/alpha/secret/", "1": "/beta/secret/"}))
+        mut("two leak kinds", lambda d: d.update(label="\n10.1.2.3 \nsk-abcdefgh12345 /home/alice/x/"))
+        for flag in (["--api-key", "opaque-demo-secret"], ["--host", "gpu-box.internal"], ["--token=abc"], ["--endpoint=http://example.com"], ["--hf-token", "x"], ["--bind", "0.0.0.0"]):
+            mut(f"args carry {flag[0]}", lambda d, flag=flag: d["config"]["args"].extend(flag))
+        for flag in (["--api-key", "<redacted>"], ["--host=<host>"], ["--token=<redacted>"], ["--api-key"], ["--api-key", "--max-context"], ["--proxy", "<host>", "--kv", "int8"]):
+            mut(f"args placeholder {flag[0]} {len(flag)} is fine", lambda d, flag=flag: d["config"]["args"].extend(flag))
+        for name, value in (("integer too big", 10 ** 400), ("small", 12), ("negative huge", -10 ** 400)):
+            for where, setter in (("n_ctx", lambda d, v: d.update(n_ctx=v)), ("status", lambda d, v: d["validity"].update(status=v)), ("protocol id", lambda d, v: d["protocol"].update(id=v)),
+                                  ("run index", lambda d, v: d["runs"][0].update(index=v)), ("machine ram", lambda d, v: d["machine"].update(ram_gb=v)), ("agent index", None)):
+                if setter is not None:
+                    mut(f"number {name} in {where}", lambda d, setter=setter, value=value: setter(d, value))
+        mut("agent index too big", lambda d: d["agent"]["sessions"][0].update(index=10 ** 400), agent)
+        mut("agent run turn too big", lambda d: [r for r in d["runs"] if r["size"] == "agent" and r["kind"] == "run"][0].update(turn=10 ** 400), agent)
+        mut("clients client too big", lambda d: [r for r in d["runs"] if r["size"] == "clients" and r["kind"] == "run"][0].update(client=10 ** 400), clients)
+        mut("agent index beyond exact", lambda d: d["agent"]["sessions"][0].update(index=2 ** 60), agent)
+        # a block that names itself must carry what a finished request carries
+        mut("agent minimal shell", lambda d: (d.update(agent={"sessions": [{"index": i, "hit_pct": None, "reread_tokens": None, "new_tokens": None} for i in (1, 2, 3)]}),
+                                              [r.clear() or r.update(size="agent", kind="run", index=i, turn=t, stream={"ttft_ms": 1}) for r in [] for i in () for t in ()]), agent)
+        def shell(d):
+            for r in d["runs"]:
+                keep = {k: r[k] for k in ("size", "kind", "index", "turn", "clients", "client") if k in r}
+                r.clear()
+                r.update(keep, stream={"ttft_ms": 1})
+            for z in d["sizes"].values():
+                for k in list(z):
+                    z[k] = {"median": 1} if k == "ttft_ms" else z[k]
+        mut("v2 requests with only a first-token time", shell, v2)
+        mut("full requests with only a first-token time", lambda d: (shell(d), d.update(agent={"sessions": [{"index": i, "hit_pct": None, "reread_tokens": None, "new_tokens": None} for i in (1, 2, 3)]})), full)
+        mut("run without wall time", lambda d: [r for r in d["runs"] if r["size"] == "medium" and r["kind"] == "run"][0].pop("wall_ms"), v2)
+        mut("run without timings", lambda d: [r for r in d["runs"] if r["size"] == "medium" and r["kind"] == "run"][0].update(timings={}), v2)
+        mut("run without tokens", lambda d: [r for r in d["runs"] if r["size"] == "medium" and r["kind"] == "run"][0].pop("tokens"), v2)
+        mut("run without a request hash", lambda d: [r for r in d["runs"] if r["size"] == "medium" and r["kind"] == "run"][0].pop("request_sha256"), v2)
+        mut("size without prompt speed", lambda d: d["sizes"]["medium"].pop("prompt_tps"), v2)
+        mut("agent turns missing", lambda d: d["agent"]["turns"].pop("3"), agent)
+        mut("agent hit summary missing", lambda d: d["agent"].pop("hit_pct"), agent)
+        mut("agent session hit null", lambda d: d["agent"]["sessions"][0].update(hit_pct=None), agent)
+        mut("clients rounds null", lambda d: d["clients"][0].update(rounds=None), clients)
+        mut("clients rounds 999", lambda d: d["clients"][0].update(rounds=999), clients)
+        mut("clients metric null with answers", lambda d: d["clients"][0].update(total_tps=None), clients)
+        mut("clients metric with no answers", lambda d: d["clients"][0].update(errors=d["clients"][0]["requests"]), clients)
+        # health agrees with itself
+        mut("garbage run with status ok", lambda d: [r for r in d["runs"] if r["size"] == "medium" and r["kind"] == "run"][0].update(output_check="garbage"), v2)
+        mut("garbage run with a failed result", lambda d: (d["validity"].update(status="failed", failure={"kind": "garbage", "where": "medium run 1"}), [r for r in d["runs"] if r["size"] == "medium" and r["kind"] == "run"][0].update(output_check="garbage")), v2)
+        mut("garbage run with a crash failure", lambda d: (d["validity"].update(status="failed", failure={"kind": "crash", "where": "medium run 1"}), [r for r in d["runs"] if r["size"] == "medium" and r["kind"] == "run"][0].update(output_check="garbage")), v2)
+        mut("refusal with status ok", lambda d: d["validity"].update(status="ok", warnings=[]), busy)
+        mut("ok with a warning", lambda d: d["validity"].update(warnings=["x"]), v2)
+        mut("warnings without a warning", lambda d: d["validity"].update(status="warnings", warnings=[]), v2)
+        mut("warnings with a warning", lambda d: d["validity"].update(status="warnings", warnings=["x"]), v2)
+        mut("ok with an error text", lambda d: d["validity"].update(error="the server reported that it ran out of memory"), v2)
+        # nesting is bounded without recursion
+        for depth in (30, 200, 700):
+            def deep(d, depth=depth):
+                node = leaf = {}
+                for _ in range(depth):
+                    leaf["x"] = {}
+                    leaf = leaf["x"]
+                d["unexpected"] = node
+            mut(f"nested {depth} deep", deep)
+            mut(f"nested {depth} deep inside a run", lambda d, deep=deep: deep(d["runs"][0]))
+        # declared text is limited: a private hostname is a leak, and no string is longer than the cap
+        for name, text in (("hostname internal", "gpu-box.internal"), ("hostname upper", "GPU-BOX.INTERNAL"), ("hostname in a sentence", "run on gpu-box.lan today"), ("hostname corp", "a.b.corp"),
+                           ("hostname local", "rig.local"), ("hostname with a dot after", "rig.home.")):
+            mut(f"leak {name}", lambda d, text=text: d.update(label=text))
+        for name, text in (("not a hostname localhost", "my.localhost"), ("not a hostname homepage", "x.homepage.com"), ("a version", "Strata 0.1.43.1"), ("200 chars", "a" * 200), ("150 emoji", "\U0001F600" * 150)):
+            mut(f"label {name} is fine", lambda d, text=text: d.update(label=text))
+        for name, text in (("201 chars", "a" * 201), ("201 emoji", "\U0001F600" * 201), ("1000 chars", "b" * 1000)):
+            mut(f"label {name}", lambda d, text=text: d.update(label=text))
+        mut("key of 201 chars", lambda d: d["config"]["env"].update({"K" * 201: "1"}))
+        mut("long string in a list", lambda d: d["config"].update(args=["--a", "x" * 300]))
+        mut("long string and a leak", lambda d: d.update(label="y" * 300 + " 10.1.2.3"))
         mut("v2 prompt hash", lambda d: d["protocol"]["prompt_sha256"].update({"medium.txt": "0" * 64}), v2)
         mut("unicode label", lambda d: d.update(label="résultat ✓ 测试"))
         mut("quote in label with leak", lambda d: d.update(label="it's /usr/local/x"))
@@ -355,7 +431,7 @@ class JsParity(unittest.TestCase):
         for c, got in zip(cases, js):
             self.assertEqual(got, validate.problems(c["doc"]), c["name"])
         self.assertGreater(sum(1 for c in cases if validate.problems(c["doc"])), 30)        # the tampering cases really are rejected
-        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "v2 ok", "v2 failed", "v2 agent ok", "v2 agent failed", "v2 chat ok", "v2 clients ok", "v2 clients busy", "v2 clients failed", "v2 quick", "v2 full", "by set", "by 39 chars", "machine id set", "host relation lan", "agent skipped", "where agent run 2 turn 3", "where agent warmup 1 turn 5", "clients skipped", "where clients 4 round 2", "where clients 8 warmup 1", "where chat run 9", "where chat warmup 1", "custom with the quick blocks", "container runs as empty list", "v2 container protocol skipped as empty list", "share after a non-ascii letter", "run finish_reason 'length' is fine", "run finish_reason 'tool_calls' is fine", "run finish_reason 'other' is fine", "run finish_reason None is fine", "surrogate pair is fine", "agent skip just under the limit", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
+        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "v2 ok", "v2 failed", "v2 agent ok", "v2 agent failed", "v2 chat ok", "v2 clients ok", "v2 clients busy", "v2 clients failed", "v2 quick", "v2 full", "by set", "by 39 chars", "machine id set", "host relation lan", "agent skipped", "where agent run 2 turn 3", "where agent warmup 1 turn 5", "clients skipped", "where clients 4 round 2", "where clients 8 warmup 1", "where chat run 9", "where chat warmup 1", "custom with the quick blocks", "container runs as empty list", "v2 container protocol skipped as empty list", "share after a non-ascii letter", "run finish_reason 'length' is fine", "run finish_reason 'tool_calls' is fine", "run finish_reason 'other' is fine", "run finish_reason None is fine", "surrogate pair is fine", "agent skip just under the limit", "args placeholder --api-key 2 is fine", "args placeholder --host=<host> 1 is fine", "args placeholder --token=<redacted> 1 is fine", "args placeholder --api-key 1 is fine", "args placeholder --proxy 4 is fine", "number small in n_ctx", "number small in run index", "number small in machine ram", "garbage run with a failed result", "garbage run with a crash failure", "warnings with a warning", "label not a hostname localhost is fine", "label not a hostname homepage is fine", "label a version is fine", "label 200 chars is fine", "label 150 emoji is fine", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
 
     def test_a_seeded_fuzz_of_mutations_gets_the_same_problems_from_both_validators(self):
         """Random edits (a value replaced, a key removed, an own or inherited key added) of a v1 result and of v2 results; whatever the edit, both

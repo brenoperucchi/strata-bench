@@ -2,7 +2,7 @@
 // validator (strata_bench.validate). tests/test_js_validator.py checks that both return EXACTLY the same problems. No dependencies, no I/O:
 // it runs in the browser (upload page), in the Cloudflare Worker and under Node.
 
-const isScalar = (v) => v === null || ["string", "number", "boolean"].includes(typeof v);
+const isScalar = (v) => v === null || typeof v === "string" || typeof v === "boolean" || (typeof v === "number" && Number.isFinite(v));
 const isObj = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);        // own keys only: "constructor" or "toString" are not fields of any object
 const isNum = (v) => v === null || (typeof v === "number" && Number.isFinite(v));
@@ -12,14 +12,36 @@ const SAFE = /^[A-Za-z0-9._ -]{0,40}$/;
 // A value for a message, only when it is short and plain; anything else is not echoed (so no spelling of an exotic value can differ from Python's).
 const shown = (v) => (v === undefined || v === null ? "None" : v === true ? "True" : v === false ? "False" : typeof v === "number" && Number.isInteger(v) && Math.abs(v) < 2 ** 53 ? String(v) : typeof v === "string" && SAFE.test(v) ? `'${v}'` : "(value not shown)");
 const LONE = /[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/;
-function loneSurrogate(x) {
-  if (typeof x === "string") return LONE.test(x);
-  if (Array.isArray(x)) return x.some(loneSurrogate);
-  if (isObj(x)) return Object.entries(x).some(([k, v]) => LONE.test(k) || loneSurrogate(v));
+// Containers nested more than `limit` levels, found without recursion (a recursive walker would meet the end of the stack first).
+function tooDeep(x, limit) {
+  const stack = [[x, 1]];
+  while (stack.length) {
+    const [node, depth] = stack.pop();
+    if (depth > limit && (Array.isArray(node) || isObj(node))) return true;
+    if (Array.isArray(node)) for (const v of node) stack.push([v, depth + 1]);
+    else if (isObj(node)) for (const v of Object.values(node)) stack.push([v, depth + 1]);
+  }
+  return false;
+}
+// Every string and every key of the result, decoded, in one fixed order (keys in UTF-16 code unit order, lists in order), without recursion.
+function* strings(doc) {
+  const stack = [doc];
+  while (stack.length) {
+    const node = stack.pop();
+    if (typeof node === "string") yield node;
+    else if (Array.isArray(node)) for (let i = node.length - 1; i >= 0; i--) stack.push(node[i]);
+    else if (isObj(node)) {
+      const items = Object.entries(node).sort(byUnit);
+      for (let i = items.length - 1; i >= 0; i--) { stack.push(items[i][1]); stack.push(items[i][0]); }
+    }
+  }
+}
+function loneSurrogate(doc) {
+  for (const text of strings(doc)) if (LONE.test(text)) return true;
   return false;
 }
 // [a, b, ...] as "a:b:..." when every part is an integer-valued number, else null: how a request names itself.
-const ident = (...parts) => (parts.every((p) => tnum(p) && Number.isInteger(p)) ? parts.join(":") : null);
+const ident = (...parts) => (parts.every((p) => tnum(p) && Number.isSafeInteger(p)) ? parts.join(":") : null);
 
 function check(value, spec, where, problems, data) {
   const hex = new RegExp(data.hex_re);
@@ -101,18 +123,26 @@ function versionProblems(doc, proto, data, out) {
   const status = isObj(doc.validity) ? doc.validity.status : undefined;
   const agent = doc.agent, clients = doc.clients, P = data.block_protocols;
   const of = (size, kind = "run") => runs.filter((r) => r.size === size && r.kind === kind);
-  const streamed = (r) => isObj(r.stream) && tnum(r.stream.ttft_ms);
+  // a finished request: its first-token time, total time, the engine's timings and token counts, and both hashes
+  const hex = new RegExp(data.hex_re);
+  const streamed = (r) => isObj(r.stream) && tnum(r.stream.ttft_ms) && tnum(r.wall_ms) && isObj(r.timings) && data.required_timings.every((x) => tnum(r.timings[x]))
+    && isObj(r.tokens) && tnum(r.tokens.prompt) && tnum(r.tokens.generated) && ["request_sha256", "output_sha256"].every((h) => typeof r[h] === "string" && hex.test(r[h]));
+  const summary = (sz, key = "ttft_ms") => isObj(sz) && isObj(sz[key]) && tnum(sz[key].median);
+  const summaries = (sz) => data.size_summaries.every((k) => summary(sz, k));
   // the runs name exactly the wanted requests, each once (`entries` are the idents of the runs, null when a run does not name itself)
   const exactly = (entries, wanted) => !entries.includes(null) && entries.length === new Set(entries).size && entries.length === wanted.length && wanted.every((w) => entries.includes(w));
   const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
   const sessions = isObj(agent) ? agent.sessions : undefined;
   const counts = P.clients.counts.split(",").map(Number);
-  const agentOk = Array.isArray(sessions) && sessions.length === P.agent.sessions && sessions.every((x) => isObj(x) && data.agent_session_keys.every((k) => has(x, k)))
+  const agentOk = Array.isArray(sessions) && sessions.length === P.agent.sessions && sessions.every((x) => isObj(x) && data.agent_session_keys.every((k) => tnum(x[k])))
+    && isObj(agent.turns) && Object.keys(agent.turns).sort().join() === range(1, P.agent.turns).map(String).join()
+    && Object.values(agent.turns).every((v) => isObj(v) && ["prompt_n", "cache_n", "ttft_ms"].every((k) => summary(v, k)))
+    && summary(agent, "hit_pct") && summary(agent, "reread_tokens")
     && exactly(sessions.map((x) => ident(x.index)), range(1, P.agent.sessions).map(String))
     && exactly(of("agent").map((r) => ident(r.index, r.turn)), range(1, P.agent.sessions).flatMap((i) => range(1, P.agent.turns).map((t) => `${i}:${t}`)))
     && of("agent").every(streamed);
   const chat = sizes.chat;
-  const chatOk = isObj(chat) && isObj(chat.ttft_ms) && tnum(chat.ttft_ms.median) && exactly(of("chat").map((r) => ident(r.index)), range(1, P.chat.runs).map(String)) && of("chat").every(streamed);
+  const chatOk = summaries(chat) && exactly(of("chat").map((r) => ident(r.index)), range(1, P.chat.runs).map(String)) && of("chat").every(streamed);
   const clientsOk = () => {
     if (!(Array.isArray(clients) && clients.length === counts.length)) return false;
     const pool = of("clients");
@@ -121,6 +151,8 @@ function versionProblems(doc, proto, data, out) {
     for (const [i, n] of counts.entries()) {
       const row = clients[i], mine = pool.filter((r) => r.clients === n);
       if (!(isObj(row) && data.clients_row_keys.every((k) => has(row, k)) && row.n === n && row.requests === n * P.clients.rounds
+        && tnum(row.rounds) && row.rounds === P.clients.rounds && tnum(row.errors)
+        && data.clients_metrics.every((k) => (row.requests - row.errors > 0 ? tnum(row[k]) : row[k] === null))
         && exactly(mine.map((r) => ident(r.index, r.client)), range(1, P.clients.rounds).flatMap((rd) => range(1, n).map((k) => `${rd}:${k}`))))) return false;
       const refused = mine.filter((r) => has(r, "error_status"));
       if (refused.some((r) => !data.busy_status.includes(r.error_status) || has(r, "stream")) || !mine.filter((r) => !has(r, "error_status")).every(streamed)) return false;
@@ -129,7 +161,7 @@ function versionProblems(doc, proto, data, out) {
     return true;
   };
   const summarized = data.text_sizes.filter((z) => isObj(sizes[z]) && isObj(sizes[z].ttft_ms));
-  const firstOk = summarized.length > 0 && summarized.every((z) => tnum(sizes[z].ttft_ms.median) && of(z).some(streamed));
+  const firstOk = summarized.length > 0 && summarized.every((z) => summaries(sizes[z]) && tnum(proto.runs) && of(z).length === proto.runs && of(z).every(streamed));
   // per block: [the content a finished result must carry, where that data is, what it is called in the message]
   const parts = {
     agent: [agentOk, has(doc, "agent"), "agent.sessions"],
@@ -151,7 +183,39 @@ function sameFlat(a, b) {
   return isObj(a) && Object.keys(a).length === Object.keys(b).length && Object.keys(b).every((k) => has(a, k) && a[k] === b[k]);
 }
 
+// 'secret' or 'host' when a command-line flag's name says it carries a credential or an address, else null.
+function flagKind(arg, data) {
+  const name = arg.split("=")[0].replace(/^-+/, "").toLowerCase();
+  if (data.secret_flag_words.some((w) => name.includes(w))) return "secret";
+  if (data.host_flag_words.some((w) => name.includes(w))) return "host";
+  return null;
+}
+// The runner replaces the value of a credential or address flag; a result whose args still carry one is refused.
+function configArgsProblems(doc, data, out) {
+  const args = isObj(doc.config) ? doc.config.args : undefined;
+  if (!Array.isArray(args)) return;
+  args.forEach((a, i) => {
+    if (typeof a !== "string" || !a.startsWith("-") || !flagKind(a, data)) return;
+    const next = args[i + 1];
+    const value = a.includes("=") ? a.slice(a.indexOf("=") + 1) : (i + 1 < args.length && !(typeof next === "string" && next.startsWith("-")) ? next : null);
+    if (value !== null && !data.flag_placeholders.includes(value)) out.push(`config.args[${i}] carries a credential or an address`);
+  });
+}
+// What a result says about its health must agree with itself.
+function healthProblems(doc, out) {
+  const validity = isObj(doc.validity) ? doc.validity : {};
+  const { status, failure, warnings } = validity;
+  const runs = Array.isArray(doc.runs) ? doc.runs.filter(isObj) : [];
+  if (runs.some((r) => r.output_check === "garbage") && status !== "failed") out.push("a run with degenerate output needs a failed result");
+  if (status === "ok" && runs.some((r) => has(r, "error_status"))) out.push("a result with refused requests needs status warnings");
+  const listed = Array.isArray(warnings) && warnings.length > 0;
+  if (status === "ok" && listed) out.push("status ok cannot carry warnings");
+  if (status === "warnings" && !listed) out.push("status warnings needs at least one warning");
+  if (validity.error !== undefined && validity.error !== null && status !== "failed") out.push("validity.error is only allowed on a failed result");
+}
+
 export function problems(doc, data) {
+  if (tooDeep(doc, data.max_depth)) return [`nested more than ${data.max_depth} levels deep`];
   const out = check(doc, data.public, "", [], data);
   if (!isObj(doc)) return out;
   const schemaIds = data.schema_ids;
@@ -186,13 +250,16 @@ export function problems(doc, data) {
     const section = doc[block];
     if (isObj(section) && section[key] !== undefined && section[key] !== null && !(typeof section[key] === "string" && new RegExp("^(?:" + data.id_re + ")$").test(section[key]))) out.push(`${block}.${key} must be a short name (letters, digits, '.', '_' and '-')`);
   }
+  configArgsProblems(doc, data, out);
+  healthProblems(doc, out);
   if (loneSurrogate(doc)) out.push("contains text that is not valid Unicode");
+  else if ([...strings(doc)].some((text) => [...text].length > data.max_string)) out.push(`contains a string longer than ${data.max_string} characters`);   // declared text is limited: a name, a label, a short note, never a document
   else {
-    const text = JSON.stringify(doc);
-    for (const [re, what] of data.leaks) {
-      const m = new RegExp(re).exec(text);
-      if (m) out.push(`contains ${what}: ${pyRepr(m[0])}`);
+    const found = {};
+    for (const text of strings(doc)) {      // the decoded strings and keys, not their JSON spelling: a newline or a NUL in front of a token hides nothing
+      for (const [re, what] of data.leaks) if (!has(found, what)) { const m = new RegExp(re).exec(text); if (m) found[what] = m[0]; }
     }
+    for (const [, what] of data.leaks) if (has(found, what)) out.push(`contains ${what}: ${pyRepr(found[what])}`);
   }
   return out;
 }

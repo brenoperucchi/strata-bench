@@ -907,6 +907,107 @@ def schema_kind_order(kind):
     return schema.FAILURE_KINDS.index(kind)
 
 
+class ScoutTests(V2Run):
+    """What the scout found after the second review round."""
+
+    def test_the_runner_keeps_no_credential_or_address_in_the_recorded_arguments(self):
+        cfg = {**CFG, "args": CFG["args"] + ["--api-key", "opaque-demo-secret", "--host", "gpu-box.internal", "--token=abc", "--endpoint=http://gpu-box.internal:8080", "--bind", "10.1.2.3"]}
+        cfg["args"] = [a if a != "10.1.2.3" else "gpu-box.internal" for a in cfg["args"]]
+        self.assertEqual(self.go(("medium",), label="s", cfg=cfg), 0)
+        d = self.doc("s")
+        text = json.dumps(d)
+        for secret in ("opaque-demo-secret", "gpu-box.internal", "abc"):
+            self.assertNotIn(secret, text.replace("abcdef", ""), secret)
+        args = d["config"]["args"]
+        self.assertEqual([args[args.index(f)+1] for f in ("--api-key", "--host", "--bind")], ["<redacted>", "<host>", "<host>"])
+        self.assertIn("--token=<redacted>", args)
+        self.assertIn("--endpoint=<host>", args)
+        self.assertEqual(args[args.index("--max-context") + 1], "32768")                # the rest of the configuration is untouched
+        self.assertEqual(validate.problems(d), [])
+        d["config"]["args"][args.index("--api-key") + 1] = "opaque-demo-secret"           # an edited file that still carries one is refused
+        self.assertIn(f"config.args[{args.index('--api-key')}] carries a credential or an address", validate.problems(d))
+
+    def test_a_leak_is_judged_on_the_decoded_text_whatever_comes_before_it(self):
+        self.assertEqual(self.go(("medium",), label="s"), 0)
+        d = self.doc("s")
+        for prefix in ("\n", "\t", "\x00", "\r", "x", "\u00e9"):
+            for text, what in (("sk-abcdefgh12345", "a token"), ("/home/alice/secret", "an absolute path"), ("10.1.2.3", "a private network address")):
+                e = copy.deepcopy(d)
+                e["label"] = prefix + text
+                if prefix in ("x", "\u00e9"):                                             # a letter in front of a token or an address is part of a word: not a leak
+                    continue
+                self.assertTrue(any(f"contains {what}" in p for p in validate.problems(e)), (prefix, text))
+        e = copy.deepcopy(d)
+        e.update({"2": "/alpha/secret/", "1": "/beta/secret/"})
+        self.assertEqual([p for p in validate.problems(e) if p.startswith("contains an absolute path")], ["contains an absolute path: '/beta/'"])
+
+    def test_a_result_nested_too_deep_is_refused_without_recursion(self):
+        self.assertEqual(self.go(("medium",), label="s"), 0)
+        d = self.doc("s")
+        node = leaf = {}
+        for _ in range(5000):
+            leaf["x"] = {}
+            leaf = leaf["x"]
+        d["unexpected"] = node
+        self.assertEqual(validate.problems(d), [f"nested more than {schema.MAX_DEPTH} levels deep"])
+        deep = schema.strict_loads('{"a":' * 5000 + "1" + "}" * 5000)                    # reading it is fine (or a ValueError), and the gate refuses it
+        self.assertEqual(validate.problems(deep), [f"nested more than {schema.MAX_DEPTH} levels deep"])
+
+    def test_numbers_outside_what_javascript_reads_are_refused_not_a_crash(self):
+        self.assertEqual(self.go(("medium",), label="s"), 0)
+        d = self.doc("s")
+        for where in (lambda e: e.update(n_ctx=10 ** 400), lambda e: e["validity"].update(status=10 ** 400), lambda e: e["protocol"].update(id=10 ** 400),
+                      lambda e: e["runs"][0].update(index=10 ** 400)):
+            e = copy.deepcopy(d)
+            where(e)
+            self.assertTrue(validate.problems(e))                                       # a list of problems, never OverflowError
+        self.assertEqual(validate.shown(10 ** 400), "(value not shown)")
+        self.assertIsNone(validate.ident(10 ** 400, 1))
+        self.assertIsNone(validate.ident(2 ** 60))                                       # JavaScript cannot name it exactly
+        self.assertEqual(validate.ident(3, 4.0), (3, 4))
+
+    def test_a_result_must_agree_with_itself_about_its_health(self):
+        Fake.st["busy_client"], Fake.st["busy_status"] = "2", 429
+        self.assertEqual(self.go(("clients",), label="b", **V2), 0)
+        b = self.doc("b")
+        self.assertEqual(b["validity"]["status"], "warnings")
+        e = copy.deepcopy(b)
+        e["validity"].update(status="ok", warnings=[])
+        self.assertIn("a result with refused requests needs status warnings", validate.problems(e))
+        Fake.reset()
+        self.assertEqual(self.go(("medium",), label="m", **V2), 0)
+        m = self.doc("m")
+        for fn, msg in ((lambda e: [r for r in e["runs"] if r["kind"] == "run"][0].update(output_check="garbage"), "a run with degenerate output needs a failed result"),
+                        (lambda e: e["validity"].update(warnings=["x"]), "status ok cannot carry warnings"),
+                        (lambda e: e["validity"].update(status="warnings"), "status warnings needs at least one warning"),
+                        (lambda e: e["validity"].update(error="the server reported an error"), "validity.error is only allowed on a failed result")):
+            e = copy.deepcopy(m)
+            fn(e)
+            self.assertIn(msg, validate.problems(e))
+        e = copy.deepcopy(m)
+        e["validity"].update(status="failed", failure={"kind": "crash", "where": "medium run 1"})
+        [r for r in e["runs"] if r["kind"] == "run"][0].update(output_check="garbage")
+        self.assertEqual(validate.problems(e), [])                                       # a failed result may carry the garbage run that failed it
+
+    def test_declared_text_is_limited_a_private_hostname_and_a_long_string_are_refused(self):
+        self.assertEqual(self.go(("medium",), label="s"), 0)
+        d = self.doc("s")
+        for text in ("gpu-box.internal", "rig.LOCAL", "see gpu-box.lan", "a.b.corp", "nas.home", "x.intranet", "pc.localdomain", "a.private"):
+            e = copy.deepcopy(d)
+            e["label"] = text
+            self.assertTrue(any("contains a private hostname" in p for p in validate.problems(e)), text)
+        for text in ("my.localhost", "x.homepage.com", "Strata 0.1.43.1", "RTX 5090 + RTX 3090", "a" * schema.MAX_STRING, "\U0001F600" * schema.MAX_STRING):
+            e = copy.deepcopy(d)
+            e["label"] = text
+            self.assertEqual(validate.problems(e), [], text[:30])
+        e = copy.deepcopy(d)
+        e["label"] = "a" * (schema.MAX_STRING + 1)
+        self.assertEqual(validate.problems(e), [f"contains a string longer than {schema.MAX_STRING} characters"])
+        e = copy.deepcopy(d)
+        e["config"]["env"]["K" * (schema.MAX_STRING + 1)] = "1"                       # a key counts too
+        self.assertIn(f"contains a string longer than {schema.MAX_STRING} characters", validate.problems(e))
+
+
 class CoverageTests(V2Run):
     """The gate asks for the content a block promises, not only for its name."""
 
