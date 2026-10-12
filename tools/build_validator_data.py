@@ -22,6 +22,8 @@ def spec(s):
         return "hex"
     if isinstance(s, list):
         return {"t": "list", "s": spec(s[0])}
+    if s == schema.NUM:
+        return "num"
     if isinstance(s, schema.Map):
         return {"t": "map", "re": s.key.pattern, "s": spec(s.spec)}
     if isinstance(s, dict):
@@ -37,10 +39,11 @@ def data() -> dict:
         "blocks": list(schema.BLOCKS),
         "suite_blocks": schema.SUITE_BLOCKS,
         "public": spec(schema.PUBLIC),
-        "hex_re": schema._HEX.pattern,
+        "hex_re": "^(?:" + schema._HEX.pattern + ")$",
         "prompts": schema.STANDARD_V1_PROMPTS,
         "prompts_v2": schema.STANDARD_V2_PROMPTS,
-        "skip_reasons": list(schema.SKIP_REASONS),
+        "skip_pairs": schema.SKIP_PAIRS,
+        "text_sizes": list(schema.TEXT_SIZES),
         "block_protocols": schema.BLOCK_PROTOCOLS,
         "v2_run_keys": list(schema.V2_RUN_KEYS),
         "probe_system_sha256": core.sha256(core.PROBE_SYSTEM.encode()),

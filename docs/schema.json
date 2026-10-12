@@ -24,8 +24,7 @@
   "first-token",
   "chat",
   "agent",
-  "clients",
-  "decode-curve"
+  "clients"
  ],
  "failure_kinds": [
   "crash",
@@ -41,7 +40,7 @@
   "450": 1575
  },
  "gprobe_system_sha256": "5530caa1b4d9f495fb591d3d309e1ab19ff4d1bc923dc09bb625427fc20ec43c",
- "hex_re": "^[0-9a-f]{8,64}$",
+ "hex_re": "^(?:[0-9a-f]{8,64})$",
  "host_relations": [
   "same-host",
   "lan",
@@ -94,27 +93,27 @@
     "k": {
      "hit_pct": {
       "k": {
-       "max": "scalar",
-       "median": "scalar",
-       "min": "scalar"
+       "max": "num",
+       "median": "num",
+       "min": "num"
       },
       "t": "obj"
      },
      "reread_tokens": {
       "k": {
-       "max": "scalar",
-       "median": "scalar",
-       "min": "scalar"
+       "max": "num",
+       "median": "num",
+       "min": "num"
       },
       "t": "obj"
      },
      "sessions": {
       "s": {
        "k": {
-        "hit_pct": "scalar",
-        "index": "scalar",
-        "new_tokens": "scalar",
-        "reread_tokens": "scalar"
+        "hit_pct": "num",
+        "index": "num",
+        "new_tokens": "num",
+        "reread_tokens": "num"
        },
        "t": "obj"
       },
@@ -126,49 +125,49 @@
        "k": {
         "cache_n": {
          "k": {
-          "max": "scalar",
-          "median": "scalar",
-          "min": "scalar"
+          "max": "num",
+          "median": "num",
+          "min": "num"
          },
          "t": "obj"
         },
         "decode_tps": {
          "k": {
-          "max": "scalar",
-          "median": "scalar",
-          "min": "scalar"
+          "max": "num",
+          "median": "num",
+          "min": "num"
          },
          "t": "obj"
         },
         "predicted_n": {
          "k": {
-          "max": "scalar",
-          "median": "scalar",
-          "min": "scalar"
+          "max": "num",
+          "median": "num",
+          "min": "num"
          },
          "t": "obj"
         },
         "prompt_ms": {
          "k": {
-          "max": "scalar",
-          "median": "scalar",
-          "min": "scalar"
+          "max": "num",
+          "median": "num",
+          "min": "num"
          },
          "t": "obj"
         },
         "prompt_n": {
          "k": {
-          "max": "scalar",
-          "median": "scalar",
-          "min": "scalar"
+          "max": "num",
+          "median": "num",
+          "min": "num"
          },
          "t": "obj"
         },
         "ttft_ms": {
          "k": {
-          "max": "scalar",
-          "median": "scalar",
-          "min": "scalar"
+          "max": "num",
+          "median": "num",
+          "min": "num"
          },
          "t": "obj"
         }
@@ -184,15 +183,15 @@
    "clients": {
     "s": {
      "k": {
-      "errors": "scalar",
-      "latency_p50_ms": "scalar",
-      "latency_p95_ms": "scalar",
-      "n": "scalar",
-      "requests": "scalar",
-      "rounds": "scalar",
-      "total_tps": "scalar",
-      "ttft_p50_ms": "scalar",
-      "ttft_p95_ms": "scalar"
+      "errors": "num",
+      "latency_p50_ms": "num",
+      "latency_p95_ms": "num",
+      "n": "num",
+      "requests": "num",
+      "rounds": "num",
+      "total_tps": "num",
+      "ttft_p50_ms": "num",
+      "ttft_p95_ms": "num"
      },
      "t": "obj"
     },
@@ -454,80 +453,80 @@
    "runs": {
     "s": {
      "k": {
-      "client": "scalar",
-      "clients": "scalar",
-      "content_chars": "scalar",
-      "error_status": "scalar",
+      "client": "num",
+      "clients": "num",
+      "content_chars": "num",
+      "error_status": "num",
       "finish_reason": "scalar",
-      "index": "scalar",
+      "index": "num",
       "kind": "scalar",
       "output_check": "scalar",
       "output_sha256": "hex",
-      "reasoning_chars": "scalar",
+      "reasoning_chars": "num",
       "request_sha256": "hex",
       "size": "scalar",
       "stream": {
        "k": {
         "gap_ms": {
          "k": {
-          "max": "scalar",
-          "p50": "scalar",
-          "p95": "scalar"
+          "max": "num",
+          "p50": "num",
+          "p95": "num"
          },
          "t": "obj"
         },
-        "pieces": "scalar",
-        "total_ms": "scalar",
-        "ttft_ms": "scalar"
+        "pieces": "num",
+        "total_ms": "num",
+        "ttft_ms": "num"
        },
        "t": "obj"
       },
       "timings": {
        "k": {
-        "cache_n": "scalar",
-        "draft_n": "scalar",
-        "draft_n_accepted": "scalar",
-        "predicted_ms": "scalar",
-        "predicted_n": "scalar",
-        "predicted_per_second": "scalar",
-        "predicted_per_token_ms": "scalar",
-        "prompt_ms": "scalar",
-        "prompt_n": "scalar",
-        "prompt_per_second": "scalar",
-        "prompt_per_token_ms": "scalar"
+        "cache_n": "num",
+        "draft_n": "num",
+        "draft_n_accepted": "num",
+        "predicted_ms": "num",
+        "predicted_n": "num",
+        "predicted_per_second": "num",
+        "predicted_per_token_ms": "num",
+        "prompt_ms": "num",
+        "prompt_n": "num",
+        "prompt_per_second": "num",
+        "prompt_per_token_ms": "num"
        },
        "t": "obj"
       },
       "tokens": {
        "k": {
-        "generated": "scalar",
-        "prompt": "scalar",
-        "reused": "scalar"
+        "generated": "num",
+        "prompt": "num",
+        "reused": "num"
        },
        "t": "obj"
       },
-      "turn": "scalar",
+      "turn": "num",
       "usage": {
        "k": {
-        "completion_tokens": "scalar",
+        "completion_tokens": "num",
         "completion_tokens_details": {
          "k": {
-          "reasoning_tokens": "scalar"
+          "reasoning_tokens": "num"
          },
          "t": "obj"
         },
-        "prompt_tokens": "scalar",
+        "prompt_tokens": "num",
         "prompt_tokens_details": {
          "k": {
-          "cached_tokens": "scalar"
+          "cached_tokens": "num"
          },
          "t": "obj"
         },
-        "total_tokens": "scalar"
+        "total_tokens": "num"
        },
        "t": "obj"
       },
-      "wall_ms": "scalar"
+      "wall_ms": "num"
      },
      "t": "obj"
     },
@@ -540,43 +539,43 @@
      "k": {
       "decode_tps": {
        "k": {
-        "max": "scalar",
-        "median": "scalar",
-        "min": "scalar"
+        "max": "num",
+        "median": "num",
+        "min": "num"
        },
        "t": "obj"
       },
       "prompt_ms": {
        "k": {
-        "max": "scalar",
-        "median": "scalar",
-        "min": "scalar"
+        "max": "num",
+        "median": "num",
+        "min": "num"
        },
        "t": "obj"
       },
       "prompt_tps": {
        "k": {
-        "max": "scalar",
-        "median": "scalar",
-        "min": "scalar"
+        "max": "num",
+        "median": "num",
+        "min": "num"
        },
        "t": "obj"
       },
-      "read_median": "scalar",
-      "reused_median": "scalar",
+      "read_median": "num",
+      "reused_median": "num",
       "ttft_ms": {
        "k": {
-        "max": "scalar",
-        "median": "scalar",
-        "min": "scalar"
+        "max": "num",
+        "median": "num",
+        "min": "num"
        },
        "t": "obj"
       },
       "wall_ms": {
        "k": {
-        "max": "scalar",
-        "median": "scalar",
-        "min": "scalar"
+        "max": "num",
+        "median": "num",
+        "min": "num"
        },
        "t": "obj"
       }
@@ -598,7 +597,7 @@
      "error": "scalar",
      "failure": {
       "k": {
-       "http_status": "scalar",
+       "http_status": "num",
        "kind": "scalar",
        "where": "scalar"
       },
@@ -619,11 +618,10 @@
   "standard-v1": "strata-bench/v1",
   "standard-v2": "strata-bench/v2"
  },
- "skip_reasons": [
-  "context_too_small",
-  "no_parallel_slots",
-  "no_stream_timings"
- ],
+ "skip_pairs": {
+  "agent": "context_too_small",
+  "clients": "no_parallel_slots"
+ },
  "statuses": [
   "ok",
   "warnings",
@@ -651,6 +649,12 @@
   "quick",
   "standard",
   "full"
+ ],
+ "text_sizes": [
+  "short",
+  "medium",
+  "long",
+  "xlong"
  ],
  "v2_run_keys": [
   "stream",

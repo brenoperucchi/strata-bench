@@ -4,14 +4,15 @@ gates what may be exported (unknown keys are rejected).
 Spec forms: SCALAR (str/int/float/bool/None), HEX (hex digest), a dict {key: spec} (only those keys), [spec] (a list
 of spec), Map(key_regex, spec) (a dynamic mapping whose keys match key_regex).
 """
+import math
 import re
 
-SCALAR, HEX = "scalar", "hex"
+SCALAR, HEX, NUM = "scalar", "hex", "num"          # NUM: a finite number or null (never a string or a boolean): the measured metrics
 
 
 class Map:
     def __init__(self, key_regex: str, spec):
-        self.key, self.spec = re.compile(key_regex), spec
+        self.key, self.spec = re.compile(key_regex, re.ASCII), spec       # ASCII: \w and \d mean what they mean in JavaScript
 
 
 STANDARD_V1_PROMPTS = {
@@ -36,22 +37,24 @@ CHAT_PROTOCOL = {"runs": 9, "warmup": 1, "max_tokens": 100}                     
 CLIENTS_PROTOCOL = {"counts": "2,4,8", "rounds": 2, "warmup": 1, "max_tokens": 128}    # medium.txt from N clients at once, per N: 1 warm-up round and 2 measured
 BLOCK_PROTOCOLS = {"agent": AGENT_PROTOCOL, "chat": CHAT_PROTOCOL, "clients": CLIENTS_PROTOCOL}   # the fixed settings a result must repeat for each block it ran
 V2_RUN_KEYS = ("stream", "turn", "clients", "client", "error_status")                    # keys of runs[] that only v2 results may carry
-BUSY_STATUS = (429, 503)         # a server that answers "busy" to a client of the clients block: counted in errors, not a failure
+BUSY_STATUS = (429,)             # a server that answers 429 (too many requests) to a client of the clients block: counted in errors, not a failure. A 503 is not busy:
+#                                  Strata answers 503 while its engine restarts or after it died, so it is a server failure
 AGENT_MIN_CTX = 16384            # the five documents, the answers and the tool text need about 14K tokens: a smaller context skips the block
-SKIP_REASONS = ("context_too_small", "no_parallel_slots", "no_stream_timings")
+SKIP_PAIRS = {"agent": "context_too_small", "clients": "no_parallel_slots"}     # a skipped block and its one closed reason
+TEXT_SIZES = ("short", "medium", "long", "xlong")
 SERVER_FIELDS = ("reasoning_budget_tokens", "sampling", "draft_vocab", "fit_max_tokens", "gpu", "layer_split")
 SHARED_KEYS = ("reasoning_effort", "temperature", "top_p", "top_k", "seed", "max_tokens",
                "experimental_speed_projection")
 
-SUMMARY = {"median": SCALAR, "min": SCALAR, "max": SCALAR}
+SUMMARY = {"median": NUM, "min": NUM, "max": NUM}
 GPU = {"name": SCALAR, "vram_gb": SCALAR, "arch": SCALAR, "pcie": SCALAR, "power_limit_w": SCALAR, "role": SCALAR,
        "display": SCALAR}
-TIMINGS = {k: SCALAR for k in ("cache_n", "prompt_n", "prompt_ms", "prompt_per_token_ms", "prompt_per_second",
+TIMINGS = {k: NUM for k in ("cache_n", "prompt_n", "prompt_ms", "prompt_per_token_ms", "prompt_per_second",
                                "predicted_n", "predicted_ms", "predicted_per_token_ms", "predicted_per_second",
                                "draft_n", "draft_n_accepted")}
-USAGE = {"prompt_tokens": SCALAR, "completion_tokens": SCALAR, "total_tokens": SCALAR,
-         "prompt_tokens_details": {"cached_tokens": SCALAR},
-         "completion_tokens_details": {"reasoning_tokens": SCALAR}}
+USAGE = {"prompt_tokens": NUM, "completion_tokens": NUM, "total_tokens": NUM,
+         "prompt_tokens_details": {"cached_tokens": NUM},
+         "completion_tokens_details": {"reasoning_tokens": NUM}}
 SAMPLING = {"temperature": SCALAR, "top_p": SCALAR, "top_k": SCALAR, "min_p": SCALAR, "seed": SCALAR,
             "max_tokens": SCALAR, "repeat_penalty": SCALAR, "presence_penalty": SCALAR}
 
@@ -76,26 +79,26 @@ OBSERVED = {"engine": {"build_info"}, "model": {"file", "n_ctx"}}
 SCHEMA_IDS = {"standard-v1": "strata-bench/v1", "standard-v2": "strata-bench/v2"}   # protocol id -> the schema it is written in
 HOST_RELATIONS = ("same-host", "lan", "remote")       # v2: where the client ran relative to the server (declared); first-token time includes the network
 SUITES = ("custom", "quick", "standard", "full")      # v2: which profile of blocks was run ("custom" = the sizes picked with --sizes)
-BLOCKS = ("first-token", "chat", "agent", "clients", "decode-curve")
+BLOCKS = ("first-token", "chat", "agent", "clients")        # decode-curve is reserved and not accepted until a protocol exists for it
 SUITE_SIZES = {"quick": ["chat", "medium", "long"], "standard": ["chat", "medium", "long", "xlong", "agent"],
                "full": ["chat", "medium", "long", "xlong", "agent", "clients"]}     # what --suite runs; the probes and gprobe are v1-style extras, asked for with --sizes
 SUITE_BLOCKS = {"quick": ["first-token", "chat"], "standard": ["first-token", "chat", "agent"],
                 "full": ["first-token", "chat", "agent", "clients"]}                  # the blocks a result of that suite lists, in this order
 
 FAILURE_KINDS = ("crash", "oom", "garbage", "hang", "server_error")        # the health view: only catastrophic failures, a closed list
-FAILURE_WHERE = re.compile(r"^((short|medium|long|xlong) (warmup|run) \d{1,3}|(probe|gprobe(150|300|450)) \d{1,3}|agent (warmup|run) \d{1,3} turn [1-5]|chat (warmup|run) \d{1,3}|clients \d{1,3} (warmup|round) \d{1,3})$")
+FAILURE_WHERE = re.compile(r"^((short|medium|long|xlong) (warmup|run) \d{1,3}|(probe|gprobe(150|300|450)) \d{1,3}|agent (warmup|run) \d{1,3} turn [1-5]|chat (warmup|run) \d{1,3}|clients \d{1,3} (warmup|round) \d{1,3})$", re.ASCII)
 
 AGENT_TURN_SUMMARY = {k: SUMMARY for k in ("prompt_n", "cache_n", "predicted_n", "ttft_ms", "prompt_ms", "decode_tps")}
-AGENT = {"sessions": [{"index": SCALAR, "hit_pct": SCALAR, "reread_tokens": SCALAR, "new_tokens": SCALAR}],
+AGENT = {"sessions": [{"index": NUM, "hit_pct": NUM, "reread_tokens": NUM, "new_tokens": NUM}],
          "hit_pct": SUMMARY, "reread_tokens": SUMMARY, "turns": Map(r"^[1-5]$", AGENT_TURN_SUMMARY)}
 
-CLIENTS_ROW = {k: SCALAR for k in ("n", "rounds", "requests", "errors", "total_tps", "ttft_p50_ms", "ttft_p95_ms", "latency_p50_ms", "latency_p95_ms")}
+CLIENTS_ROW = {k: NUM for k in ("n", "rounds", "requests", "errors", "total_tps", "ttft_p50_ms", "ttft_p95_ms", "latency_p50_ms", "latency_p95_ms")}
 
-STREAM = {"ttft_ms": SCALAR, "total_ms": SCALAR, "pieces": SCALAR, "gap_ms": {"p50": SCALAR, "p95": SCALAR, "max": SCALAR}}
+STREAM = {"ttft_ms": NUM, "total_ms": NUM, "pieces": NUM, "gap_ms": {"p50": NUM, "p95": NUM, "max": NUM}}
 
-RUN = {"size": SCALAR, "kind": SCALAR, "index": SCALAR, "turn": SCALAR, "clients": SCALAR, "client": SCALAR, "error_status": SCALAR, "request_sha256": HEX, "wall_ms": SCALAR, "timings": TIMINGS,
-       "usage": USAGE, "tokens": {"prompt": SCALAR, "reused": SCALAR, "generated": SCALAR},
-       "reasoning_chars": SCALAR, "content_chars": SCALAR, "finish_reason": SCALAR, "output_sha256": HEX, "output_check": SCALAR,
+RUN = {"size": SCALAR, "kind": SCALAR, "index": NUM, "turn": NUM, "clients": NUM, "client": NUM, "error_status": NUM, "request_sha256": HEX, "wall_ms": NUM, "timings": TIMINGS,
+       "usage": USAGE, "tokens": {"prompt": NUM, "reused": NUM, "generated": NUM},
+       "reasoning_chars": NUM, "content_chars": NUM, "finish_reason": SCALAR, "output_sha256": HEX, "output_check": SCALAR,
        "stream": STREAM}
 
 PUBLIC = {
@@ -127,12 +130,24 @@ PUBLIC = {
     "clients": [CLIENTS_ROW],
     "sizes": Map(r"^(short|medium|long|xlong|chat|probe|gprobe150|gprobe300|gprobe450)$",
                  {"prompt_tps": SUMMARY, "decode_tps": SUMMARY, "prompt_ms": SUMMARY, "wall_ms": SUMMARY, "ttft_ms": SUMMARY,
-                  "reused_median": SCALAR, "read_median": SCALAR}),
+                  "reused_median": NUM, "read_median": NUM}),
     "validity": {"status": SCALAR, "warnings": [SCALAR], "error": SCALAR,
-                 "failure": {"kind": SCALAR, "where": SCALAR, "http_status": SCALAR}},
+                 "failure": {"kind": SCALAR, "where": SCALAR, "http_status": NUM}},
 }
 
-_HEX = re.compile(r"^[0-9a-f]{8,64}$")
+_HEX = re.compile(r"[0-9a-f]{8,64}")
+
+
+def is_num(value) -> bool:
+    """null or a finite number; a string, a boolean, a list or NaN is not (JSON.parse in JavaScript rejects the NaN and Infinity literals too)."""
+    if value is None:
+        return True
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(float(value))
+    except OverflowError:
+        return False
 
 
 def check(value, spec, where="", problems=None) -> list:
@@ -141,8 +156,11 @@ def check(value, spec, where="", problems=None) -> list:
     if spec == SCALAR:
         if not (value is None or isinstance(value, (str, int, float, bool))):
             problems.append(f"{where}: not a scalar")
+    elif spec == NUM:
+        if not is_num(value):
+            problems.append(f"{where}: not a number")
     elif spec == HEX:
-        if not (isinstance(value, str) and _HEX.match(value)):
+        if not (isinstance(value, str) and _HEX.fullmatch(value)):
             problems.append(f"{where}: not a hex digest")
     elif isinstance(spec, list):
         if not isinstance(value, list):
@@ -155,7 +173,7 @@ def check(value, spec, where="", problems=None) -> list:
             problems.append(f"{where}: not an object")
         else:
             for k, v in value.items():
-                if not spec.key.match(str(k)):
+                if not spec.key.fullmatch(str(k)):
                     problems.append(f"{where}.{k}: key not allowed")
                 else:
                     check(v, spec.spec, f"{where}.{k}", problems)
@@ -175,12 +193,14 @@ def prune(value, spec):
     """value with everything outside spec removed (None when value itself does not fit)."""
     if spec == SCALAR:
         return value if value is None or isinstance(value, (str, int, float, bool)) else None
+    if spec == NUM:
+        return value if is_num(value) else None
     if spec == HEX:
-        return value if isinstance(value, str) and _HEX.match(value) else None
+        return value if isinstance(value, str) and _HEX.fullmatch(value) else None
     if isinstance(spec, list):
         return [prune(v, spec[0]) for v in value] if isinstance(value, list) else None
     if isinstance(spec, Map):
-        return ({k: prune(v, spec.spec) for k, v in value.items() if spec.key.match(str(k))}
+        return ({k: prune(v, spec.spec) for k, v in value.items() if spec.key.fullmatch(str(k))}
                 if isinstance(value, dict) else None)
     if isinstance(spec, dict):
         return {k: prune(v, spec[k]) for k, v in value.items() if k in spec} if isinstance(value, dict) else None

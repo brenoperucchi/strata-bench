@@ -47,7 +47,7 @@ class JsParity(unittest.TestCase):
         agent_failed = real(tmp, "agentfail", mode="oom", sizes=("agent",), run_kw={"protocol": core.PROTOCOL_V2})
         chat = real(tmp, "chat", sizes=("chat",), run_kw={"protocol": core.PROTOCOL_V2})
         clients = real(tmp, "clients", sizes=("clients",), run_kw={"protocol": core.PROTOCOL_V2})
-        busy = real(tmp, "busy", sizes=("clients",), run_kw={"protocol": core.PROTOCOL_V2}, busy_client="2")
+        busy = real(tmp, "busy", sizes=("clients",), run_kw={"protocol": core.PROTOCOL_V2}, busy_client="2", busy_status=429)
         clients_failed = real(tmp, "clientsfail", mode="oom", sizes=("clients",), run_kw={"protocol": core.PROTOCOL_V2})
         quick = real(tmp, "quick", sizes=("medium",), run_kw={"protocol": core.PROTOCOL_V2, "suite": "quick"})
         full = real(tmp, "full", sizes=("medium",), run_kw={"protocol": core.PROTOCOL_V2, "suite": "full"})
@@ -218,6 +218,81 @@ class JsParity(unittest.TestCase):
         mut("suite a list", lambda d: d["protocol"].update(suite=["quick"]), quick)
         mut("suite an object", lambda d: d["protocol"].update(suite={"quick": 1}), quick)
         mut("suite unknown", lambda d: d["protocol"].update(suite="huge"), quick)
+        # numbers are numbers: a string or a boolean in a metric is refused (and cannot reach the dashboard as markup)
+        html = "<img src=x onerror=alert(1)>"
+        for label, path, base in (("summary median", ("sizes", "medium", "prompt_tps", "median"), ok), ("run timing", ("runs", 0, "timings", "prompt_n"), ok),
+                                  ("run tokens", ("runs", 0, "tokens", "prompt"), ok), ("run wall", ("runs", 0, "wall_ms"), ok),
+                                  ("run index", ("runs", 0, "index"), ok), ("run usage", ("runs", 0, "usage", "completion_tokens"), ok),
+                                  ("stream ttft", ("runs", 0, "stream", "ttft_ms"), v2), ("size ttft", ("sizes", "medium", "ttft_ms", "median"), v2),
+                                  ("agent hit", ("agent", "sessions", 0, "hit_pct"), agent), ("agent turn", ("agent", "turns", "1", "ttft_ms", "median"), agent),
+                                  ("clients tps", ("clients", 0, "total_tps"), clients), ("clients n", ("clients", 0, "n"), clients),
+                                  ("failure status", ("validity", "failure", "http_status"), failed)):
+            for kind, value in (("html", html), ("bool", True), ("list", [1]), ("string number", "12")):
+                def put(d, path=path, value=value):
+                    node = d
+                    for key in path[:-1]:
+                        node = node[key]
+                    node[path[-1]] = value
+                mut(f"number {label} {kind}", put, base)
+        # an own key only: names every object inherits are not fields
+        for key in ("constructor", "toString", "hasOwnProperty", "valueOf", "__proto__"):
+            for where, path, base in (("root", (), ok), ("machine", ("machine",), ok), ("runner", ("runner",), ok), ("stream", ("runs", 0, "stream"), v2),
+                                      ("agent", ("agent",), agent), ("protocol agent", ("protocol", "agent"), agent), ("client row", ("clients", 0), clients),
+                                      ("size", ("sizes", "medium"), ok)):
+                def inject(d, path=path, key=key):
+                    node = d
+                    for step in path:
+                        node = node[step]
+                    node[key] = {"host": "internal-only.example", "secret": "opaque-secret-123"}
+                mut(f"inherited key {key} in {where}", inject, base)
+        # containers that are not objects: no exception on either side, the same problems
+        for where, path in (("protocol", ("protocol",)), ("prompt hashes", ("protocol", "prompt_sha256")), ("gprobe", ("protocol", "gprobe")), ("validity", ("validity",)),
+                            ("runner", ("runner",)), ("sizes", ("sizes",)), ("runs", ("runs",)), ("machine", ("machine",)), ("submission", ("submission",)),
+                            ("failure", ("validity", "failure"))):
+            for kind, value in (("string", "x"), ("number", 5), ("true", True), ("zero", 0), ("empty string", ""), ("list", [1]), ("empty list", []), ("null", None)):
+                def swap(d, path=path, value=value):
+                    node = d
+                    for step in path[:-1]:
+                        node = node[step]
+                    node[path[-1]] = value
+                mut(f"container {where} as {kind}", swap, failed if where == "failure" else ok)
+        for where, path in (("agent", ("agent",)), ("protocol agent", ("protocol", "agent")), ("protocol blocks", ("protocol", "blocks")), ("clients", ("clients",)),
+                            ("protocol skipped", ("protocol", "skipped")), ("sizes chat", ("sizes", "chat"))):
+            for kind, value in (("string", "x"), ("number", 5), ("true", True), ("list", [1]), ("empty list", []), ("object", {"a": 1})):
+                def swap2(d, path=path, value=value):
+                    node = d
+                    for step in path[:-1]:
+                        node = node[step]
+                    node[path[-1]] = value
+                mut(f"v2 container {where} as {kind}", swap2, full)
+        # patterns mean the same thing on both sides: no trailing newline, no non-ASCII digits or word characters
+        mut("hash with a newline", lambda d: d["runs"][0].update(request_sha256="abcdef12\n"))
+        mut("env key with a newline", lambda d: d["config"]["env"].update({"FOO\n": "1"}))
+        mut("where with a newline", lambda d: d["validity"].update(status="failed", failure={"kind": "crash", "where": "medium run 1\n"}))
+        mut("where with arabic digits", lambda d: d["validity"].update(status="failed", failure={"kind": "crash", "where": "medium run \u0663"}))
+        mut("model file key with accents", lambda d: d["model"].update(files_sha256={"modelo-\u00e7\u00e3o.gguf": "ab" * 32}))
+        mut("by with a newline", lambda d: d["submission"].update(by="name\n"))
+        mut("leak after a non-ascii letter", lambda d: d.update(label="\u00e9/tmp/"))
+        mut("share after a non-ascii letter", lambda d: d.update(label="\\\u00e9\\"))
+        mut("ip after a non-ascii letter", lambda d: d.update(label="\u00e9 10.1.2.3 \u00e9"))
+        mut("status with a newline", lambda d: d["validity"].update(status="a\nb"))
+        mut("protocol id with a tab", lambda d: d["protocol"].update(id="standard\tv1"))
+        # the closed skip pairs and the content a block promises
+        mut("skip pair wrong", lambda d: d["protocol"].update(skipped=[{"block": "agent", "reason": "no_parallel_slots"}]), agent)
+        mut("skip no stream timings", lambda d: d["protocol"].update(skipped=[{"block": "clients", "reason": "no_stream_timings"}]), clients)
+        mut("decode-curve block", lambda d: d["protocol"].update(blocks=d["protocol"]["blocks"] + ["decode-curve"]), v2)
+        mut("first-token without content", lambda d: d.update(runs=[], sizes={}), v2)
+        mut("first-token without ttft", lambda d: [z.pop("ttft_ms", None) for z in d["sizes"].values()], v2)
+        mut("first-token without streams", lambda d: [r.pop("stream", None) for r in d["runs"]], v2)
+        mut("chat without ttft", lambda d: d["sizes"]["chat"].pop("ttft_ms"), chat)
+        mut("chat missing a run", lambda d: d["runs"].pop(), chat)
+        mut("agent missing a session", lambda d: d["agent"]["sessions"].pop(), agent)
+        mut("agent missing a run", lambda d: d["runs"].pop(), agent)
+        mut("clients missing a row", lambda d: d["clients"].pop(), clients)
+        mut("clients wrong n", lambda d: d["clients"][0].update(n=3), clients)
+        mut("clients wrong requests", lambda d: d["clients"][1].update(requests=9), clients)
+        mut("clients reordered", lambda d: d["clients"].reverse(), clients)
+        mut("full emptied", lambda d: d.update(runs=[], sizes={"chat": {}}, agent={"sessions": [{}, {}, {}]}, clients=[{}]), full)
         mut("v2 prompt hash", lambda d: d["protocol"]["prompt_sha256"].update({"medium.txt": "0" * 64}), v2)
         mut("unicode label", lambda d: d.update(label="résultat ✓ 测试"))
         mut("quote in label with leak", lambda d: d.update(label="it's /usr/local/x"))
@@ -234,7 +309,52 @@ class JsParity(unittest.TestCase):
         for c, got in zip(cases, js):
             self.assertEqual(got, validate.problems(c["doc"]), c["name"])
         self.assertGreater(sum(1 for c in cases if validate.problems(c["doc"])), 30)        # the tampering cases really are rejected
-        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "v2 ok", "v2 failed", "v2 agent ok", "v2 agent failed", "v2 chat ok", "v2 clients ok", "v2 clients busy", "v2 clients failed", "v2 quick", "v2 full", "by set", "by 39 chars", "machine id set", "host relation lan", "blocks several", "agent skipped", "where agent run 2 turn 3", "where agent warmup 1 turn 5", "clients skipped", "where clients 4 round 2", "where clients 8 warmup 1", "where chat run 9", "where chat warmup 1", "custom with the quick blocks", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
+        self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "v2 ok", "v2 failed", "v2 agent ok", "v2 agent failed", "v2 chat ok", "v2 clients ok", "v2 clients busy", "v2 clients failed", "v2 quick", "v2 full", "by set", "by 39 chars", "machine id set", "host relation lan", "agent skipped", "where agent run 2 turn 3", "where agent warmup 1 turn 5", "clients skipped", "where clients 4 round 2", "where clients 8 warmup 1", "where chat run 9", "where chat warmup 1", "custom with the quick blocks", "container runs as empty list", "v2 container protocol skipped as empty list", "share after a non-ascii letter", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
+
+    def test_a_seeded_fuzz_of_mutations_gets_the_same_problems_from_both_validators(self):
+        """Random edits (a value replaced, a key removed, an own or inherited key added) of a v1 result and of v2 results; whatever the edit, both
+        validators answer with the same list and neither raises."""
+        import random
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, True)
+        bases = [real(tmp, "f1"), real(tmp, "f2", sizes=("medium", "chat", "agent", "clients"), run_kw={"protocol": core.PROTOCOL_V2, "suite": "full"}),
+                 real(tmp, "f3", mode="crash", sizes=("clients",), run_kw={"protocol": core.PROTOCOL_V2})]
+        pool = [None, True, False, 0, 7, -3, 1.5, 0.25, "x", "", "a\nb", "\u00e9", "\u00e9/tmp/", "/abs/path/x", "C:\\x", "10.1.2.3", "sk-abcdefgh12345", "ab" * 32, "failed", "ok",
+                "standard-v2", "strata-bench/v2", "agent", "clients", [], [1], ["agent"], [{"block": "agent", "reason": "context_too_small"}], {}, {"a": 1}, {"sessions": [{}]}]
+        keys = ["constructor", "__proto__", "toString", "extra", "stream", "turn", "agent", "clients", "suite", "blocks", "skipped", "host_relation", "chat", "ttft_ms"]
+        rng = random.Random(20261012)
+
+        def paths(node, prefix=()):
+            yield prefix
+            kids = node.items() if isinstance(node, dict) else enumerate(node) if isinstance(node, list) else ()
+            for k, v in kids:
+                yield from paths(v, prefix + (k,))
+        docs = []
+        for i in range(450):
+            d = copy.deepcopy(rng.choice(bases))
+            for _ in range(rng.choice((1, 1, 2, 3))):
+                allpaths = [p for p in paths(d) if p]
+                where = rng.choice(allpaths)
+                parent = d
+                for step in where[:-1]:
+                    parent = parent[step]
+                move = rng.random()
+                if move < 0.55:
+                    parent[where[-1]] = copy.deepcopy(rng.choice(pool))
+                elif move < 0.75 and isinstance(parent, dict):
+                    del parent[where[-1]]
+                elif isinstance(parent[where[-1]], dict):
+                    parent[where[-1]][rng.choice(keys)] = copy.deepcopy(rng.choice(pool))
+                else:
+                    parent[where[-1]] = copy.deepcopy(rng.choice(pool))
+            docs.append({"name": f"fuzz {i}", "doc": d})
+        (tmp / "cases.json").write_text(json.dumps(docs))
+        r = subprocess.run([NODE, str(ROOT / "tests" / "js" / "run_cases.mjs"), str(tmp / "cases.json"), str(ROOT / "docs" / "schema.json")], capture_output=True, text=True, timeout=120)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        js = json.loads(r.stdout)
+        for c, got in zip(docs, js):
+            self.assertEqual(got, validate.problems(c["doc"]), c["name"] + " " + json.dumps(c["doc"])[:300])
+        self.assertGreater(sum(1 for c in docs if validate.problems(c["doc"])), 200)        # the edits really break things
 
     def test_the_schema_data_file_is_current(self):
         import sys

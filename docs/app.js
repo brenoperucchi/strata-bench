@@ -2,8 +2,9 @@
 (function () {
   var state = { rows: [], filters: { gpu: "", model: "", engine: "", status: "", by: "", machine_id: "", protocol: "" }, selected: [], sort: { key: "date", dir: -1 } };
   var $ = function (id) { return document.getElementById(id); };
-  var fmt = function (v, d) { return v === null || v === undefined ? "–" : (typeof v === "number" ? v.toLocaleString(undefined, { maximumFractionDigits: d === undefined ? 1 : d }) : String(v)); };
   var esc = function (s) { return String(s === null || s === undefined ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
+  // every value that goes into a table cell as HTML: numbers are formatted, anything else is escaped (a result file is data, never markup)
+  var fmt = function (v, d) { return v === null || v === undefined ? "–" : (typeof v === "number" && isFinite(v) ? v.toLocaleString(undefined, { maximumFractionDigits: d === undefined ? 1 : d }) : esc(v)); };
   var uniq = function (rows, key) { var s = {}; rows.forEach(function (r) { if (r[key]) s[r[key]] = 1; }); return Object.keys(s).sort(); };
   var size = function (r, name, field) { return r.sizes && r.sizes[name] ? r.sizes[name][field] : null; };
 
@@ -66,7 +67,7 @@
     var head = [["select", ""], ["gpu", "GPU"], ["model", "Model"], ["engine", "Engine"]].concat(hasBy ? [["by", "By"]] : []).concat([["config_id", "Config"], ["prompt_medium", "Prompt medium", 1], ["prompt_long", "Prompt long", 1], ["prompt_xlong", "Prompt xlong", 1], ["decode", "Decode", 1]]).concat(hasV2 ? [["ttft", "First token ms", 1], ["agent", "Agent cache %", 1], ["clients8", "8 clients tok/s", 1]] : []).concat([["date", "Date"], ["open", ""]]);
     var h = "<thead><tr>" + head.map(function (c) { return '<th data-key="' + c[0] + '"' + (c[2] ? ' class="num"' : "") + ">" + c[1] + (state.sort.key === c[0] ? (state.sort.dir > 0 ? " ▲" : " ▼") : "") + "</th>"; }).join("") + "</tr></thead>";
     var b = rows.map(function (r) {
-      var dec = size(r, "medium", "decode_tps");
+      var dec = size(r, "medium", "decode_tps"); if (typeof dec !== "number") dec = null;
       var args = (r.args || []).join(" ");
       return "<tr class='openable' data-id='" + esc(r.id) + "'><td class='pick-cell'><input type='checkbox' class='pick' data-id='" + esc(r.id) + "' aria-label='Select for comparison'" + (state.selected.indexOf(r.id) >= 0 ? " checked" : "") + "></td><td>" + esc(r.gpu) + (r.vram_gb ? " <span class='hint'>" + esc(r.vram_gb) + " GB</span>" : "") + (r.gpu_count > 1 ? " <span class='hint'>×" + esc(r.gpu_count) + "</span>" : "") +
         (r.protocol === "standard-v2" ? "<br><span class='hint'>v2 " + esc(r.suite) + "</span>" + (r.host_relation && r.host_relation !== "same-host" ? " <span class='pill warnings' title='The client ran on another machine, so first-token times include the network'>" + esc(r.host_relation) + "</span>" : "") : "") +

@@ -36,7 +36,7 @@ class Fake(BaseHTTPRequestHandler):
         cls.st = {"model": MODEL, "n_ctx": 32768, "build": "Strata 0.1.39", "reused": 0, "probe_read": 20,
                   "probe_reused": 400, "fail_after": None, "no_timings": False, "calls": [], "shared": {},
                   "settings": True, "api_key": None, "mode": None, "mode_after": 0,
-                  "sse": {}, "last_render": "", "agent_cache": True, "busy_client": None, "slots": None, "active": 0, "max_active": 0}
+                  "sse": {}, "last_render": "", "agent_cache": True, "busy_client": None, "slots": None, "active": 0, "max_active": 0, "client_modes": {}, "busy_pattern": None, "finish": "stop"}
 
     def log_message(self, *a):
         pass
@@ -81,6 +81,12 @@ class Fake(BaseHTTPRequestHandler):
         first_line = str((body.get("messages") or [{}])[0].get("content") or "").split("\n", 1)[0]
         if s.get("busy_client") and first_line.startswith("[strata-bench clients ") and (s["busy_client"] == "*" or first_line.endswith(f" {s['busy_client']}]")):
             return self.reply({"error": "busy"}, s.get("busy_status", 503))
+        if s.get("busy_pattern") and s["busy_pattern"] in first_line:
+            return self.reply({"error": "busy"}, s.get("busy_status", 429))
+        client = first_line.rsplit(" ", 1)[-1].rstrip("]") if first_line.startswith("[strata-bench clients ") else None
+        client_mode = s["client_modes"].get(client)
+        if client_mode == "http400":
+            return self.reply({"error": "bad request"}, 400)
         mode = s["mode"] if len(s["calls"]) > s["mode_after"] else None
         if mode == "crash":                      # the server dies: the connection is closed without any answer
             self.close_connection = True
@@ -98,7 +104,7 @@ class Fake(BaseHTTPRequestHandler):
             finally:
                 with Fake.lock:
                     s["active"] -= 1
-        msg = {"choices": [{"message": {"content": "SAFE", "reasoning_content": "hmm"}, "finish_reason": "stop"}],
+        msg = {"choices": [{"message": {"content": "SAFE", "reasoning_content": "hmm"}, "finish_reason": s.get("finish", "stop")}],
                "usage": {"completion_tokens": 1, "secret_extra": "x"}}
         if s["no_timings"]:
             return self.reply(msg)
@@ -114,8 +120,14 @@ class Fake(BaseHTTPRequestHandler):
     def stream(self, body, probe):
         """An SSE answer (standard-v2). st["sse"] shapes it: header_delay (s before the response starts), keepalive, empty_deltas, pieces, gap (s between pieces), first_delay (s
         before the first piece), drop_after (pieces, then the connection closes), error (an error event after one piece),
-        garbage, no_timings, no_done."""
-        o = Fake.st["sse"]
+        garbage, no_timings, no_done, truncate_after (a piece cut in the middle of its event), multiline, bad_event, plain_json."""
+        o = dict(Fake.st["sse"])
+        first = str(body["messages"][0].get("content") or "").split("\n", 1)[0]
+        if first.startswith("[strata-bench clients "):
+            o.update({"drop": {"drop_after": 1}, "notimings": {"no_timings": True}, "garbage": {"garbage": True}}.get(
+                Fake.st["client_modes"].get(first.rsplit(" ", 1)[-1].rstrip("]")), {}))
+        if o.get("plain_json"):                              # a 200 answer that ignores "stream" and sends one JSON body
+            return self.reply({"choices": [{"message": {"content": "SAFE"}, "finish_reason": "stop"}]})
         time.sleep(o.get("header_delay", 0))                 # a server that is busy reading the prompt answers late
         self.send_response(200)
         self.send_header("content-type", "text/event-stream")
@@ -129,12 +141,23 @@ class Fake(BaseHTTPRequestHandler):
             self.wfile.write(b": keep-alive\n\n")
             self.wfile.flush()
             time.sleep(o.get("keepalive_delay", 0))
+        if o.get("multiline"):                               # one event whose JSON is split over two data: lines
+            self.wfile.write(b'data: {"choices": [{"delta":\ndata: {"content": "SAFE"}}]}\n\n')
+            self.wfile.flush()
+        if o.get("bad_event"):                               # a complete event that is not JSON
+            self.wfile.write(b"data: {not json}\n\n")
+            self.wfile.flush()
         if o.get("empty_deltas"):
             send({"choices": [{"delta": {"role": "assistant", "content": ""}}]})
             send({"choices": [{"delta": {"content": None, "reasoning_content": ""}}]})
         pieces = o.get("pieces", 3)
         for i in range(pieces):
             if i == o.get("drop_after", -1):
+                self.close_connection = True
+                return
+            if i == o.get("truncate_after", -1):             # the connection ends inside an event
+                self.wfile.write(b'data: {"choices": [{"delta": {"content": "SA')
+                self.wfile.flush()
                 self.close_connection = True
                 return
             if i == 1 and o.get("error"):
@@ -151,7 +174,7 @@ class Fake(BaseHTTPRequestHandler):
             total = len(render) // 4
             reused = len(os.path.commonprefix([s["last_render"], render])) // 4 if body.get("cache_prompt") and s["agent_cache"] else 0
             read, s["last_render"] = total - reused, render
-        send({"choices": [{"delta": {}, "finish_reason": "stop"}]})
+        send({"choices": [{"delta": {}, "finish_reason": s.get("finish", "stop")}]})
         send({"choices": [], "usage": {"completion_tokens": pieces, "secret_extra": "x"},
               **({} if o.get("no_timings") else {"timings": {"prompt_n": read, "cache_n": reused, "prompt_ms": 50.0,
                                                            "prompt_per_second": 2000.0, "predicted_n": pieces,

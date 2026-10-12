@@ -73,7 +73,7 @@ FAILURE_TEXT = {"crash": "the server closed or refused the connection during the
                 "oom": "the server reported that it ran out of memory",
                 "garbage": "the server returned degenerate output (a single repeated token, or no letters or digits)",
                 "hang": "a request did not finish in time",
-                "server_error": "the server answered with an HTTP 5xx error"}
+                "server_error": "the server answered with an HTTP 5xx error or reported an error in the stream"}
 OOM_RX = re.compile(r"out of memory|\boom\b|cudamalloc|failed to allocate|allocation failed|cannot allocate", re.I)
 
 
@@ -238,16 +238,24 @@ def call(base: str, messages: list, max_tokens: int, extra=None) -> dict:
     wall = time.perf_counter() - t0
     ch = d["choices"][0]
     msg, finish = ch.get("message", {}), ch.get("finish_reason")
-    t = d.get("timings") or {}
+    t = prune(d.get("timings") or {}, RUN["timings"])
     return {"request_sha256": sha256(json.dumps(messages, ensure_ascii=False).encode()),
-            "wall_ms": round(wall * 1000, 1), "timings": prune(t, RUN["timings"]),
+            "wall_ms": round(wall * 1000, 1), "timings": t,
             "usage": prune(d.get("usage"), RUN["usage"]),
             "tokens": {"prompt": t.get("prompt_n"), "reused": t.get("cache_n"), "generated": t.get("predicted_n")},
             "reasoning_chars": len(msg.get("reasoning_content") or ""), "content_chars": len(msg.get("content") or ""),
-            "finish_reason": finish,
+            "finish_reason": closed_finish(finish),
             "output_check": "garbage" if looks_like_garbage((msg.get("reasoning_content") or "") + " " + (msg.get("content") or "")) else "ok",
             "output_sha256": sha256(json.dumps([msg.get("reasoning_content") or "", msg.get("content") or "",
                                                 finish]).encode())}
+
+
+FINISH_REASONS = ("stop", "length", "tool_calls", "content_filter", "function_call")
+
+
+def closed_finish(v):
+    """The server's finish_reason from a closed list; anything else is recorded as "other", never the server's own words."""
+    return v if v is None or v in FINISH_REASONS else "other"
 
 
 def percentile(sorted_values: list, pct: int):
@@ -272,36 +280,67 @@ def call_stream(base: str, messages: list, max_tokens: int, extra=None, sink=Non
         headers["authorization"] = "Bearer " + API_KEY["value"]
     req = urllib.request.Request(base + "/v1/chat/completions", data=json.dumps(body).encode(), headers=headers)
     content, reasoning, stamps, finish, timings, usage, done = [], [], [], None, {}, None, False
+    seen = {"bytes": 0, "events": 0}
     t0 = time.perf_counter()
-    with urllib.request.urlopen(req, timeout=1800) as r:
-        for raw in r:
-            line = raw.decode("utf-8", "replace").strip()
-            if not line.startswith("data:"):           # blank separators, ": keep-alive" comments, event names
-                continue
-            payload = line[5:].strip()
-            if payload == "[DONE]":
-                done = True
-                break
+
+    def handle(payload: str) -> bool:
+        """One complete event. Returns True for [DONE]. A server error event raises; a payload that is not JSON raises MeasureError."""
+        nonlocal finish, timings, usage
+        payload = payload.strip()
+        if payload == "[DONE]":
+            return True
+        try:
             ev = json.loads(payload)
-            if not isinstance(ev, dict):
-                continue
-            if "error" in ev:                          # the server failed mid-stream; its own words are never kept
-                raise MeasureFailure(stream_error_kind(ev))
-            now = time.perf_counter()
-            for ch in ev.get("choices") or []:
-                delta = ch.get("delta") or {}
-                c, rc = delta.get("content") or "", delta.get("reasoning_content") or ""
-                if c or rc:
-                    stamps.append(now)
-                    content.append(c)
-                    reasoning.append(rc)
-                finish = ch.get("finish_reason") or finish
-            if isinstance(ev.get("timings"), dict):
-                timings = ev["timings"]
-            if isinstance(ev.get("usage"), dict):
-                usage = ev["usage"]
+        except ValueError:
+            raise MeasureError("the stream carried an event that is not JSON")
+        seen["events"] += 1
+        if not isinstance(ev, dict):
+            return False
+        if "error" in ev:                              # the server failed mid-stream; its own words are never kept
+            raise MeasureFailure(stream_error_kind(ev))
+        now = time.perf_counter()
+        for ch in ev.get("choices") or []:
+            delta = ch.get("delta") or {}
+            c, rc = delta.get("content") or "", delta.get("reasoning_content") or ""
+            if c or rc:
+                stamps.append(now)
+                content.append(c)
+                reasoning.append(rc)
+            finish = ch.get("finish_reason") or finish
+        if isinstance(ev.get("timings"), dict):
+            timings = ev["timings"]
+        if isinstance(ev.get("usage"), dict):
+            usage = ev["usage"]
+        return False
+
+    with urllib.request.urlopen(req, timeout=1800) as r:
+        pending = []                                   # the data lines of the event being read; a blank line ends it (SSE framing)
+        for raw in r:
+            seen["bytes"] += len(raw)
+            line = raw.decode("utf-8", "replace").rstrip("\r\n")
+            if line == "":
+                if pending:
+                    done = handle("\n".join(pending))
+                    pending = []
+                    if done:
+                        break
+            elif line.startswith("data:"):
+                pending.append(line[6:] if line.startswith("data: ") else line[5:])
+            # comments (": keep-alive"), event:, id: and retry: lines carry no data
+        if pending and not done:                       # the connection ended inside an event: it counts only if it is whole
+            try:
+                json.loads("\n".join(pending).strip())
+            except ValueError:
+                if "\n".join(pending).strip() != "[DONE]":
+                    pending = []
+            if pending:
+                done = handle("\n".join(pending))
     wall = time.perf_counter() - t0
-    if not done and finish is None:                    # the stream ended with no finish_reason and no [DONE]: the server died
+    if not done and finish is None:
+        if seen["bytes"] and not seen["events"]:       # a 200 answer that is not an event stream at all (the server ignored "stream")
+            raise MeasureError("the server did not stream: the answer had no data events")
+        raise MeasureFailure("crash")                  # ended with no finish_reason and no [DONE]: the server died
+    if not done and not timings:                       # cut after the last text but before the closing chunk with the timings
         raise MeasureFailure("crash")
     text, rtext = "".join(content), "".join(reasoning)
     if sink is not None:
@@ -310,18 +349,18 @@ def call_stream(base: str, messages: list, max_tokens: int, extra=None, sink=Non
     stream = {"ttft_ms": round((stamps[0] - t0) * 1000, 1) if stamps else None, "total_ms": round(wall * 1000, 1),
               "pieces": len(stamps),
               "gap_ms": {"p50": percentile(gaps, 50), "p95": percentile(gaps, 95), "max": gaps[-1]} if gaps else None}
+    t = prune(timings, RUN["timings"])
     return {"request_sha256": sha256(json.dumps(messages, ensure_ascii=False).encode()),
-            "wall_ms": stream["total_ms"], "timings": prune(timings, RUN["timings"]),
+            "wall_ms": stream["total_ms"], "timings": t,
             "usage": prune(usage, RUN["usage"]),
-            "tokens": {"prompt": timings.get("prompt_n"), "reused": timings.get("cache_n"),
-                       "generated": timings.get("predicted_n")},
-            "reasoning_chars": len(rtext), "content_chars": len(text), "finish_reason": finish,
+            "tokens": {"prompt": t.get("prompt_n"), "reused": t.get("cache_n"), "generated": t.get("predicted_n")},
+            "reasoning_chars": len(rtext), "content_chars": len(text), "finish_reason": closed_finish(finish),
             "output_check": "garbage" if looks_like_garbage(rtext + " " + text) else "ok",
             "output_sha256": sha256(json.dumps([rtext, text, finish]).encode()), "stream": stream}
 
 
 def require(r: dict, keys: tuple, what: str):
-    missing = [k for k in keys if not isinstance(r["timings"].get(k), (int, float))]
+    missing = [k for k in keys if not isinstance(r["timings"].get(k), (int, float)) or isinstance(r["timings"].get(k), bool)]
     if "stream" in r and not r["timings"]:
         raise MeasureError(f"{what}: the server sent no timings in the stream (no_stream_timings)")
     if "stream" in r and not isinstance((r["stream"] or {}).get("ttft_ms"), (int, float)):
@@ -678,18 +717,20 @@ def client_request(base: str, messages: list, results: list, k: int, barrier: th
 
 def measure_clients(base: str, res: Result, log):
     """standard-v2 clients block: for each N in CLIENTS_PROTOCOL["counts"], N clients send the same public prompt at once (each with its own first line,
-    so none reads another's cache), 1 warm-up round and CLIENTS_PROTOCOL["rounds"] measured ones. A client the server turns away as busy (429 or 503) is
-    counted in `errors`; any other failure of a request is a failure of the server and stops the run. total_tps is the tokens all clients
-    generated divided by the time from the common start to the last finish."""
+    so none reads another's cache), 1 warm-up round and CLIENTS_PROTOCOL["rounds"] measured ones. A client the server turns away with 429 is counted in
+    `errors`; any other failure of a request is a failure of the server and stops the run (a 503 is one: Strata answers it while its engine restarts or
+    after it died). total_tps is the tokens all clients generated divided by the time from the common start, taken just before the barrier releases the
+    clients, to the last finish; a measured round in which nothing was generated counts as 0 in the median."""
     d, P = res.doc, CLIENTS_PROTOCOL
     text = (PROMPTS / "medium.txt").read_text(encoding="utf-8")
     rows = []
     for n in (int(x) for x in P["counts"].split(",")):
-        ok, ttft, latency, tps, errors, requests = [], [], [], [], 0, 0
+        ttft, latency, tps, errors, requests, reuse_warned = [], [], [], 0, 0, False
         for kind, rounds in (("warmup", P["warmup"]), ("run", P["rounds"])):
             for rnd in range(1, rounds + 1):
                 res.where = f"clients {n} {'warmup' if kind == 'warmup' else 'round'} {rnd}"
-                results, barrier = [None] * n, threading.Barrier(n + 1)
+                results, start = [None] * n, [None]
+                barrier = threading.Barrier(n + 1, action=lambda: start.__setitem__(0, time.perf_counter()))   # the clock starts before any client is released
                 threads = [threading.Thread(target=client_request, daemon=True, args=(
                     base, [{"role": "user", "content": f"[strata-bench clients {n} {kind} {rnd} {k + 1}]\n" + text}], results, k, barrier))
                     for k in range(n)]
@@ -699,39 +740,54 @@ def measure_clients(base: str, res: Result, log):
                     barrier.wait(timeout=60)
                 except threading.BrokenBarrierError:
                     raise MeasureError(f"{res.where}: the clients did not start together")
-                t0 = time.perf_counter()
                 for t in threads:
                     t.join()
-                wall = time.perf_counter() - t0
-                generated, fatal = 0, None
-                for k, (state, r) in enumerate(results):
+                wall = time.perf_counter() - start[0]
+                generated, fatals, late = 0, [], []
+                for k, (state, r) in enumerate(results):          # record every outcome first, judge afterwards, so no failure hides another
                     run = {"size": "clients", "kind": kind, "index": rnd, "clients": n, "client": k + 1}
+                    requests += kind == "run"
                     if state == "ok":
                         run.update(r)
                         d["runs"].append(run)
-                        if kind == "run":
-                            require(run, ("prompt_n", "prompt_ms", "prompt_per_second", "predicted_n", "predicted_per_second"), res.where)
+                        if run.get("output_check") == "garbage":
+                            fatals.append(MeasureFailure("garbage", res.where))
+                        elif kind == "run":
+                            try:
+                                require(run, ("prompt_n", "prompt_ms", "prompt_per_second", "predicted_n", "predicted_per_second"), res.where)
+                            except MeasureError as e:
+                                late.append(e)
+                                continue
                             generated += run["tokens"]["generated"] or 0
                             ttft.append(run["stream"]["ttft_ms"])
                             latency.append(run["stream"]["total_ms"])
-                        if run.get("output_check") == "garbage":
-                            fatal = fatal or MeasureFailure("garbage", res.where)
+                            reused = run["tokens"]["reused"]
+                            if reused is not None and reused > REUSE_LIMIT and not reuse_warned:
+                                reuse_warned = True
+                                d["validity"]["warnings"].append(f"clients {n}: {reused} prompt tokens reused, the prompt was not read fresh")
                     elif state == "busy":
                         d["runs"].append({**run, "error_status": r})
                         errors += kind == "run"
                     else:
-                        fatal = fatal or r
-                    requests += kind == "run"
+                        fatals.append(r)
                 res.save()
-                if fatal is not None:
-                    raise fatal
-                if kind == "run" and generated:
+                judged = [(classify_failure(e), e) for e in fatals]       # each exception is classified once: reading an HTTP error body twice would lose it
+                health = sorted(((FAILURE_KINDS.index(k), k, st) for (k, st), _ in judged if k in FAILURE_KINDS))
+                if health:                                                 # the same answer whatever order the clients finished in
+                    raise MeasureFailure(health[0][1], res.where, health[0][2])
+                if judged:
+                    raise judged[0][1]
+                if late:
+                    raise late[0]
+                if kind == "run":
                     tps.append(generated / max(wall, 1e-9))
-                log(f"clients {n} {kind} {rnd}: {sum(1 for s, _ in results if s == 'ok')} of {n} answered in {round(wall * 1000)} ms")
+                log(f"clients {n} {kind} {rnd}: {sum(1 for s_, _ in results if s_ == 'ok')} of {n} answered in {round(wall * 1000)} ms")
         if not ttft:
             d["validity"]["warnings"].append(f"clients {n}: every request was turned away as busy")
+        elif errors:
+            d["validity"]["warnings"].append(f"clients {n}: {errors} request(s) turned away as busy, so the total speed counts fewer than {n} clients in some rounds")
         rows.append({"n": n, "rounds": P["rounds"], "requests": requests, "errors": errors,
-                     "total_tps": round(statistics.median(tps), 1) if tps else None,
+                     "total_tps": round(statistics.median(tps), 1) if ttft else None,
                      "ttft_p50_ms": percentile(sorted(ttft), 50) if ttft else None, "ttft_p95_ms": percentile(sorted(ttft), 95) if ttft else None,
                      "latency_p50_ms": percentile(sorted(latency), 50) if latency else None,
                      "latency_p95_ms": percentile(sorted(latency), 95) if latency else None})

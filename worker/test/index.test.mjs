@@ -255,3 +255,29 @@ test("a tampered standard-v2 result is refused with the validator's problems", a
   asV1.schema = "strata-bench/v1";
   assert.equal((await submit(asV1)).status, 422);
 });
+
+test("a field every object inherits is not a field of the schema, and a number is a number", async () => {
+  for (const [path, key] of [[["runs", 0, "stream"], "constructor"], [[], "toString"], [["machine"], "__proto__"], [["clients", 0], "hasOwnProperty"]]) {
+    const calls = mockFetch(goodRoutes());
+    const raw = JSON.stringify(VALID_V2);
+    const bad = JSON.parse(raw);
+    let node = bad;
+    for (const step of path) node = node[step];
+    Object.defineProperty(node, key, { value: { host: "internal-only.example", secret: "opaque-secret-123" }, enumerable: true, configurable: true, writable: true });
+    const res = await submit(bad);
+    const out = await res.json();
+    assert.equal(res.status, 422, key);
+    assert.ok(out.problems.some((p) => p.includes("not in the public schema")), key);
+    assert.equal(calls.filter((c) => c.url.includes("api.github.com")).length, 0, key);
+  }
+  const calls = mockFetch(goodRoutes());
+  const html = structuredClone(VALID_V2);
+  html.sizes.medium.ttft_ms.median = "<img src=x onerror=alert(1)>";
+  html.clients[0].total_tps = true;
+  const res = await submit(html);
+  const out = await res.json();
+  assert.equal(res.status, 422);
+  assert.ok(out.problems.some((p) => p.includes("sizes.medium.ttft_ms.median: not a number")));
+  assert.ok(out.problems.some((p) => p.includes("clients[0].total_tps: not a number")));
+  assert.equal(calls.filter((c) => c.url.includes("api.github.com")).length, 0);
+});
