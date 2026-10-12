@@ -72,3 +72,5 @@ table.compare a.remove { font-size: .8rem; }
 td.pick-cell, th.pick-cell { width: 28px; padding-right: 0; }
 table.compare td.num { text-align: left; }
 td.nowrap { white-space: nowrap; }
+tr.openable { cursor: pointer; }
+tr.openable:hover td { background: var(--hover, rgba(127,127,127,.08)); }

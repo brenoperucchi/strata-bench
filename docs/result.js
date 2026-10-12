@@ -190,7 +190,18 @@
     $("status").textContent = "No result was asked for. Open one from the dashboard's table.";
     return;
   }
-  fetch(id, { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); }).then(function (doc) { render(doc, id); }).catch(function () {
+  // Links to the neighbours in the dashboard's order (newest first) and to the comparison. Best effort: the page works without them.
+  function neighbours() {
+    fetch("data.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (data) {
+      var ids = (data.results || []).map(function (r) { return r.id; }), i = ids.indexOf(id), nav = document.querySelector("header nav");
+      if (i < 0 || !nav) return;
+      var add = function (text, href) { var a = el("a", text); a.href = href; nav.append(a); };
+      if (i > 0) add("← Newer", "result.html?id=" + encodeURIComponent(ids[i - 1]));
+      if (i < ids.length - 1) add("Older →", "result.html?id=" + encodeURIComponent(ids[i + 1]));
+      if (ids.length > 1) add("Compare with another", "index.html?compare=" + encodeURIComponent(id));
+    }).catch(function () { /* no neighbours */ });
+  }
+  fetch(id, { cache: "no-cache" }).then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); }).then(function (doc) { render(doc, id); neighbours(); }).catch(function () {
     $("subtitle").textContent = "The result file could not be loaded.";
     $("status").textContent = "The file may have been removed, or the page was opened without its data. Go back to the dashboard.";
   });
