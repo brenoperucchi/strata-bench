@@ -156,7 +156,10 @@ class Site(unittest.TestCase):
 
     def test_the_committed_data_file_is_well_formed(self):
         d = json.loads((ROOT / "docs" / "data.json").read_text())                  # rebuilt by CI after each merge; here only its shape
-        self.assertEqual((d["protocols"], d["count"]), (["standard-v1"], len(d["results"])))
+        self.assertEqual(d["count"], len(d["results"]))
+        self.assertEqual(d["protocols"], sorted(set(d["protocols"])))               # which protocols are listed depends on the results published so far
+        self.assertTrue(set(d["protocols"]) <= {"standard-v1", "standard-v2"})
+        self.assertTrue(set(d["protocols"]) >= {r["protocol"] for r in d["results"]})
 
     def test_the_empty_state_builds(self):
         data = build_site.build(self.tmp / "results")
