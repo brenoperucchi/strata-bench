@@ -7,7 +7,7 @@ Community measurements of [Strata](https://github.com/Niko1221/Strata) servers w
   <a href="https://brenoperucchi.github.io/strata-bench/">
     <picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/img/dashboard-dark.png">
-      <img src="docs/img/dashboard.png" alt="The strata-bench dashboard: a table with one result, an RTX 5090 running Swift IQ3_XXS on Strata 0.1.42" width="900">
+      <img src="docs/img/dashboard.png" alt="The strata-bench dashboard: a summary strip, a speed map of every result, the change between two results of the same machine against a noise band, and the same model on an RTX 5090 and a Tesla V100S" width="900">
     </picture>
   </a>
 </p>
@@ -18,7 +18,7 @@ strata-bench is an independent project. It is not part of Strata and is not main
 
 - A runner that measures a Strata server you already run and writes one `result.json` (schema `strata-bench/v1`, or `strata-bench/v2` with `--protocol standard-v2`) per configuration.
 - A validator that is the public-export gate: it accepts only results of the public protocol and refuses anything that looks like a local path, a private address or a secret.
-- A dashboard with two views. Performance shows prompt and decode speeds side by side for the same model and config. Health lists the catastrophic failures that runs recorded: crash, out of memory, degenerate output, hang, server error.
+- A dashboard with an overview and two views. The overview opens with a summary strip, a speed map (one point per result), what changed between two results of the same machine (a new engine build, or a changed configuration with the arguments that differ) drawn against the run-to-run noise band, and the same model on different machines. It says "insufficient data" instead of a verdict until three machines back a release. Performance lists every result with prompt and decode speeds side by side for the same model and config. Health lists the catastrophic failures that runs recorded: crash, out of memory, degenerate output, hang, server error.
 
 ## Run it
 
