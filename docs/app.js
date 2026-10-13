@@ -9,10 +9,20 @@
   var size = function (r, name, field) { return r.sizes && r.sizes[name] ? r.sizes[name][field] : null; };
 
   function cards(rows) {
+    if (typeof StrataOverview !== "undefined") { $("cards").innerHTML = StrataOverview.kpi(rows); return; }
     var perf = rows.filter(function (r) { return r.status !== "failed"; });
     var failed = rows.length - perf.length;
     var items = [[rows.length, "results"], [uniq(rows, "gpu").length, "GPU models"], [uniq(rows, "engine").length, "engine versions"], [failed, "failed runs"]];
     $("cards").innerHTML = items.map(function (i) { return '<div class="card"><b>' + esc(i[0]) + "</b><span>" + esc(i[1]) + "</span></div>"; }).join("");
+  }
+
+  // the overview panels need the insight modules; the table and the filters below work without them
+  function overview(rows) {
+    var O = typeof StrataOverview !== "undefined" ? StrataOverview : null;
+    if (!O || !rows.length) return;
+    var panels = [["ov-map", O.speedMap], ["ov-pairs", O.pairs], ["ov-same", O.sameModel]];
+    panels.forEach(function (p) { var html = p[1](rows); $(p[0]).innerHTML = html; $(p[0]).hidden = !html; });
+    $("overview").hidden = false;
   }
 
   function filters(rows) {
@@ -139,6 +149,7 @@
   fetch("data.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (data) {
     state.rows = data.results || [];
     cards(state.rows);
+    overview(state.rows);
     tabs();
     if (!state.rows.length) { $("empty").hidden = false; $("view-perf").hidden = true; $("view-health").hidden = true; document.querySelector(".tabs").hidden = true; return; }
     readLink();

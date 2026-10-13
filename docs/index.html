@@ -24,6 +24,11 @@
 <main class="wrap">
   <p class="note" id="independence">strata-bench is an independent project. It is not part of Strata and is not maintained by its author.</p>
   <section id="cards" class="cards" aria-label="Summary"></section>
+  <section id="overview" class="overview" aria-label="Overview" hidden>
+    <article class="panel" id="ov-map"></article>
+    <article class="panel" id="ov-pairs"></article>
+    <article class="panel full" id="ov-same"></article>
+  </section>
   <div class="tabs" role="tablist">
     <button role="tab" id="tab-perf" aria-selected="true" aria-controls="view-perf">Performance</button>
     <button role="tab" id="tab-health" aria-selected="false" aria-controls="view-health">Health</button>
@@ -49,6 +54,8 @@
 <footer class="wrap">
   <p>Data: <a href="data.json">data.json</a>, built from <code>results/</code> by <code>tools/build_site.py</code>. MIT licensed.</p>
 </footer>
+<script src="insights.js"></script>
+<script src="overview.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

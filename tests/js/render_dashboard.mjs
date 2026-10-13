@@ -39,6 +39,8 @@ const sandbox = {
 vm.createContext(sandbox);
 // the page swallows a failure to draw into a "could not be loaded" card; here it must show, or a broken stub would look like a safe page
 const source = readFileSync(appPath, "utf8").replace(".catch(function () {", ".catch(function (e) { console.error(e && e.stack);");
+sandbox.window = sandbox;                                                  // the overview modules attach themselves to the page's global object
+for (const mod of ["insights.js", "overview.js"]) vm.runInContext(readFileSync(new URL(mod, "file://" + appPath.replace(/[^/]*$/, "")), "utf8"), sandbox);
 vm.runInContext(source, sandbox);
 await new Promise((r) => setTimeout(r, 50));
 console.log(JSON.stringify(html));
