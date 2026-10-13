@@ -21,10 +21,19 @@ SIZE_ORDER = ("short", "medium", "long", "xlong", "chat", "probe", "gprobe150", 
 
 
 def gpu_name(name):
-    """The GPU as the dashboard groups and filters it: a leading vendor word is dropped ("NVIDIA GeForce RTX 5090" and "RTX 5090" are the same card). The result file keeps what was declared."""
+    """The GPU as the dashboard shows, groups and filters it: a leading vendor word ("NVIDIA GeForce RTX 5090" and "RTX 5090" are the same card), a note in parentheses and the PCIe suffix are dropped. The result file keeps what was declared."""
     if not isinstance(name, str):
         return name
-    return re.sub(r"^(?:(?:NVIDIA|GeForce|AMD)\s+)+", "", name.strip(), flags=re.I) or name
+    short = re.sub(r"\s*\([^)]*\)", "", name.strip())
+    short = re.sub(r"[- ]PCIE(?:[- ]?\d+GB)?\b", "", short, flags=re.I)
+    return re.sub(r"^(?:(?:NVIDIA|GeForce|AMD)\s+)+", "", short.strip(), flags=re.I).strip() or name
+
+
+def model_name(name):
+    """The model family as the dashboard shows it: a note in parentheses is dropped (the quantization has its own column)."""
+    if not isinstance(name, str):
+        return name
+    return re.sub(r"\s*\([^)]*\)", "", name).strip() or name
 
 
 def med(x):
@@ -34,7 +43,8 @@ def med(x):
 def row(rel: str, doc: dict) -> dict:
     m, e, mo = doc.get("machine") or {}, doc.get("engine") or {}, doc.get("model") or {}
     cfg, val = doc.get("config") or {}, doc.get("validity") or {}
-    g0 = (m.get("gpus") or [{}])[0] or {}
+    gpus = [g for g in (m.get("gpus") or []) if isinstance(g, dict)]
+    g0 = gpus[0] if gpus else {}
     sizes = {}
     for name in SIZE_ORDER:
         s = (doc.get("sizes") or {}).get(name)
@@ -56,9 +66,12 @@ def row(rel: str, doc: dict) -> dict:
         "warnings": len(val.get("warnings") or []),
         "failure": val.get("failure"),
         "gpu": gpu_name(g0.get("name")), "vram_gb": g0.get("vram_gb"), "gpu_count": len(m.get("gpus") or []) or None,
+        "gpu_other": sum(1 for g in gpus[1:] if gpu_name(g.get("name")) != gpu_name(g0.get("name"))),      # cards of another kind beside the first (a display card, say)
+        "gpu_full": ", ".join(str(g.get("name")) + (" " + str(g["vram_gb"]) + " GB" if g.get("vram_gb") else "") for g in gpus if g.get("name")) or None,
+        "model_full": mo.get("family") or doc.get("model_path"),
         "cpu": m.get("cpu"), "ram_gb": m.get("ram_gb"), "os": m.get("os"), "driver": m.get("driver"),
         "engine": e.get("version") or doc.get("build_info"), "commit": e.get("commit"), "backend": e.get("backend"),
-        "model": mo.get("family") or doc.get("model_path"), "quant": mo.get("quant"), "n_ctx": doc.get("n_ctx"),
+        "model": model_name(mo.get("family") or doc.get("model_path")), "quant": mo.get("quant"), "n_ctx": doc.get("n_ctx"),
         "config_id": cfg.get("config_id"), "config_origin": cfg.get("config_origin"),
         "args": cfg.get("args"),
         "sizes": sizes,

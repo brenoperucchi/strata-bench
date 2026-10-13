@@ -25,6 +25,22 @@ class DetailPage(unittest.TestCase):
     def test_the_script_parses(self):
         self.assertEqual(subprocess.run([NODE, "--check", str(ROOT / "docs" / "result.js")], capture_output=True).returncode, 0)
 
+    @unittest.skipUnless(NODE, "node is not installed")
+    def test_the_short_names_in_the_scripts_match_the_ones_the_site_builder_writes(self):
+        import sys
+        sys.path.insert(0, str(ROOT / "tools"))
+        import build_site
+        gpus = ("Tesla V100S-PCIE-32GB (reports as Tesla PG500-216)", "NVIDIA GeForce RTX 5090", "GeForce GTX 1060 6GB", "NVIDIA A100-SXM4-80GB", "Tesla V100-PCIE-16GB",
+                "AMD Radeon RX 7900 XTX", "nvidia geforce rtx 4090", "(note only)", "NVIDIA")
+        models = ("Swift (Qwen3.8-Flash-Next 125B MoE)", "Swift Qwen3.8 Flash Next", "(x)")
+        for script in ("result.js", "compare.js"):
+            src = (ROOT / "docs" / script).read_text()
+            g, m = (re.search(r"var %s = (function .*?);\n" % n, src).group(1) for n in ("shortGpu", "shortModel"))
+            code = "const g = %s, m = %s; console.log(JSON.stringify([%s, %s]));" % (g, m, json.dumps(list(gpus)) + ".map(g)", json.dumps(list(models)) + ".map(m)")
+            out = json.loads(subprocess.run([NODE, "-e", code], capture_output=True, text=True, check=True).stdout)
+            self.assertEqual(out[0], [build_site.gpu_name(n) for n in gpus], script)
+            self.assertEqual(out[1], [build_site.model_name(n) for n in models], script)
+
     def test_the_id_check_accepts_published_results_and_refuses_anything_else(self):
         m = re.search(r"/(\^results.*?result\\\.json\$)/\.test\(id\)", JS)
         self.assertIsNotNone(m)

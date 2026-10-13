@@ -66,7 +66,9 @@ class Site(unittest.TestCase):
 
     def test_the_same_gpu_declared_with_and_without_the_vendor_name_is_one_gpu_on_the_page(self):
         for name, shown in (("NVIDIA GeForce RTX 5090", "RTX 5090"), ("RTX 5090", "RTX 5090"), ("GeForce RTX 3090", "RTX 3090"), ("NVIDIA RTX 4000 Ada Generation", "RTX 4000 Ada Generation"),
-                            ("AMD Radeon RX 7900 XTX", "Radeon RX 7900 XTX"), ("nvidia geforce rtx 4090", "rtx 4090"), ("Tesla P100", "Tesla P100"), ("NVIDIA", "NVIDIA"), (None, None)):
+                            ("AMD Radeon RX 7900 XTX", "Radeon RX 7900 XTX"), ("nvidia geforce rtx 4090", "rtx 4090"), ("Tesla P100", "Tesla P100"), ("NVIDIA", "NVIDIA"), (None, None),
+                            ("Tesla V100S-PCIE-32GB (reports as Tesla PG500-216)", "Tesla V100S"), ("Tesla V100-PCIE-16GB", "Tesla V100"), ("NVIDIA A100-SXM4-80GB", "A100-SXM4-80GB"),
+                            ("(note only)", "(note only)")):
             self.assertEqual(build_site.gpu_name(name), shown, name)
         ident = json.loads(json.dumps(self.IDENT))
         ident["machine"]["gpus"][0]["name"] = "NVIDIA GeForce RTX 5090"
@@ -75,6 +77,18 @@ class Site(unittest.TestCase):
         rows = build_site.build(self.tmp / "results")["results"]
         self.assertEqual({r["gpu"] for r in rows}, {"RTX 5090"})
         self.assertIn("NVIDIA GeForce RTX 5090", (self.tmp / "results" / "long-name.result.json").read_text())      # the file keeps what was declared
+
+    def test_a_long_model_name_is_shown_short_and_the_full_names_stay_for_the_tooltip(self):
+        for name, shown in (("Swift (Qwen3.8-Flash-Next 125B MoE)", "Swift"), ("Swift Qwen3.8 Flash Next", "Swift Qwen3.8 Flash Next"), (None, None)):
+            self.assertEqual(build_site.model_name(name), shown, name)
+        ident = json.loads(json.dumps(self.IDENT))
+        ident["machine"]["gpus"] = [{"name": "Tesla V100S-PCIE-32GB (reports as Tesla PG500-216)", "vram_gb": 32}, {"name": "GeForce GTX 1060 6GB", "vram_gb": 6}]
+        ident["model"] = {**ident.get("model", {}), "family": "Swift (Qwen3.8-Flash-Next 125B MoE)"}
+        self.make("mixed", identity=ident)
+        r = build_site.build(self.tmp / "results")["results"][0]
+        self.assertEqual((r["gpu"], r["gpu_count"], r["gpu_other"], r["model"]), ("Tesla V100S", 2, 1, "Swift"))
+        self.assertEqual(r["gpu_full"], "Tesla V100S-PCIE-32GB (reports as Tesla PG500-216) 32 GB, GeForce GTX 1060 6GB 6 GB")
+        self.assertEqual(r["model_full"], "Swift (Qwen3.8-Flash-Next 125B MoE)")
 
     def test_a_failed_result_is_published_for_the_health_view(self):
         self.make("boom", mode="crash", identity=self.IDENT)

@@ -19,6 +19,8 @@
     return e;
   }
   function put(parent) { for (var i = 1; i < arguments.length; i++) if (arguments[i]) parent.append(arguments[i]); return parent; }
+  var shortGpu = function (n) { var s = String(n).replace(/\s*\([^)]*\)/g, "").replace(/[- ]PCIE(?:[- ]?\d+GB)?\b/gi, "").trim().replace(/^(?:(?:NVIDIA|GeForce|AMD)\s+)+/i, "").trim(); return s || String(n); };
+  var shortModel = function (n) { return String(n).replace(/\s*\([^)]*\)/g, "").trim() || String(n); };
   var num = function (v, d) { return v === null || v === undefined || isNaN(v) ? "–" : Number(v).toLocaleString(undefined, { maximumFractionDigits: d === undefined ? 1 : d }); };
   var rng = function (s, d) { return s && s.median !== undefined && s.median !== null ? num(s.median, d) + (s.min !== undefined && s.max !== undefined && s.min !== null ? " (" + num(s.min, d) + " to " + num(s.max, d) + ")" : "") : "–"; };
   function median(a) { a = a.filter(function (x) { return typeof x === "number"; }).sort(function (x, y) { return x - y; }); if (!a.length) return null; var m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; }
@@ -94,8 +96,12 @@
     $("status").textContent = "";
 
     var pill = el("span", val.status || "", "pill " + (val.status || ""));
-    var cards = [[gpus || "–", "GPU"], [(mo.family || doc.model_path || "–") + (mo.quant ? " " + mo.quant : ""), "model"], [e.version || doc.build_info || "–", "engine"], [num(doc.n_ctx, 0), "context tokens"], [(cfg.config_origin || "–") + (cfg.config_origin_verified ? " (verified)" : ""), "config origin"]];
-    cards.forEach(function (c) { var d = el("div", null, "card"); put(d, el("b", c[0]), el("span", c[1])); $("cards").append(d); });
+    var gl = (m.gpus || []).filter(function (g) { return g && g.name; }), g0 = gl[0] || null;
+    var gOther = g0 ? gl.slice(1).filter(function (g) { return shortGpu(g.name) !== shortGpu(g0.name); }).length : 0;
+    var gpuCard = g0 ? shortGpu(g0.name) + (g0.vram_gb ? " " + g0.vram_gb + " GB" : "") + (gOther > 0 ? " +" + gOther : gl.length > 1 ? " ×" + gl.length : "") : "–";
+    var modelFull = (mo.family || doc.model_path || "–") + (mo.quant ? " " + mo.quant : "");
+    var cards = [[gpuCard, "GPU", gpus], [(mo.family ? shortModel(mo.family) : (doc.model_path || "–")) + (mo.quant ? " " + mo.quant : ""), "model", modelFull], [e.version || doc.build_info || "–", "engine"], [num(doc.n_ctx, 0), "context tokens"], [(cfg.config_origin || "–") + (cfg.config_origin_verified ? " (verified)" : ""), "config origin"]];
+    cards.forEach(function (c) { var d = el("div", null, "card"); var b = el("b", c[0]); if (String(c[0]).length > 18) b.className = "long"; if (c[2] && c[2] !== c[0]) d.title = c[2]; put(d, b, el("span", c[1])); $("cards").append(d); });
     if (proto.suite) { var pc = el("div", null, "card"); put(pc, el("b", proto.id + " · " + proto.suite), el("span", "protocol" + ((doc.runner || {}).host_relation && doc.runner.host_relation !== "same-host" ? ", client on the " + doc.runner.host_relation : ""))); $("cards").append(pc); }
     var sc = el("div", null, "card"); put(sc, put(el("b"), pill), el("span", (val.warnings || []).length ? (val.warnings.length + " warning(s)") : "status")); $("cards").append(sc);
 

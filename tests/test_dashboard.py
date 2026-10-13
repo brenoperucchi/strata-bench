@@ -81,7 +81,7 @@ class RenderedDashboard(unittest.TestCase):
     def test_the_plain_rows_still_render_their_numbers(self):
         sample = json.loads((ROOT / "docs" / "data.json").read_text())["results"][0]
         out = self.render([sample])
-        self.assertIn("RTX 5090", out["perf"])
+        self.assertIn(sample["gpu"], out["perf"])                                       # whichever result the file lists first
         self.assertIn("title='Click for more details'", out["perf"])                   # the hover hint on the row
         self.assertNotIn("<details>", out["perf"])                                      # the configuration lives on the details page, not in the table
         self.assertNotIn("details →", out["perf"])

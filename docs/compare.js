@@ -18,7 +18,9 @@
     runsOf(d, size).forEach(function (r) { dr += (r.timings || {}).draft_n || 0; ac += (r.timings || {}).draft_n_accepted || 0; });
     return dr > 0 ? 100 * ac / dr : null;
   }
-  var gpuText = function (d) { return ((d.machine || {}).gpus || []).map(function (g) { return g.name + (g.vram_gb ? " " + g.vram_gb + " GB" : ""); }).join(", ") || null; };
+  var shortGpu = function (n) { var s = String(n).replace(/\s*\([^)]*\)/g, "").replace(/[- ]PCIE(?:[- ]?\d+GB)?\b/gi, "").trim().replace(/^(?:(?:NVIDIA|GeForce|AMD)\s+)+/i, "").trim(); return s || String(n); };
+  var shortModel = function (n) { return String(n).replace(/\s*\([^)]*\)/g, "").trim() || String(n); };
+  var gpuText = function (d) { return ((d.machine || {}).gpus || []).map(function (g) { return shortGpu(g.name) + (g.vram_gb ? " " + g.vram_gb + " GB" : ""); }).join(", ") || null; };
 
   // rows: {group, label, get(d) -> text | number | {median,min,max}, better: "high" | "low" | null, digits}
   function rows() {
@@ -40,7 +42,7 @@
     G = "Engine and model";
     text(G, "Engine", function (d) { return (d.engine || {}).version || d.build_info || null; });
     text(G, "Commit", function (d) { return (d.engine || {}).commit || null; });
-    text(G, "Model", function (d) { return (d.model || {}).family || d.model_path || null; });
+    text(G, "Model", function (d) { var f = (d.model || {}).family; return f ? shortModel(f) : d.model_path || null; });
     text(G, "Quantization", function (d) { return (d.model || {}).quant || null; });
     text(G, "Context tokens", function (d) { return isNum(d.n_ctx) ? num(d.n_ctx, 0) : null; });
     G = "Configuration";
@@ -124,7 +126,7 @@
   }
 
   function verdict(docs) {
-    var checks = [["model", function (d) { return ((d.model || {}).family || d.model_path || "") + " " + ((d.model || {}).quant || ""); }], ["context", function (d) { return d.n_ctx; }],
+    var checks = [["model", function (d) { var f = (d.model || {}).family; return (f ? shortModel(f) : d.model_path || "") + " " + ((d.model || {}).quant || ""); }], ["context", function (d) { return d.n_ctx; }],
       ["engine", function (d) { return (d.engine || {}).version || d.build_info; }], ["configuration", function (d) { return (d.config || {}).config_id; }],
       ["GPU", gpuText], ["protocol", function (d) { var p = d.protocol || {}; return (p.id || "") + " " + (p.suite || ""); }], ["client location", function (d) { return (d.runner || {}).host_relation || ""; }]];
     var differ = checks.filter(function (c) { var v = docs.map(c[1]).map(String); return v.some(function (x) { return x !== v[0]; }); }).map(function (c) { return c[0]; });
