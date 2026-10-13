@@ -11,7 +11,8 @@
  },
  "submission": {
   "label": "ryzen9-5090-default",
-  "date": "2026-10-11T17:15:23-03:00"
+  "date": "2026-10-11T17:15:23-03:00",
+  "by": "brenoperucchi"
  },
  "machine": {
   "gpus": [

@@ -473,7 +473,7 @@
     "int8"
    ],
    "backend": "CUDA",
-   "by": null,
+   "by": "brenoperucchi",
    "clients": null,
    "commit": "a0116b2782a5b82622358c04a06496485d12b2d6",
    "config_id": "355c006bb87cd541",
@@ -559,7 +559,7 @@
     "int8"
    ],
    "backend": "CUDA",
-   "by": null,
+   "by": "brenoperucchi",
    "clients": null,
    "commit": "a0116b2782a5b82622358c04a06496485d12b2d6",
    "config_id": "355c006bb87cd541",
@@ -672,7 +672,7 @@
     "int8"
    ],
    "backend": null,
-   "by": null,
+   "by": "brenoperucchi",
    "clients": null,
    "commit": "61b3fb5d",
    "config_id": "355c006bb87cd541",
