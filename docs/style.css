@@ -195,3 +195,4 @@ details.gpu > summary { color: var(--fg); }
 svg.viz .sel { fill: var(--accent); fill-opacity: .12; stroke: var(--accent); stroke-width: 1; stroke-dasharray: 4 3; pointer-events: none; }
 #ov-map .hint { margin: 2px 0; }
 #ov-map .legend { margin: 2px 0 0; }
+#view-dash > .overview { margin-top: 16px; }

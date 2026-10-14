@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
-const [appPath, dataPath] = process.argv.slice(2);
+const [appPath, dataPath, locationJson] = process.argv.slice(2);                // locationJson: optional {"search": "?by=x", "hash": "#health"}
 const data = JSON.parse(readFileSync(dataPath, "utf8"));
 const html = {};
 const element = (id) => {
@@ -30,7 +30,7 @@ const document = {
 };
 const sandbox = {
   document, console,
-  location: { search: "", hash: "", pathname: "/index.html", href: "" },
+  location: { search: "", hash: "", pathname: "/index.html", href: "", ...(locationJson ? JSON.parse(locationJson) : {}) },
   history: { replaceState() {} },
   URLSearchParams,
   fetch: async () => ({ json: async () => data }),
@@ -43,4 +43,6 @@ sandbox.window = sandbox;                                                  // th
 for (const mod of ["insights.js", "overview.js"]) vm.runInContext(readFileSync(new URL(mod, "file://" + appPath.replace(/[^/]*$/, "")), "utf8"), sandbox);
 vm.runInContext(source, sandbox);
 await new Promise((r) => setTimeout(r, 50));
-console.log(JSON.stringify(html));
+// which tab panels are shown, for the tests that look at the opening tab
+const views = ["dash", "perf", "health"].map((t) => t + ":" + (document.getElementById("view-" + t).hidden ? "hidden" : "shown")).join(" ");
+console.log(JSON.stringify({ ...html, __views: views }));

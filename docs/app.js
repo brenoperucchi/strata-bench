@@ -19,7 +19,7 @@
   // the overview panels need the insight modules; the table and the filters below work without them
   function overview(rows) {
     var O = typeof StrataOverview !== "undefined" ? StrataOverview : null;
-    if (!O || !rows.length) return;
+    if (!O || !rows.length) return null;
     $("overview").hidden = false;                                  // shown first: the speed map is drawn at the width its card has
     [["ov-pairs", O.pairs], ["ov-same", O.sameModel]].forEach(function (p) { var html = p[1](rows); $(p[0]).innerHTML = html; $(p[0]).hidden = !html; });
     var map = $("ov-map");
@@ -31,6 +31,7 @@
     };
     draw();
     expandable(map, draw, view, function () { return O.fit(rows); });
+    return draw;                                                    // drawn again when the Dashboard tab is shown: its card has no width while the tab is hidden
   }
 
   // The speed map can be opened over the page: a button on the card, and Escape or the button again to close it. It is redrawn at each size.
@@ -213,23 +214,34 @@
       "<thead><tr><th>Engine</th><th class='num'>Runs</th><th class='num'>Failed</th><th colspan='5'></th></tr></thead><tbody>" + eng + "</tbody>";
   }
 
-  function tabs() {
-    var sel = function (which) {
-      $("tab-perf").setAttribute("aria-selected", which === "perf"); $("tab-health").setAttribute("aria-selected", which === "health");
-      $("view-perf").hidden = which !== "perf"; $("view-health").hidden = which !== "health";
-      try { history.replaceState(null, "", which === "health" ? "#health" : "#"); } catch (e) { /* file:// */ }
+  // Dashboard (the overview), Results (the table) and Health. The address keeps the tab: #results, #health, nothing for the Dashboard.
+  // A link that carries a filter (?by=, ?machine=, ?compare=) is about the table, so it opens on Results.
+  var TABS = [["dash", "dashboard"], ["perf", "results"], ["health", "health"]];
+  function tabs(redrawMap) {
+    var fromHash = function () {
+      var h = String(location.hash || "").replace(/^#/, "").toLowerCase(), t = TABS.filter(function (x) { return x[1] === h; })[0];
+      if (t) return t[0];
+      try { var q = new URLSearchParams(location.search); if (q.get("by") || q.get("machine") || q.get("compare")) return "perf"; } catch (e) { /* no URL support */ }
+      return "dash";
     };
-    $("tab-perf").addEventListener("click", function () { sel("perf"); });
-    $("tab-health").addEventListener("click", function () { sel("health"); });
-    if (location.hash === "#health") sel("health");
+    var sel = function (which, keep) {
+      TABS.forEach(function (t) { $("tab-" + t[0]).setAttribute("aria-selected", t[0] === which); $("view-" + t[0]).hidden = t[0] !== which; });
+      if (which === "dash" && redrawMap) redrawMap();
+      if (keep) return;
+      var name = TABS.filter(function (t) { return t[0] === which; })[0][1];
+      try { history.replaceState(null, "", location.pathname + location.search + (which === "dash" ? "" : "#" + name)); } catch (e) { /* file:// */ }
+    };
+    TABS.forEach(function (t) { $("tab-" + t[0]).addEventListener("click", function () { sel(t[0]); }); });
+    if (typeof window !== "undefined" && typeof window.addEventListener === "function") window.addEventListener("hashchange", function () { sel(fromHash(), true); });
+    sel(fromHash(), true);
   }
 
   fetch("data.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (data) {
     state.rows = data.results || [];
     cards(state.rows);
-    overview(state.rows);
-    tabs();
-    if (!state.rows.length) { $("empty").hidden = false; $("view-perf").hidden = true; $("view-health").hidden = true; document.querySelector(".tabs").hidden = true; return; }
+    var redrawMap = overview(state.rows);
+    tabs(redrawMap);
+    if (!state.rows.length) { $("empty").hidden = false; $("view-dash").hidden = true; $("view-perf").hidden = true; $("view-health").hidden = true; document.querySelector(".tabs").hidden = true; return; }
     readLink();
     try { var pre = new URLSearchParams(location.search).get("compare"); if (pre && state.rows.some(function (r) { return r.id === pre; })) state.selected = [pre]; } catch (e) { /* no URL support */ }   // from a detail page: start the comparison with that result
     ["by", "machine_id"].forEach(function (k) { if (uniq(state.rows, k).indexOf(state.filters[k]) < 0) state.filters[k] = ""; });   // a link to an unknown name shows everything

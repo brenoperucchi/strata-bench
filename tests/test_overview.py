@@ -251,6 +251,34 @@ class OverviewHtml(unittest.TestCase):
         self.assertLessEqual(int(short[0]), 270)                                     # the card stays low
         self.assertEqual(short[1], "600")                                            # opened over the page it takes the height it is given
 
+    def opening_tab(self, location=None):
+        data = {"protocols": ["standard-v1"], "count": 1, "results": [row("a")]}
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, True)
+        (tmp / "data.json").write_text(json.dumps(data))
+        args = [NODE, str(ROOT / "tests" / "js" / "render_dashboard.mjs"), str(ROOT / "docs" / "app.js"), str(tmp / "data.json")] + ([json.dumps(location)] if location else [])
+        r = subprocess.run(args, capture_output=True, text=True, timeout=30)
+        self.assertEqual((r.returncode, r.stderr), (0, ""), r.stderr)
+        return json.loads(r.stdout)["__views"]
+
+    def test_the_page_opens_on_the_dashboard_and_a_filter_link_opens_on_the_results(self):
+        self.assertEqual(self.opening_tab(), "dash:shown perf:hidden health:hidden")
+        self.assertEqual(self.opening_tab({"search": "?by=someone"}), "dash:hidden perf:shown health:hidden")           # a link about one person's results is about the table
+        self.assertEqual(self.opening_tab({"search": "?machine=m1"}), "dash:hidden perf:shown health:hidden")
+        self.assertEqual(self.opening_tab({"hash": "#health"}), "dash:hidden perf:hidden health:shown")
+        self.assertEqual(self.opening_tab({"search": "?by=someone", "hash": "#dashboard"}), "dash:shown perf:hidden health:hidden")   # an explicit tab wins
+
+    def test_the_tabs_are_dashboard_results_health_and_the_overview_lives_under_the_first(self):
+        html = (ROOT / "docs" / "index.html").read_text()
+        order = [html.index(f'id="tab-{t}"') for t in ("dash", "perf", "health")]
+        self.assertEqual(order, sorted(order))
+        self.assertIn(">Dashboard</button>", html)
+        self.assertIn(">Results</button>", html)
+        dash = html[html.index('id="view-dash"'):html.index('id="view-perf"')]
+        self.assertIn('id="overview"', dash)
+        self.assertIn('id="ov-map"', dash)
+        self.assertLess(html.index('id="cards"'), html.index('id="tab-dash"'))                                            # the summary strip stays above the tabs
+
     def test_the_page_loads_the_insight_modules_before_the_app(self):
         html = (ROOT / "docs" / "index.html").read_text()
         self.assertLess(html.index("insights.js"), html.index("overview.js"))
