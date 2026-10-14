@@ -241,6 +241,16 @@ class OverviewHtml(unittest.TestCase):
         fitted = run_node(js % (json.dumps(rows), json.dumps(f)))
         self.assertEqual((fitted["dots"], fitted["outside"]), (3, []))
 
+    def test_the_speed_map_tells_the_page_its_axes_and_has_zoom_buttons_on_both(self):
+        h = run_node("const O = require('./docs/overview.js'); console.log(JSON.stringify(O.speedMap(%s, 800, {xmin: 500, xmax: 1500})));" % json.dumps(self.rows()))
+        for k in ("x+", "x-", "y+", "y-"):
+            self.assertIn(f"data-zoom='{k}'", h)
+        self.assertIn("data-view='500,1500,0,", h)                                   # what the zoom buttons and the drag read: the range now on screen
+        self.assertIn("data-plot='", h)
+        short = run_node("const O = require('./docs/overview.js'); console.log(JSON.stringify([O.speedMap(%s, 800).match(/viewBox='0 0 800 (\\d+)'/)[1], O.speedMap(%s, 800, {}, 600).match(/viewBox='0 0 800 (\\d+)'/)[1]]));" % (json.dumps(self.rows()), json.dumps(self.rows())))
+        self.assertLessEqual(int(short[0]), 270)                                     # the card stays low
+        self.assertEqual(short[1], "600")                                            # opened over the page it takes the height it is given
+
     def test_the_page_loads_the_insight_modules_before_the_app(self):
         html = (ROOT / "docs" / "index.html").read_text()
         self.assertLess(html.index("insights.js"), html.index("overview.js"))

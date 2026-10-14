@@ -24,7 +24,11 @@
     [["ov-pairs", O.pairs], ["ov-same", O.sameModel]].forEach(function (p) { var html = p[1](rows); $(p[0]).innerHTML = html; $(p[0]).hidden = !html; });
     var map = $("ov-map");
     var view = {};                                                  // the axis ranges typed in; empty means the default
-    var draw = function () { var w = map.clientWidth; map.innerHTML = O.speedMap(rows, w ? w - 32 : 0, view); map.hidden = !map.innerHTML; syncExpand(map); };
+    var draw = function () {
+      var w = map.clientWidth, open = !!(map.classList && map.classList.contains("expanded"));
+      map.innerHTML = O.speedMap(rows, w ? w - 32 : 0, view, open && typeof window !== "undefined" && window.innerHeight ? window.innerHeight - 270 : 0);   // opened over the page, the map takes the screen's height
+      map.hidden = !map.innerHTML; syncExpand(map);
+    };
     draw();
     expandable(map, draw, view, function () { return O.fit(rows); });
   }
@@ -43,6 +47,49 @@
       else if (closest(e, "[data-fit]")) { var f = fit(); if (f) { ["xmin", "xmax", "ymin", "ymax"].forEach(function (k) { view[k] = f[k]; }); draw(); } }
       else if (closest(e, "[data-reset]")) { ["xmin", "xmax", "ymin", "ymax"].forEach(function (k) { delete view[k]; }); draw(); }
     });
+    // + and − on an axis: the range shrinks or grows around its middle; a drag on the chart zooms into the rectangle
+    var current = function () { var svg = panel.querySelector("svg[data-view]"); if (!svg) return null; var v = svg.getAttribute("data-view").split(",").map(Number); return { svg: svg, x: [v[0], v[1]], y: [v[2], v[3]] }; };
+    var round = function (v) { return +v.toPrecision(4); };
+    var zoomAxis = function (axis, factor) {
+      var c = current(); if (!c) return;
+      var lo = c[axis][0], hi = c[axis][1], mid = (lo + hi) / 2, half = (hi - lo) / 2 / factor;
+      view[axis + "min"] = round(Math.max(0, mid - half)); view[axis + "max"] = round(mid + half);
+      draw();
+    };
+    panel.addEventListener("click", function (e) {
+      var b = closest(e, "[data-zoom]"); if (!b) return;
+      var d = b.getAttribute("data-zoom"); zoomAxis(d.charAt(0), d.charAt(1) === "+" ? 1.6 : 1 / 1.6);
+    });
+    var drag = null;
+    panel.addEventListener("pointerdown", function (e) {
+      var svg = closest(e, "svg[data-view]");
+      if (!svg || e.button !== 0 || closest(e, "a")) return;
+      var r = svg.getBoundingClientRect(), p = svg.getAttribute("data-plot").split(",").map(Number);
+      var k = p[4] / r.width, at = function (ev) { return [Math.max(p[0], Math.min(p[4] - p[1], (ev.clientX - r.left) * k)), Math.max(p[2], Math.min(p[5] - p[3], (ev.clientY - r.top) * k))]; };
+      var sel = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      sel.setAttribute("class", "sel"); svg.appendChild(sel);
+      drag = { svg: svg, from: at(e), at: at, sel: sel, p: p };
+      e.preventDefault();
+    });
+    if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+      window.addEventListener("pointermove", function (e) {
+        if (!drag) return;
+        var a = drag.from, b = drag.at(e);
+        drag.sel.setAttribute("x", Math.min(a[0], b[0])); drag.sel.setAttribute("y", Math.min(a[1], b[1]));
+        drag.sel.setAttribute("width", Math.abs(a[0] - b[0])); drag.sel.setAttribute("height", Math.abs(a[1] - b[1]));
+      });
+      window.addEventListener("pointerup", function (e) {
+        if (!drag) return;
+        var d = drag, a = d.from, b = d.at(e), c = current(); drag = null;
+        if (d.sel.parentNode) d.sel.parentNode.removeChild(d.sel);
+        if (!c || Math.abs(a[0] - b[0]) < 8 || Math.abs(a[1] - b[1]) < 8) return;          // a click, not a drag
+        var p = d.p, w = p[4] - p[0] - p[1], h = p[5] - p[2] - p[3];
+        var xv = function (px) { return c.x[0] + (px - p[0]) / w * (c.x[1] - c.x[0]); }, yv = function (py) { return c.y[0] + ((p[5] - p[3]) - py) / h * (c.y[1] - c.y[0]); };
+        view.xmin = round(Math.max(0, Math.min(xv(a[0]), xv(b[0])))); view.xmax = round(Math.max(xv(a[0]), xv(b[0])));
+        view.ymin = round(Math.max(0, Math.min(yv(a[1]), yv(b[1])))); view.ymax = round(Math.max(yv(a[1]), yv(b[1])));
+        draw();
+      });
+    }
     panel.addEventListener("change", function (e) {                 // an axis box was edited: empty, or a number
       var box = closest(e, "[data-axis]"); if (!box) return;
       var v = parseFloat(box.value);

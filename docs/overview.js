@@ -55,11 +55,12 @@
 
   // The map is drawn at the width its card has (in CSS pixels, so the text stays at its size): wide on a desktop, narrow on a phone, larger still when expanded.
   // view = {xmin, xmax, ymin, ymax}: any of them may be missing (zero, or room for the data); results outside the range are left out and counted.
-  function speedMap(rows, width, view) {
+  function speedMap(rows, width, view, height) {
     var all = I.speedPoints(rows);
     if (!all.length) return "";
     view = view || {};
-    var W = Math.max(320, Math.min(1400, Math.round(width) || 520)), H = Math.max(260, Math.min(520, Math.round(W * 0.36)));
+    var W = Math.max(320, Math.min(1400, Math.round(width) || 520));
+    var H = height ? Math.max(220, Math.min(900, Math.round(height))) : Math.max(210, Math.min(270, Math.round(W * 0.22)));     // a low card: the page should not be all map
     var mc = machines(rows), L = 58, R = 28, T = 12, B = 46;
     var axis = function (key, grow) {
       var lo = numOr(view[key + "min"]), hi = numOr(view[key + "max"]), top = Math.max.apply(null, all.map(function (p) { return p[key]; })) * grow;
@@ -76,8 +77,8 @@
     var g = "";
     for (var yv = Math.ceil(ymin / sy - 1e-9) * sy + 0; yv <= ymax + 1e-9; yv += sy) g += "<line class='grid' x1='" + L + "' x2='" + (W - R) + "' y1='" + Y(yv) + "' y2='" + Y(yv) + "'/><text x='" + (L - 8) + "' y='" + (Y(yv) + 4) + "' text-anchor='end'>" + fmt(yv, 0) + "</text>";
     for (var xv = Math.ceil(xmin / sx - 1e-9) * sx + 0; xv <= xmax + 1e-9; xv += sx) g += "<text x='" + X(xv) + "' y='" + (H - B + 18) + "' text-anchor='middle'>" + fmt(xv, 0) + "</text>";
-    g += "<text class='axis-title' x='" + (L + W - R) / 2 + "' y='" + (H - 6) + "' text-anchor='middle'>prompt speed, medium prompt (tokens per second)</text>" +
-      "<text class='axis-title' x='14' y='" + (T + H - B) / 2 + "' text-anchor='middle' transform='rotate(-90 14 " + (T + H - B) / 2 + ")'>decode speed (tokens per second)</text>";
+    g += "<text class='axis-title' x='" + (L + W - R) / 2 + "' y='" + (H - 6) + "' text-anchor='middle'>prompt speed, medium prompt (tok/s)</text>" +
+      "<text class='axis-title' x='14' y='" + (T + H - B) / 2 + "' text-anchor='middle' transform='rotate(-90 14 " + (T + H - B) / 2 + ")'>decode speed (tok/s)</text>";
     pts.forEach(function (p) {
       var r = p.row, m = mc[p.machine], cx = X(p.x), cy = Y(p.y), v2 = r.protocol === "standard-v2";
       var shape = v2 ? "<rect class='dot " + m.cls + "' x='" + (cx - 6) + "' y='" + (cy - 6) + "' width='12' height='12' transform='rotate(45 " + cx + " " + cy + ")'/>" : "<circle class='dot " + m.cls + "' cx='" + cx + "' cy='" + cy + "' r='6.5'/>";
@@ -100,13 +101,16 @@
     var legend = Object.keys(used).sort().map(function (k) { return "<span class='key'><i class='sw " + mc[k].cls + "'></i>" + esc(mc[k].label) + "</span>"; }).join("");
     var shapes = "<span class='key'><i class='sw round'></i>standard-v1</span><span class='key'><i class='sw diamond'></i>standard-v2</span>";
     var field = function (key, name, ph) { return "<input type='number' step='any' min='0' data-axis='" + key + "' aria-label='" + name + "' placeholder='" + ph + "' value='" + (numOr(view[key]) === null ? "" : esc(view[key])) + "'>"; };
-    var controls = "<div class='axes'><span>Prompt speed (x) " + field("xmin", "x axis from", "0") + " to " + field("xmax", "x axis to", "auto") + "</span><span>Decode speed (y) " + field("ymin", "y axis from", "0") + " to " + field("ymax", "y axis to", "auto") + "</span>" +
+    var zoom = function (k, what) { return "<button type='button' class='z' data-zoom='" + k + "+' title='Zoom in on " + what + "' aria-label='Zoom in on " + what + "'>+</button><button type='button' class='z' data-zoom='" + k + "-' title='Zoom out on " + what + "' aria-label='Zoom out on " + what + "'>−</button>"; };
+    var controls = "<div class='axes'><span class='ax'>Prompt speed (x) " + field("xmin", "x axis from", "0") + " to " + field("xmax", "x axis to", "auto") + " " + zoom("x", "the x axis") + "</span>" +
+      "<span class='ax'>Decode speed (y) " + field("ymin", "y axis from", "0") + " to " + field("ymax", "y axis to", "auto") + " " + zoom("y", "the y axis") + "</span>" +
       "<button type='button' data-fit>Fit to data</button><button type='button' data-reset>Reset</button></div>";
-    var outside = all.length - pts.length ? "<p class='hint'>" + (all.length - pts.length) + " of " + all.length + " results are outside this range. <b>Reset</b> shows them all.</p>" : "";
-    return "<button type='button' class='expand' data-expand aria-expanded='false' title='Show the speed map larger'>Expand</button><h2>Speed map</h2><p class='hint'>One point per result. Right is faster at reading a prompt, up is faster at writing the answer. Click a point for the full result. Set the axes, or use Fit to data, to pull a crowded cluster apart.</p>" + controls +
-      "<svg class='viz' viewBox='0 0 " + W + " " + H + "' role='img' aria-label='Decode speed against prompt speed, one point per result'>" + g + "</svg>" +
-      "<div class='legend'>" + legend + "</div><div class='legend'>" + shapes + "</div>" +
-      outside + "<p class='hint'>A map of what was measured, not a ranking: the points differ in model, quantisation, engine and configuration.</p>";
+    var outside = all.length - pts.length ? " " + (all.length - pts.length) + " of " + all.length + " results are outside this range; Reset shows them all." : "";
+    var round = function (v) { return +v.toPrecision(6); };
+    return "<button type='button' class='expand' data-expand aria-expanded='false' title='Show the speed map larger'>Expand</button><h2>Speed map</h2><p class='hint'>One point per result: right reads a prompt faster, up writes the answer faster. Drag on the chart to zoom into an area; + and − scale an axis; click a point to open it.</p>" + controls +
+      "<svg class='viz' viewBox='0 0 " + W + " " + H + "' data-view='" + [xmin, xmax, ymin, ymax].map(round).join(",") + "' data-plot='" + [L, R, T, B, W, H].join(",") + "' role='img' aria-label='Decode speed against prompt speed, one point per result'>" + g + "</svg>" +
+      "<div class='legend'>" + legend + shapes + "</div>" +
+      "<p class='hint'>A map of what was measured, not a ranking: the points differ in model, quantisation, engine and configuration." + outside + "</p>";
   }
 
   var DOMAIN = 20;                                           // the strips show -20% to +20%; a larger change sits at the edge and its value is written out
