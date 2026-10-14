@@ -125,6 +125,48 @@
     t.append(tb); wrap.append(t);
   }
 
+
+  // "Who won more measures?": the count comes from scoreboard.js; this only draws it. Everything from the files goes through textContent.
+  function board(docs) {
+    var box = $("scoreboard"), S = window.StrataScoreboard, res = S ? S.compute(docs) : null;
+    box.textContent = "";
+    if (!res) { box.hidden = true; return; }
+    box.hidden = false;
+    var names = docs.map(function (d) { return d.label || "result"; }), h = res.headline;
+    box.append(el("h2", "Who won more measures?"));
+    var say = h.kind === "none" ? "No measure was taken in every selected result, so there is nothing to count."
+      : h.kind === "all-ties" ? "No result is clearly in front: all " + h.total + " measures are within the noise band."
+      : h.kind === "leader" ? names[h.leaders[0]] + " is in front on " + h.wins + " of " + h.total + " measures." + (h.ties ? " " + h.ties + " more " + (h.ties === 1 ? "is a tie" : "are ties") + " within the noise band." : "")
+      : "No single leader: " + h.leaders.map(function (i) { return names[i]; }).join(" and ") + " are each in front on " + h.wins + " of " + h.total + " measures.";
+    box.append(el("p", say, "headline"));
+    if (res.metrics.length) {
+      var t = el("table", "", "compare board"), thead = el("thead"), hr = el("tr");
+      hr.append(el("th", "Measure"));
+      names.forEach(function (n) { hr.append(el("th", n, "colhead")); });
+      thead.append(hr); t.append(thead);
+      var tb = el("tbody");
+      res.metrics.forEach(function (m) {
+        var tr = el("tr"); tr.append(el("th", m.label, "rowhead"));
+        m.values.forEach(function (v, i) {
+          var win = !m.tie && m.front[i], td = el("td", num(v, m.digits) + (win ? " ▲" : m.tie ? " ≈" : ""), "num" + (win ? " win" : m.tie ? " tie" : ""));
+          td.title = win ? "In front on this measure" : m.tie ? "Tie: every result is within the noise band (" + (m.abs ? m.band + " points" : m.band + "%") + ")" : "Behind the best by more than the noise band";
+          tr.append(td);
+        });
+        tb.append(tr);
+      });
+      t.append(tb);
+      var tf = el("tfoot"), r1 = el("tr"), r2 = el("tr");
+      r1.append(el("th", "Measures in front", "rowhead")); r2.append(el("th", "Support score", "rowhead"));
+      res.results.forEach(function (r) {
+        r1.append(el("td", r.wins + " of " + r.total, "num total")); r2.append(el("td", r.support === null ? "–" : num(r.support, 1) + " / 100", "num"));
+      });
+      tf.append(r1, r2); t.append(tf);
+      var sc = el("div", null, "scroll"); sc.append(t); box.append(sc);
+    }
+    if (res.excluded.length) box.append(el("p", "Left out because not every result has them: " + res.excluded.join(", ") + ".", "hint"));
+    box.append(el("p", "▲ in front: the best value on that measure, or within the noise band of it (5% for prompt speed, 10% for decode, first token and load, 2 points for the agent cache hit rate). ≈ tie: every result is inside that band, so the measure counts for nobody. Only measures present in every selected result are counted, and a missing value is never read as zero. The support score is the average of each value as a percentage of the best (for times, the best divided by the value) and does not break ties. This counts measures. It does not show that one setup is better overall or why: when the setup differs, the numbers are different measurements.", "hint"));
+  }
+
   function verdict(docs) {
     var checks = [["model", function (d) { var f = (d.model || {}).family; return (f ? shortModel(f) : d.model_path || "") + " " + ((d.model || {}).quant || ""); }], ["context", function (d) { return d.n_ctx; }],
       ["engine", function (d) { return (d.engine || {}).version || d.build_info; }], ["configuration", function (d) { return (d.config || {}).config_id; }],
@@ -147,7 +189,7 @@
     $("legend").hidden = false; $("diff-toggle").hidden = docs.length < 2;
     document.title = "Compare " + docs.map(function (d) { return d.label || "result"; }).join(" vs ") + " · strata-bench";
     try { $("only-diff").checked = new URLSearchParams(location.search).get("diff") === "1"; } catch (e) { /* no URL support */ }
-    verdict(docs); build(docs, ids);
+    verdict(docs); board(docs); build(docs, ids);
     $("only-diff").addEventListener("change", function () {
       build(docs, ids);
       try { var q = new URLSearchParams(location.search); if ($("only-diff").checked) q.set("diff", "1"); else q.delete("diff"); history.replaceState(null, "", location.pathname + "?" + q.toString().replace(/%2C/g, ",").replace(/%2F/g, "/")); } catch (e) { /* file:// */ }

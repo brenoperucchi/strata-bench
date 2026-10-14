@@ -22,6 +22,7 @@
 <main class="wrap">
   <p class="note" id="status" role="status"></p>
   <div id="verdict"></div>
+  <section class="panel" id="scoreboard" hidden></section>
   <label class="inline" id="diff-toggle" hidden><input type="checkbox" id="only-diff"> Show only the rows that differ</label>
   <div class="scroll" id="table-wrap"></div>
   <p class="hint" id="legend" hidden>The first column is the baseline: the percentages show how each other column differs from it. The best value in a row is marked. For speeds higher is better; for times lower is better. Hardware fields are declared by whoever ran the benchmark.</p>
@@ -29,6 +30,7 @@
 <footer class="wrap">
   <p>Everything on this page is read from result files in <code>results/</code> that passed the public validator.</p>
 </footer>
+<script src="scoreboard.js"></script>
 <script src="compare.js"></script>
 </body>
 </html>

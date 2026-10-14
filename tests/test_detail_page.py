@@ -66,12 +66,14 @@ class ComparePage(unittest.TestCase):
 
     def test_the_page_loads_only_its_own_scripts(self):
         html = (ROOT / "docs" / "compare.html").read_text()
-        self.assertEqual(re.findall(r'<script[^>]*src="([^"]+)"', html), ["theme.js", "compare.js"])
+        self.assertEqual(re.findall(r'<script[^>]*src="([^"]+)"', html), ["theme.js", "scoreboard.js", "compare.js"])
         self.assertEqual(re.findall(r"https?://[^\"' ]+\.js", CMP), [])
+        self.assertEqual(re.findall(r"https?://[^\"' ]+\.js", (ROOT / "docs" / "scoreboard.js").read_text()), [])
 
     @unittest.skipUnless(NODE, "node is not installed")
     def test_the_script_parses(self):
-        self.assertEqual(subprocess.run([NODE, "--check", str(ROOT / "docs" / "compare.js")], capture_output=True).returncode, 0)
+        for name in ("compare.js", "scoreboard.js"):
+            self.assertEqual(subprocess.run([NODE, "--check", str(ROOT / "docs" / name)], capture_output=True).returncode, 0, name)
 
     def test_at_most_three_results_and_only_published_paths(self):
         self.assertIn("var MAX = 3;", CMP)

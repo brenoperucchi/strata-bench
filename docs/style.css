@@ -140,3 +140,11 @@ svg.viz text.tag { fill: var(--fg); font-weight: 600; }
 .args code { display: inline-block; margin: 2px 4px 2px 0; }
 .args code.add { color: var(--good); } .args code.del { color: var(--bad); }
 svg.viz text.tag.c0 { fill: var(--c0); } svg.viz text.tag.c1 { fill: var(--c1); } svg.viz text.tag.c2 { fill: var(--c2); } svg.viz text.tag.c3 { fill: var(--c3); } svg.viz text.tag.c4 { fill: var(--c4); } svg.viz text.tag.c5 { fill: var(--c5); }
+
+/* who won more measures */
+#scoreboard { margin: 12px 0 18px; }
+#scoreboard .headline { font-size: 1.05rem; font-weight: 600; margin: 6px 0 10px; }
+table.board td.win { color: var(--good); font-weight: 700; }
+table.board td.tie { color: var(--muted); }
+table.board tfoot th, table.board tfoot td { border-top: 2px solid var(--line); font-weight: 700; }
+table.board td.total { font-size: 1.05rem; }

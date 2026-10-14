@@ -100,7 +100,7 @@
   var MAX_COMPARE = 3;
   function updateCompare() {
     var n = state.selected.length;
-    $("compare-count").textContent = n ? n + " selected" + (n === 1 ? ", tick one more" : "") + (n >= MAX_COMPARE ? " (the most that fit)" : "") : "Tick two or three rows to compare them.";
+    $("compare-count").textContent = n ? n + " selected" + (n === 1 ? ", tick one more" : "") + (n >= MAX_COMPARE ? " (the most that fit)" : "") : "Tick two or three rows to compare them: a scoreboard shows who is in front on more measures.";
     var go = $("compare-go");
     go.setAttribute("aria-disabled", n < 2 ? "true" : "false");
     go.href = n < 2 ? "#" : "compare.html?ids=" + state.selected.map(encodeURIComponent).join(",");
