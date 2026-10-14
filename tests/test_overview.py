@@ -99,10 +99,11 @@ class Insights(unittest.TestCase):
     def test_two_binaries_with_one_version_number_are_two_builds_not_a_config_change(self):
         official = row("a", engine="0.1.43.1", binary="aa690ae6", config_id="c1", protocol="standard-v2")
         fork = row("b", engine="0.1.43.1", binary="dfc35851", config_id="c2", protocol="standard-v2", date="2026-10-12T10:00:00-03:00")
-        self.assertEqual(self.call("I.pairs(rows)", [official, fork]), [])           # different binary and different config: nothing says which one moved the numbers
+        got = self.call("I.pairs(rows).map(p => [p.kind, p.moved >= 0])", [official, fork])
+        self.assertEqual(got, [["mixed", True]])                                       # different binary and different config: shown, but flagged as not isolating either cause
         same_cfg = row("c", engine="0.1.43.1", binary="dfc35851", config_id="c1", protocol="standard-v2", date="2026-10-12T10:00:00-03:00")
         got = self.call("I.pairs(rows).map(p => [p.kind, p.a.binary, p.b.binary])", [official, same_cfg])
-        self.assertEqual(got, [["build", "aa690ae6", "dfc35851"]])                   # same config, other binary: a build pair
+        self.assertEqual(got, [["build", "aa690ae6", "dfc35851"]])                   # same config, other binary: a build pair, and no mixed pair beside it
 
     def test_the_same_model_on_two_machines_is_matched_by_family_even_when_the_name_differs(self):
         a = row("a", model_full="Swift", machine_id="m1")
@@ -136,6 +137,23 @@ class Insights(unittest.TestCase):
         other = self.call("['Coder', 'Llama 3 8B', 'Llama 3 70B'].map(n => I.kindOf({model_full: n, quant: 'Q', protocol: 'p'}))", [])
         self.assertEqual(len(set(other + fam[:1])), 4)                                                    # a size in the main name is a different model
 
+    def test_a_build_and_a_config_that_changed_together_is_a_mixed_pair_and_never_a_release(self):
+        a = row("a", engine="0.1.43", config_id="c1", n_ctx=131072, args=["--max-context", "131072"])
+        b = row("b", engine="0.1.44", config_id="c2", n_ctx=262144, args=["--max-context", "262144"], date="2026-10-12T10:00:00-03:00")
+        got = self.call("I.pairs(rows).map(p => [p.kind, p.args])", [a, b])
+        self.assertEqual(got, [["mixed", [{"opt": "--max-context", "from": "131072", "to": "262144"}]]])
+        self.assertEqual(self.call("I.releases(I.pairs(rows))", [a, b]), [])           # only pairs that isolate the build count toward a release
+
+    def test_a_release_gathers_its_pairs_over_machines_and_is_a_verdict_only_with_enough_of_them(self):
+        rows = []
+        for i in range(3):
+            rows.append(row(f"a{i}", machine_id=f"m{i}", cpu=f"cpu{i}"))
+            rows.append(scaled(dict(id=f"b{i}", machine_id=f"m{i}", cpu=f"cpu{i}", engine="0.1.43", date="2026-10-12T10:00:00-03:00"), p=1.20))
+        rel = self.call("I.releases(I.pairs(rows)).map(r => [r.key, r.machines, r.enough, r.moved, r.metrics.map(m => m.median), r.metrics.map(m => m.verdict)])", rows)
+        self.assertEqual(rel, [["0.1.42 → 0.1.43", 3, True, 2, [20.0, 20.0, 0.0, 0.0], ["up", "up", "same", "same"]]])
+        few = self.call("I.releases(I.pairs(rows)).map(r => [r.machines, r.enough])", rows[:2])
+        self.assertEqual(few, [[1, False]])
+
     def test_the_summary_counts_machines_and_contributors(self):
         rows = [row("a"), row("b", by="other", machine_id="m2", cpu="x", date="2026-10-12T10:00:00-03:00", engine="0.1.43"), row("c", status="failed", by=None)]
         s = self.call("I.summary(rows)", rows)
@@ -160,7 +178,9 @@ class OverviewHtml(unittest.TestCase):
     def test_the_overview_draws_its_panels_from_real_looking_rows(self):
         out = self.render(self.rows())
         self.assertIn("<svg", out["ov-map"])
-        self.assertIn("Same machine, what changed", out["ov-pairs"])
+        self.assertIn("What changed", out["ov-pairs"])
+        self.assertIn("Releases", out["ov-pairs"])
+        self.assertIn("By GPU", out["ov-pairs"])
         self.assertIn("Same model, different machines", out["ov-same"])
         self.assertIn("RTX 5090", out["ov-map"])
         self.assertIn("results", out["cards"])
@@ -183,6 +203,20 @@ class OverviewHtml(unittest.TestCase):
         out = self.render([row("a")])
         self.assertIn("No pair yet", out["ov-pairs"])
         self.assertIn("Nothing to compare yet", out["ov-same"])
+
+    def test_what_changed_has_three_tabs_that_need_no_script_and_folds_long_lists(self):
+        rows = [row("a0")]
+        for i in range(1, 8):                                                        # seven machines, each with a new build: more rows than the cap
+            rows.append(row(f"b{i}", machine_id=f"m{i}", cpu=f"cpu{i}", engine="0.1.40", date="2026-10-10T10:00:00-03:00"))
+            rows.append(row(f"c{i}", machine_id=f"m{i}", cpu=f"cpu{i}", engine="0.1.43", date="2026-10-12T10:00:00-03:00"))
+        html = self.render(rows)["ov-pairs"]
+        for tab in ("ov-tab-rel", "ov-tab-gpu", "ov-tab-cfg"):
+            self.assertIn(f"type='radio' name='ov-tab' id='{tab}'", html)
+        self.assertEqual(html.count("<script"), 0)
+        self.assertIn("<details class='gpu' open>", html)                            # only the first group is open
+        self.assertEqual(html.count("<details class='gpu'"), 7)
+        self.assertIn("Show 2 more machines", html)                                  # seven machines: five shown, two folded
+        self.assertIn("inside the noise band", html)
 
     def test_the_page_loads_the_insight_modules_before_the_app(self):
         html = (ROOT / "docs" / "index.html").read_text()

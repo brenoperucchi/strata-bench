@@ -72,7 +72,7 @@
     var deltas = METRICS.map(function (m) { return delta(a, b, m); }).filter(Boolean);
     if (!deltas.length) return null;
     var moved = deltas.filter(function (d) { return d.verdict !== "same"; });
-    return { kind: kind, why: why, machine: key, a: a, b: b, deltas: deltas, moved: moved.length, args: kind === "config" ? argsDiff(a, b) : [],
+    return { kind: kind, why: why, machine: key, a: a, b: b, deltas: deltas, moved: moved.length, args: kind === "build" ? [] : argsDiff(a, b),
       headline: moved.length ? moved.length + " of " + deltas.length + " measures moved past the noise band" : "inside the noise band" };
   }
 
@@ -101,6 +101,22 @@
         if (p) out.push(p);
       }
     });
+
+    // Same machine and model, but the engine build and the configuration both changed: shown, flagged as not telling which of the two moved the numbers.
+    var built = {};
+    out.forEach(function (p) { if (p.kind === "build") built[keys[p.b.id] + "#" + kindOf(p.b) + "#" + buildOf(p.a) + ">" + buildOf(p.b)] = 1; });
+    var machineKind = group(function (r) { return [keys[r.id], kindOf(r)].join("#"); });
+    Object.keys(machineKind).forEach(function (k) {
+      var latest = {};
+      machineKind[k].forEach(function (r) { var b = buildOf(r); if (!latest[b] || byDate(latest[b], r) < 0) latest[b] = r; });
+      var builds = Object.keys(latest).sort(function (x, y) { return engineCmp(latest[x].engine, latest[y].engine) || byDate(latest[x], latest[y]); });
+      for (var i = 1; i < builds.length; i++) {
+        var a = latest[builds[i - 1]], b = latest[builds[i]];
+        if (a.config_id === b.config_id || built[keys[b.id] + "#" + kindOf(b) + "#" + builds[i - 1] + ">" + builds[i]]) continue;
+        var p = pairOf("mixed", a, b, keys[b.id], "engine build and configuration both changed");
+        if (p) out.push(p);
+      }
+    });
     return out.sort(function (p, q) { return -byDate(p.b, q.b); });
   }
 
@@ -113,6 +129,31 @@
     var out = {};
     Object.keys(t).forEach(function (k) { out[k] = Object.keys(t[k]).length; });
     return out;
+  }
+
+  // One row per engine release step (build A to build B), gathered over every machine that measured it: the answer to "did the release change the speed".
+  // Only the pairs that isolate the build count; the median of the changes is the release's number, and with fewer than MIN_MACHINES machines it stays an observation.
+  function releases(list) {
+    var t = {}, order = [];
+    list.filter(function (p) { return p.kind === "build"; }).forEach(function (p) {
+      var k = buildOf(p.a) + " → " + buildOf(p.b);
+      if (!t[k]) { t[k] = { key: k, from: p.a, to: p.b, pairs: [], machines: {} }; order.push(k); }
+      t[k].pairs.push(p); t[k].machines[p.machine] = 1;
+      if (byDate(t[k].to, p.b) < 0) t[k].to = p.b;
+    });
+    return order.map(function (k) {
+      var r = t[k], n = Object.keys(r.machines).length;
+      var metrics = METRICS.map(function (m) {
+        var points = [];
+        r.pairs.forEach(function (p) { var d = p.deltas.filter(function (x) { return x.key === m.key; })[0]; if (d) points.push({ pct: d.pct, verdict: d.verdict, machine: p.machine, pair: p }); });
+        if (!points.length) return { key: m.key, label: m.label, band: m.band, points: [], median: null, verdict: null };
+        var v = points.map(function (q) { return q.pct; }).sort(function (x, y) { return x - y; }), h = Math.floor(v.length / 2);
+        var median = Math.round((v.length % 2 ? v[h] : (v[h - 1] + v[h]) / 2) * 10) / 10;
+        return { key: m.key, label: m.label, band: m.band, points: points, median: median, verdict: Math.abs(median) <= m.band ? "same" : median > 0 ? "up" : "down" };
+      });
+      var moved = metrics.filter(function (m) { return m.verdict && m.verdict !== "same"; }).length;
+      return { key: k, from: r.from, to: r.to, machines: n, enough: n >= MIN_MACHINES, pairs: r.pairs.length, metrics: metrics, moved: moved };
+    }).sort(function (a, b) { return -byDate(a.to, b.to); });
   }
 
   // The same model and quantisation under one protocol, on different machines: the closest thing to a hardware comparison the data allows.
@@ -174,7 +215,7 @@
     };
   }
 
-  var api = { buildOf: buildOf, kindOf: kindOf, METRICS: METRICS, MIN_MACHINES: MIN_MACHINES, machineKeys: machineKeys, engineCmp: engineCmp, pairs: pairs, transitionSupport: transitionSupport, sameModel: sameModel, speedPoints: speedPoints, summary: summary };
+  var api = { buildOf: buildOf, kindOf: kindOf, METRICS: METRICS, MIN_MACHINES: MIN_MACHINES, machineKeys: machineKeys, engineCmp: engineCmp, pairs: pairs, transitionSupport: transitionSupport, releases: releases, sameModel: sameModel, speedPoints: speedPoints, summary: summary };
   root.StrataInsights = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : this);

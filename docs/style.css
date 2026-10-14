@@ -148,3 +148,34 @@ table.board td.win { color: var(--good); font-weight: 700; }
 table.board td.tie { color: var(--muted); }
 table.board tfoot th, table.board tfoot td { border-top: 2px solid var(--line); font-weight: 700; }
 table.board td.total { font-size: 1.05rem; }
+
+/* "What changed": tabs without script (radio buttons), compact tables, collapsible groups */
+.ptabs { display: flex; flex-wrap: wrap; border-top: 1px solid var(--line); margin-top: 8px; }
+.ptabs > input { position: absolute; opacity: 0; pointer-events: none; }
+.ptabs > label { padding: 8px 12px; cursor: pointer; color: var(--muted); border-bottom: 3px solid transparent; font-size: .92rem; }
+.ptabs > input:checked + label { color: var(--fg); border-bottom-color: var(--accent); font-weight: 600; }
+.ptabs > input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: -2px; }
+.ptabs .count { color: var(--muted); font-weight: 400; font-size: .8rem; }
+.ptabs .pview { display: none; width: 100%; order: 9; padding-top: 6px; }
+#ov-tab-rel:checked ~ .v-rel, #ov-tab-gpu:checked ~ .v-gpu, #ov-tab-cfg:checked ~ .v-cfg { display: block; }
+table.pairs { width: 100%; border-collapse: collapse; font-size: .86rem; }
+table.pairs th { text-align: right; font-weight: 600; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.pairs th:first-child { text-align: left; }
+table.pairs td { padding: 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+table.pairs td.num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+table.pairs td.what small { color: var(--muted); }
+table.pairs td.num small { color: var(--muted); font-size: .72rem; white-space: normal; }
+.chip { display: inline-block; min-width: 3.6em; padding: 1px 6px; border-radius: 6px; text-align: center; font-weight: 600; background: var(--band); color: var(--muted); }
+.chip.up { color: var(--good); } .chip.down { color: var(--bad); }
+.val.up { color: var(--good); } .val.down { color: var(--bad); } .val.weak { color: var(--muted); }
+table.pairs .val { display: block; font-weight: 600; }
+svg.viz.mini { display: block; width: 76px; height: auto; margin: 0 0 1px auto; font-size: 11px; }
+.pill.muted { color: var(--muted); }
+details.gpu { margin: 6px 0; border-bottom: 1px solid var(--line); }
+details.gpu > summary, details.more > summary { cursor: pointer; padding: 6px 0; font-weight: 600; }
+details.more > summary { font-weight: 400; color: var(--accent); }
+table.pairs .nw, .pill { white-space: nowrap; }
+table.pairs th { white-space: normal; }
+table.pairs td.what { min-width: 8.5em; }
+table.pairs td.num { padding-left: 2px; padding-right: 2px; }
+details.gpu > summary { color: var(--fg); }

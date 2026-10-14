@@ -79,47 +79,101 @@
       "<p class='hint'>A map of what was measured, not a ranking: the points differ in model, quantisation, engine and configuration.</p>";
   }
 
-  var DOMAIN = 20;                                           // the strip shows -20% to +20%; a larger change sits at the edge and its value is written out
-  function pairBlock(p, mc, support) {
-    var W = 440, rowH = 30, L = 0, x0 = 150, x1 = 340, H = p.deltas.length * rowH + 26;
-    var X = function (pct) { return x0 + (x1 - x0) * (Math.max(-DOMAIN, Math.min(DOMAIN, pct)) + DOMAIN) / (2 * DOMAIN); };
-    var g = "<line class='zero' x1='" + X(0) + "' x2='" + X(0) + "' y1='0' y2='" + (H - 24) + "'/>";
-    p.deltas.forEach(function (d, i) {
-      var y = i * rowH + 15;
-      g += "<text x='" + L + "' y='" + (y + 4) + "'>" + esc(d.label) + "</text>" +
-        "<rect class='band' x='" + X(-d.band) + "' y='" + (y - 9) + "' width='" + (X(d.band) - X(-d.band)) + "' height='18' rx='3'><title>noise band: ±" + d.band + "%</title></rect>" +
-        "<circle class='dot " + d.verdict + "' cx='" + X(d.pct) + "' cy='" + y + "' r='6'><title>" + esc(d.label) + ": " + fmt(d.from, 1) + " to " + fmt(d.to, 1) + " (" + signed(d.pct) + ")</title></circle>" +
-        "<text class='val " + d.verdict + "' x='" + (W - 4) + "' y='" + (y + 4) + "' text-anchor='end'>" + signed(d.pct) + "</text>";
-    });
-    [-DOMAIN, 0, DOMAIN].forEach(function (t) { g += "<text x='" + X(t) + "' y='" + (H - 6) + "' text-anchor='middle'>" + (t > 0 ? "+" : t < 0 ? "−" : "") + Math.abs(t) + "%</text>"; });
-    var m = mc[p.machine] || { label: "machine" }, a = p.a, b = p.b;
-    var tag = function (r) { return r.engine + (a.engine === b.engine && r.binary ? " [" + r.binary + "]" : ""); };      // the same version from two binaries needs the binary to be told apart
-    var what = p.kind === "build" ? "engine " + tag(a) + " → " + tag(b) + ", same configuration" : "engine " + tag(a) + ", configuration changed";
-    var n = support[I.buildOf(a) + " → " + I.buildOf(b)] || 0;
-    var note = p.kind === "build"
-      ? (n < I.MIN_MACHINES ? "Insufficient data for a verdict on this release: " + n + " of " + I.MIN_MACHINES + " machines needed. " : "")
-      : "Single-machine observation. ";
-    var val = function (v) { return v === true ? "" : " " + esc(v); };
-    var changes = p.args && p.args.length ? "<p class='args'>Configuration changes: " + p.args.map(function (c) {
+  var DOMAIN = 20;                                           // the strips show -20% to +20%; a larger change sits at the edge and its value is written out
+  var CAP = 5;                                               // rows shown before "Show N more"
+  var short = function (label) { return String(label).replace(" speed, ", " "); };
+  var proto = function (r) { return String(r.protocol || "").replace(/^standard-/, ""); };
+  // the version, and the binary when two builds share one version number
+  var tag = function (r, other) { return esc(r.engine) + (other && other.engine === r.engine && r.binary ? " <small>[" + esc(r.binary) + "]</small>" : ""); };
+  // "0.1.43.1 → 0.1.44"; two builds that share a version number are told apart on a second line by their binary
+  var arrow = function (p) {
+    var same = p.a.engine === p.b.engine && (p.a.binary || p.b.binary);
+    return "<span class='nw'>" + esc(p.a.engine) + " → " + esc(p.b.engine) + "</span>" + (same ? "<br><small>" + esc(p.a.binary || "?") + " → " + esc(p.b.binary || "?") + "</small>" : "");
+  };
+  var val = function (v) { return v === true ? "" : " " + esc(v); };
+
+  // The configuration changes between two results as small chips; the first three, and a count of the rest.
+  function argChips(args) {
+    if (!args || !args.length) return "";
+    var one = function (c) {
       return c.from === null ? "<code class='add'>+ " + esc(c.opt) + val(c.to) + "</code>" : c.to === null ? "<code class='del'>− " + esc(c.opt) + val(c.from) + "</code>" : "<code>" + esc(c.opt) + " " + esc(c.from === true ? "on" : c.from) + " → " + esc(c.to === true ? "on" : c.to) + "</code>";
-    }).join(" ") + "</p>" : "";
-    return "<div class='pair'><h3>" + esc(m.label) + " · " + esc(b.model || "") + " " + esc(b.quant || "") + " <span class='pill " + (p.moved ? "warnings" : "ok") + "'>" + esc(p.headline) + "</span></h3>" +
-      "<p class='hint'>" + esc(what) + ". " + esc(note) + "</p>" + changes +
-      "<svg class='viz' viewBox='0 0 " + W + " " + H + "' role='img' aria-label='Change in speed between two results of one machine'>" + g + "</svg></div>";
+    };
+    var rest = args.slice(3).map(function (c) { return c.opt; }).join(", ");
+    return "<span class='args'>" + args.slice(0, 3).map(one).join(" ") + (args.length > 3 ? " <span class='hint' title='" + esc(rest) + "'>+" + (args.length - 3) + " more</span>" : "") + "</span>";
   }
+
+  // A small strip: the grey band is the noise, one dot per measured change.
+  function strip(points, band) {
+    var W = 92, H = 18, X = function (pct) { return 4 + (W - 8) * (Math.max(-DOMAIN, Math.min(DOMAIN, pct)) + DOMAIN) / (2 * DOMAIN); };
+    var g = "<rect class='band' x='" + X(-band) + "' y='3' width='" + (X(band) - X(-band)) + "' height='12' rx='2'><title>noise band: ±" + band + "%</title></rect><line class='zero' x1='" + X(0) + "' x2='" + X(0) + "' y1='0' y2='" + H + "'/>";
+    points.forEach(function (q) { g += "<circle class='dot " + q.verdict + "' cx='" + X(q.pct) + "' cy='9' r='4'><title>" + esc(q.title) + "</title></circle>"; });
+    return "<svg class='viz mini' viewBox='0 0 " + W + " " + H + "' width='" + W + "' height='" + H + "' role='img' aria-label='Change in speed, noise band in grey'>" + g + "</svg>";
+  }
+
+  function releasesTab(list, mc) {
+    var rel = I.releases(list);
+    if (!rel.length) return "<p class='hint'>No release step yet. The same configuration measured on two engine builds of one machine appears here.</p>";
+    var head = "<tr><th>Release</th>" + I.METRICS.map(function (m) { return "<th>" + esc(short(m.label)) + "</th>"; }).join("") + "</tr>";
+    var row = function (r) {
+      var verdict = r.enough ? "<span class='pill " + (r.moved ? "warnings" : "ok") + "'>" + (r.moved ? r.moved + " of " + r.metrics.length + " measures moved" : "inside the noise band") + "</span>"
+        : "<span class='pill muted' title='A verdict needs " + I.MIN_MACHINES + " machines'>insufficient data</span> <small>" + r.machines + " of " + I.MIN_MACHINES + " machines</small>";
+      var cells = r.metrics.map(function (m) {
+        if (m.median === null) return "<td class='num'>–</td>";
+        var pts = m.points.map(function (q) { return { pct: q.pct, verdict: q.verdict, title: (mc[q.machine] || { label: "machine" }).label + " · " + (q.pair.b.quant || "") + ": " + signed(q.pct) }; });
+        return "<td class='num' title='" + (m.points.length > 1 ? "median of " + m.points.length + " pairs" : "one pair") + "'>" + strip(pts, m.band) + "<span class='val " + (r.enough ? m.verdict : "weak") + "'>" + signed(m.median) + "</span></td>";
+      }).join("");
+      return "<tr><td class='what'><b>" + arrow({ a: r.from, b: r.to }) + "</b><br>" + verdict + "</td>" + cells + "</tr>";
+    };
+    return "<div class='scroll'><table class='pairs'>" + head + rel.slice(0, CAP).map(row).join("") + "</table></div>" +
+      (rel.length > CAP ? "<details class='more'><summary>Show " + (rel.length - CAP) + " more</summary><div class='scroll'><table class='pairs'>" + head + rel.slice(CAP).map(row).join("") + "</table></div></details>" : "") +
+      "<p class='hint'>One row per engine release, over every machine that measured both builds with the same configuration. A verdict needs " + I.MIN_MACHINES + " machines; below that the numbers are one machine's observation. Each dot is one pair; with more than one pair the number is their median.</p>";
+  }
+
+  // One row per pair: what changed, then the change in each measure.
+  function pairRow(p, mc, withMachine) {
+    var what = p.kind === "config" ? "engine " + esc(p.a.engine) + " · configuration changed" : arrow(p);
+    var note = p.kind === "mixed" ? " <span class='pill warnings' title='The engine build and the configuration both changed, so these numbers do not say which of the two moved them.'>build and configuration</span>" : "";
+    var who = withMachine ? "<br><small>" + esc((mc[p.machine] || { label: "machine" }).label) + "</small>" : "";
+    var cells = I.METRICS.map(function (m) {
+      var d = p.deltas.filter(function (x) { return x.key === m.key; })[0];
+      return d ? "<td class='num'><span class='chip " + d.verdict + "' title='" + esc(d.label + ": " + fmt(d.from, 1) + " to " + fmt(d.to, 1) + " (noise band ±" + d.band + "%)") + "'>" + signed(d.pct) + "</span></td>" : "<td class='num'>–</td>";
+    }).join("");
+    return "<tr><td class='what'><b>" + what + "</b> <small>" + esc(p.b.quant || "") + " · " + esc(proto(p.b)) + "</small>" + note + who + (p.args.length ? "<br>" + argChips(p.args) : "") + "</td>" + cells + "</tr>";
+  }
+  function pairTable(list, mc, withMachine) {
+    var head = "<tr><th>Change</th>" + I.METRICS.map(function (m) { return "<th>" + esc(short(m.label)) + "</th>"; }).join("") + "</tr>";
+    var t = function (l) { return "<div class='scroll'><table class='pairs'>" + head + l.map(function (p) { return pairRow(p, mc, withMachine); }).join("") + "</table></div>"; };
+    return t(list.slice(0, CAP)) + (list.length > CAP ? "<details class='more'><summary>Show " + (list.length - CAP) + " more</summary>" + t(list.slice(CAP)) + "</details>" : "");
+  }
+  function gpuTab(list, mc) {
+    var by = {}, order = [];
+    list.forEach(function (p) { if (!by[p.machine]) { by[p.machine] = []; order.push(p.machine); } by[p.machine].push(p); });
+    order.sort(function (x, y) { return by[y].length - by[x].length || String((mc[x] || {}).label).localeCompare(String((mc[y] || {}).label)); });
+    var group = function (k, i) {
+      var m = mc[k] || { cls: "c0", label: "machine" };
+      return "<details class='gpu'" + (i === 0 ? " open" : "") + "><summary><i class='sw " + m.cls + "'></i> " + esc(m.label) + " <span class='hint'>" + by[k].length + (by[k].length === 1 ? " comparison" : " comparisons") + "</span></summary>" + pairTable(by[k], mc, false) + "</details>";
+    };
+    return order.slice(0, CAP).map(group).join("") + (order.length > CAP ? "<details class='more'><summary>Show " + (order.length - CAP) + " more machines</summary>" + order.slice(CAP).map(function (k, i) { return group(k, CAP + i); }).join("") + "</details>" : "");
+  }
+
   function pairs(rows) {
-    var list = I.pairs(rows), mc = machines(rows), support = I.transitionSupport(list);
-    var body = list.length
-      ? list.slice(0, 4).map(function (p) { return pairBlock(p, mc, support); }).join("")
-      : "<p class='hint'>No pair yet. Two results from one machine that differ only in the engine build, or only in the configuration, appear here.</p>";
-    return "<h2>Same machine, what changed</h2><p class='hint'>Change from the older result to the newer one, per measure. The grey band is the run-to-run noise (about 5% for prompt speed, 10% for decode); a dot inside it is not a measurable change.</p>" + body;
+    var list = I.pairs(rows), mc = machines(rows);
+    var head = "<h2>What changed</h2><p class='hint'>Change from the older result to the newer one, per measure, on one machine. The grey band is the run-to-run noise (about 5% for prompt speed, 10% for decode); a change inside it is not measurable.</p>";
+    if (!list.length) return head + "<p class='hint'>No pair yet. Two results from one machine that differ only in the engine build, or only in the configuration, appear here.</p>";
+    var rel = I.releases(list), cfg = list.filter(function (p) { return p.kind === "config"; }), gpus = {};
+    list.forEach(function (p) { gpus[p.machine] = 1; });
+    var tab = function (id, label, n, on) { return "<input type='radio' name='ov-tab' id='ov-tab-" + id + "'" + (on ? " checked" : "") + "><label for='ov-tab-" + id + "'>" + label + " <span class='count'>" + n + "</span></label>"; };
+    return head + "<div class='ptabs'>" + tab("rel", "Releases", rel.length, true) + tab("gpu", "By GPU", Object.keys(gpus).length, false) + tab("cfg", "Configurations", cfg.length, false) +
+      "<div class='pview v-rel'>" + releasesTab(list, mc) + "</div>" +
+      "<div class='pview v-gpu'>" + gpuTab(list, mc) + "</div>" +
+      "<div class='pview v-cfg'>" + (cfg.length ? pairTable(cfg, mc, true) + "<p class='hint'>Same engine build, only the configuration changed. A change in the numbers is not by itself proof that the setting caused it.</p>" : "<p class='hint'>No configuration pair yet. Two results of one machine on the same engine build with different settings appear here.</p>") + "</div></div>";
   }
 
   function sameModel(rows) {
     var list = I.sameModel(rows), mc = machines(rows);
     if (!list.length) return "<h2>Same model, different machines</h2><p class='hint'>Nothing to compare yet. Results for a model and quantisation that two machines both measured appear here. <a href='submit.html'>Submit a result</a> for a model that is already listed.</p>";
     var metrics = [["prefill_medium", "Prompt speed, medium", 0], ["prefill_long", "Prompt speed, long", 0], ["decode_medium", "Decode speed", 1]];
-    return "<h2>Same model, different machines</h2>" + list.slice(0, 2).map(function (g) {
+    var one = function (g) {
       var cols = metrics.map(function (m) {
         var vals = g.machines.map(function (x) { return x[m[0]]; }).filter(function (v) { return v !== null; });
         if (vals.length < 2) return "";
@@ -135,7 +189,8 @@
       return "<div class='same'><h3>" + esc(g.model) + " " + esc(g.quant) + " <span class='hint'>engine " + esc(g.engine) + " · " + esc(g.protocol) + "</span></h3><div class='grid3'>" + cols + "</div>" +
         (sec && g.long_tokens ? "<p>A long prompt of about " + fmt(g.long_tokens, 0) + " tokens is read in " + sec + ".</p>" : "") +
         "<p class='hint'>Same model, quantisation and protocol; the latest result of each machine, on the engine build most machines share.<span>" + diff + "</span></p></div>";
-    }).join("");
+    };
+    return "<h2>Same model, different machines</h2>" + one(list[0]) + (list.length > 1 ? "<details class='more'><summary>Show " + (list.length - 1) + " more</summary>" + list.slice(1, 8).map(one).join("") + "</details>" : "");
   }
 
   var api = { kpi: kpi, speedMap: speedMap, pairs: pairs, sameModel: sameModel, machines: machines };
