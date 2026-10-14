@@ -169,7 +169,7 @@ table.pairs td.num small { color: var(--muted); font-size: .72rem; white-space: 
 .chip.up { color: var(--good); } .chip.down { color: var(--bad); }
 .val.up { color: var(--good); } .val.down { color: var(--bad); } .val.weak { color: var(--muted); }
 table.pairs .val { display: block; font-weight: 600; }
-svg.viz.mini { display: block; width: 76px; height: auto; margin: 0 0 1px auto; font-size: 11px; }
+svg.viz.mini { display: block; width: 110px; height: auto; margin: 0 0 1px auto; font-size: 11px; }
 .pill.muted { color: var(--muted); }
 details.gpu { margin: 6px 0; border-bottom: 1px solid var(--line); }
 details.gpu > summary, details.more > summary { cursor: pointer; padding: 6px 0; font-weight: 600; }
@@ -185,4 +185,7 @@ details.gpu > summary { color: var(--fg); }
 #ov-map .expand { position: absolute; top: 10px; right: 12px; background: var(--card); color: var(--accent); border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; font: inherit; font-size: .84rem; cursor: pointer; }
 #ov-map .expand:hover { border-color: var(--accent); }
 #ov-map.expanded { position: fixed; inset: 12px; z-index: 50; overflow: auto; box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .55); padding: 18px 22px; }
-#ov-map.expanded svg.viz { max-height: calc(100vh - 230px); }
+.axes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; margin: 8px 0 2px; font-size: .86rem; color: var(--muted); }
+.axes input { width: 5.4em; padding: 3px 6px; font: inherit; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 6px; }
+.axes button { background: var(--card); color: var(--accent); border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; font: inherit; cursor: pointer; }
+.axes button:hover { border-color: var(--accent); }

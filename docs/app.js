@@ -20,24 +20,40 @@
   function overview(rows) {
     var O = typeof StrataOverview !== "undefined" ? StrataOverview : null;
     if (!O || !rows.length) return;
-    var panels = [["ov-map", O.speedMap], ["ov-pairs", O.pairs], ["ov-same", O.sameModel]];
-    panels.forEach(function (p) { var html = p[1](rows); $(p[0]).innerHTML = html; $(p[0]).hidden = !html; });
-    $("overview").hidden = false;
-    expandable($("ov-map"));
+    $("overview").hidden = false;                                  // shown first: the speed map is drawn at the width its card has
+    [["ov-pairs", O.pairs], ["ov-same", O.sameModel]].forEach(function (p) { var html = p[1](rows); $(p[0]).innerHTML = html; $(p[0]).hidden = !html; });
+    var map = $("ov-map");
+    var view = {};                                                  // the axis ranges typed in; empty means the default
+    var draw = function () { var w = map.clientWidth; map.innerHTML = O.speedMap(rows, w ? w - 32 : 0, view); map.hidden = !map.innerHTML; syncExpand(map); };
+    draw();
+    expandable(map, draw, view, function () { return O.fit(rows); });
   }
 
-  // The speed map can be opened over the page: a button on the card, and Escape or the button again to close it.
-  function expandable(panel) {
+  // The speed map can be opened over the page: a button on the card, and Escape or the button again to close it. It is redrawn at each size.
+  function syncExpand(panel) {
+    var on = !!(panel.classList && panel.classList.contains("expanded")), b = panel.querySelector("[data-expand]");
+    if (b) { b.setAttribute("aria-expanded", String(on)); b.textContent = on ? "Close" : "Expand"; b.title = on ? "Back to the page" : "Show the speed map larger"; }
+  }
+  function expandable(panel, draw, view, fit) {
     if (!panel || !panel.addEventListener) return;
-    var set = function (on) {
-      panel.classList.toggle("expanded", on);
-      var b = panel.querySelector("[data-expand]");
-      if (b) { b.setAttribute("aria-expanded", String(on)); b.textContent = on ? "Close" : "Expand"; b.title = on ? "Back to the page" : "Show the speed map larger"; }
-    };
+    var set = function (on) { panel.classList.toggle("expanded", on); draw(); };
+    var closest = function (e, sel) { return e.target && e.target.closest && e.target.closest(sel); };
     panel.addEventListener("click", function (e) {
-      if (e.target && e.target.closest && e.target.closest("[data-expand]")) set(!panel.classList.contains("expanded"));
+      if (closest(e, "[data-expand]")) set(!panel.classList.contains("expanded"));
+      else if (closest(e, "[data-fit]")) { var f = fit(); if (f) { ["xmin", "xmax", "ymin", "ymax"].forEach(function (k) { view[k] = f[k]; }); draw(); } }
+      else if (closest(e, "[data-reset]")) { ["xmin", "xmax", "ymin", "ymax"].forEach(function (k) { delete view[k]; }); draw(); }
+    });
+    panel.addEventListener("change", function (e) {                 // an axis box was edited: empty, or a number
+      var box = closest(e, "[data-axis]"); if (!box) return;
+      var v = parseFloat(box.value);
+      if (isFinite(v) && v >= 0) view[box.getAttribute("data-axis")] = v; else delete view[box.getAttribute("data-axis")];
+      draw();
     });
     if (typeof document.addEventListener === "function") document.addEventListener("keydown", function (e) { if (e.key === "Escape" && panel.classList.contains("expanded")) set(false); });
+    if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+      var width = panel.clientWidth, timer = null;
+      window.addEventListener("resize", function () { clearTimeout(timer); timer = setTimeout(function () { if (Math.abs(panel.clientWidth - width) > 8) { width = panel.clientWidth; draw(); } }, 150); });
+    }
   }
 
   function filters(rows) {

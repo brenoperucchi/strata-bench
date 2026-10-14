@@ -226,6 +226,21 @@ class OverviewHtml(unittest.TestCase):
         self.assertIn("data-expand", app)
         self.assertIn("Escape", app)
 
+    def test_the_speed_map_axes_can_be_set_and_leave_out_what_falls_outside(self):
+        rows = self.rows()
+        js = ("const O = require('./docs/overview.js'); const rows = %s; const view = %s; const h = O.speedMap(rows, 900, view);"
+              "console.log(JSON.stringify({dots: (h.match(/class='dot /g) || []).length, outside: (h.match(/(\\d+) of (\\d+) results are outside/) || []).slice(1), fit: O.fit(rows)}));")
+        base = run_node(js % (json.dumps(rows), "{}"))
+        self.assertEqual((base["dots"], base["outside"]), (3, []))
+        zoom = run_node(js % (json.dumps(rows), json.dumps({"xmin": 1100, "xmax": 4000, "ymin": 50, "ymax": 300})))
+        self.assertEqual((zoom["dots"], zoom["outside"]), (1, ["2", "3"]))           # only the result at 1,200 tok/s is inside; the other two are counted, not hidden
+        bad = run_node(js % (json.dumps(rows), json.dumps({"xmin": 5, "xmax": 1})))
+        self.assertEqual(bad["dots"], 3)                                             # an upper end below the lower end is ignored
+        f = base["fit"]
+        self.assertTrue(f["xmin"] > 0 and f["xmin"] <= 1000 and f["xmax"] >= 1200)   # the fit holds every point with room, and does not start at zero
+        fitted = run_node(js % (json.dumps(rows), json.dumps(f)))
+        self.assertEqual((fitted["dots"], fitted["outside"]), (3, []))
+
     def test_the_page_loads_the_insight_modules_before_the_app(self):
         html = (ROOT / "docs" / "index.html").read_text()
         self.assertLess(html.index("insights.js"), html.index("overview.js"))

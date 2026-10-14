@@ -40,16 +40,42 @@
 
   var niceStep = function (v) { var p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; };
 
-  function speedMap(rows) {
+  // The axes the map opens with start at zero; fit() gives the ones that just hold the data, so a cluster of results can be pulled apart.
+  var numOr = function (v) { return typeof v === "number" && isFinite(v) ? v : null; };
+  function fit(rows) {
     var pts = I.speedPoints(rows);
-    if (!pts.length) return "";
-    var mc = machines(rows), W = 520, H = 280, L = 58, R = 28, T = 12, B = 46;
-    var mx = Math.max.apply(null, pts.map(function (p) { return p.x; })) * 1.06, my = Math.max.apply(null, pts.map(function (p) { return p.y; })) * 1.12;
-    var sx = niceStep(mx / 4), sy = niceStep(my / 4), xmax = Math.ceil(mx / sx) * sx, ymax = Math.ceil(my / sy) * sy;
-    var X = function (v) { return L + (W - L - R) * v / xmax; }, Y = function (v) { return H - B - (H - B - T) * v / ymax; };
+    if (!pts.length) return null;
+    var span = function (vals) {
+      var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals), pad = Math.max((hi - lo) * 0.1, hi * 0.02, 1e-6), step = niceStep((hi - lo + 2 * pad) / 6);
+      return [Math.max(0, Math.floor((lo - pad) / step) * step), Math.ceil((hi + pad) / step) * step];
+    };
+    var x = span(pts.map(function (p) { return p.x; })), y = span(pts.map(function (p) { return p.y; }));
+    return { xmin: x[0], xmax: x[1], ymin: y[0], ymax: y[1] };
+  }
+
+  // The map is drawn at the width its card has (in CSS pixels, so the text stays at its size): wide on a desktop, narrow on a phone, larger still when expanded.
+  // view = {xmin, xmax, ymin, ymax}: any of them may be missing (zero, or room for the data); results outside the range are left out and counted.
+  function speedMap(rows, width, view) {
+    var all = I.speedPoints(rows);
+    if (!all.length) return "";
+    view = view || {};
+    var W = Math.max(320, Math.min(1400, Math.round(width) || 520)), H = Math.max(260, Math.min(520, Math.round(W * 0.36)));
+    var mc = machines(rows), L = 58, R = 28, T = 12, B = 46;
+    var axis = function (key, grow) {
+      var lo = numOr(view[key + "min"]), hi = numOr(view[key + "max"]), top = Math.max.apply(null, all.map(function (p) { return p[key]; })) * grow;
+      lo = lo === null ? 0 : lo;
+      var open = hi === null || hi <= lo;                          // no usable upper end: leave room for the data
+      if (open) hi = Math.max(top, lo + 1e-6);
+      var step = niceStep((hi - lo) / 4);
+      return { min: lo, max: open ? lo + Math.ceil((hi - lo) / step) * step : hi, step: step };
+    };
+    var ax = axis("x", 1.06), ay = axis("y", 1.12);
+    var xmin = ax.min, xmax = ax.max, sx = ax.step, ymin = ay.min, ymax = ay.max, sy = ay.step;
+    var pts = all.filter(function (p) { return p.x >= xmin && p.x <= xmax && p.y >= ymin && p.y <= ymax; });
+    var X = function (v) { return L + (W - L - R) * (v - xmin) / (xmax - xmin); }, Y = function (v) { return H - B - (H - B - T) * (v - ymin) / (ymax - ymin); };
     var g = "";
-    for (var yv = 0; yv <= ymax + 1e-9; yv += sy) g += "<line class='grid' x1='" + L + "' x2='" + (W - R) + "' y1='" + Y(yv) + "' y2='" + Y(yv) + "'/><text x='" + (L - 8) + "' y='" + (Y(yv) + 4) + "' text-anchor='end'>" + fmt(yv, 0) + "</text>";
-    for (var xv = 0; xv <= xmax + 1e-9; xv += sx) g += "<text x='" + X(xv) + "' y='" + (H - B + 18) + "' text-anchor='middle'>" + fmt(xv, 0) + "</text>";
+    for (var yv = Math.ceil(ymin / sy - 1e-9) * sy + 0; yv <= ymax + 1e-9; yv += sy) g += "<line class='grid' x1='" + L + "' x2='" + (W - R) + "' y1='" + Y(yv) + "' y2='" + Y(yv) + "'/><text x='" + (L - 8) + "' y='" + (Y(yv) + 4) + "' text-anchor='end'>" + fmt(yv, 0) + "</text>";
+    for (var xv = Math.ceil(xmin / sx - 1e-9) * sx + 0; xv <= xmax + 1e-9; xv += sx) g += "<text x='" + X(xv) + "' y='" + (H - B + 18) + "' text-anchor='middle'>" + fmt(xv, 0) + "</text>";
     g += "<text class='axis-title' x='" + (L + W - R) / 2 + "' y='" + (H - 6) + "' text-anchor='middle'>prompt speed, medium prompt (tokens per second)</text>" +
       "<text class='axis-title' x='14' y='" + (T + H - B) / 2 + "' text-anchor='middle' transform='rotate(-90 14 " + (T + H - B) / 2 + ")'>decode speed (tokens per second)</text>";
     pts.forEach(function (p) {
@@ -73,10 +99,14 @@
     var used = {}; pts.forEach(function (p) { used[p.machine] = (used[p.machine] || 0) + 1; });
     var legend = Object.keys(used).sort().map(function (k) { return "<span class='key'><i class='sw " + mc[k].cls + "'></i>" + esc(mc[k].label) + "</span>"; }).join("");
     var shapes = "<span class='key'><i class='sw round'></i>standard-v1</span><span class='key'><i class='sw diamond'></i>standard-v2</span>";
-    return "<button type='button' class='expand' data-expand aria-expanded='false' title='Show the speed map larger'>Expand</button><h2>Speed map</h2><p class='hint'>One point per result. Right is faster at reading a prompt, up is faster at writing the answer. Click a point for the full result.</p>" +
+    var field = function (key, name, ph) { return "<input type='number' step='any' min='0' data-axis='" + key + "' aria-label='" + name + "' placeholder='" + ph + "' value='" + (numOr(view[key]) === null ? "" : esc(view[key])) + "'>"; };
+    var controls = "<div class='axes'><span>Prompt speed (x) " + field("xmin", "x axis from", "0") + " to " + field("xmax", "x axis to", "auto") + "</span><span>Decode speed (y) " + field("ymin", "y axis from", "0") + " to " + field("ymax", "y axis to", "auto") + "</span>" +
+      "<button type='button' data-fit>Fit to data</button><button type='button' data-reset>Reset</button></div>";
+    var outside = all.length - pts.length ? "<p class='hint'>" + (all.length - pts.length) + " of " + all.length + " results are outside this range. <b>Reset</b> shows them all.</p>" : "";
+    return "<button type='button' class='expand' data-expand aria-expanded='false' title='Show the speed map larger'>Expand</button><h2>Speed map</h2><p class='hint'>One point per result. Right is faster at reading a prompt, up is faster at writing the answer. Click a point for the full result. Set the axes, or use Fit to data, to pull a crowded cluster apart.</p>" + controls +
       "<svg class='viz' viewBox='0 0 " + W + " " + H + "' role='img' aria-label='Decode speed against prompt speed, one point per result'>" + g + "</svg>" +
       "<div class='legend'>" + legend + "</div><div class='legend'>" + shapes + "</div>" +
-      "<p class='hint'>A map of what was measured, not a ranking: the points differ in model, quantisation, engine and configuration.</p>";
+      outside + "<p class='hint'>A map of what was measured, not a ranking: the points differ in model, quantisation, engine and configuration.</p>";
   }
 
   var DOMAIN = 20;                                           // the strips show -20% to +20%; a larger change sits at the edge and its value is written out
@@ -193,7 +223,7 @@
     return "<h2>Same model, different machines</h2>" + one(list[0]) + (list.length > 1 ? "<details class='more'><summary>Show " + (list.length - 1) + " more</summary>" + list.slice(1, 8).map(one).join("") + "</details>" : "");
   }
 
-  var api = { kpi: kpi, speedMap: speedMap, pairs: pairs, sameModel: sameModel, machines: machines };
+  var api = { kpi: kpi, speedMap: speedMap, fit: fit, pairs: pairs, sameModel: sameModel, machines: machines };
   root.StrataOverview = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : this);
