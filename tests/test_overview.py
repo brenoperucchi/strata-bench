@@ -96,6 +96,14 @@ class Insights(unittest.TestCase):
         self.assertEqual(self.call("I.MIN_MACHINES", []), 3)
         self.assertEqual(self.call("I.transitionSupport(I.pairs(rows))", rows[:2]), {"0.1.42 → 0.1.43": 1})
 
+    def test_two_binaries_with_one_version_number_are_two_builds_not_a_config_change(self):
+        official = row("a", engine="0.1.43.1", binary="aa690ae6", config_id="c1", protocol="standard-v2")
+        fork = row("b", engine="0.1.43.1", binary="dfc35851", config_id="c2", protocol="standard-v2", date="2026-10-12T10:00:00-03:00")
+        self.assertEqual(self.call("I.pairs(rows)", [official, fork]), [])           # different binary and different config: nothing says which one moved the numbers
+        same_cfg = row("c", engine="0.1.43.1", binary="dfc35851", config_id="c1", protocol="standard-v2", date="2026-10-12T10:00:00-03:00")
+        got = self.call("I.pairs(rows).map(p => [p.kind, p.a.binary, p.b.binary])", [official, same_cfg])
+        self.assertEqual(got, [["build", "aa690ae6", "dfc35851"]])                   # same config, other binary: a build pair
+
     def test_the_same_model_on_two_machines_is_matched_by_family_even_when_the_name_differs(self):
         a = row("a", model_full="Swift", machine_id="m1")
         b = row("b", model_full="Swift (Qwen3.8-Flash-Next 125B MoE)", machine_id="m2", gpu="Tesla V100S", config_id="c2", n_ctx=131072,

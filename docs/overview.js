@@ -59,11 +59,16 @@
     });
     var clusters = {};
     pts.forEach(function (p) { var c = clusters[p.machine] = clusters[p.machine] || { n: 0, x: 0, y: 0 }; c.n++; c.x += X(p.x); c.y += Y(p.y); });
-    var placed = [];
+    var boxes = [];                                                  // a label is drawn only where it overlaps no other; the legend names every machine anyway
     Object.keys(clusters).sort().forEach(function (k) {
-      var c = clusters[k], cx = c.x / c.n, cy = c.y / c.n, below = placed.some(function (q) { return Math.abs(q.x - cx) < 90 && Math.abs(q.y - cy) < 26; });
-      placed.push({ x: cx, y: cy });
-      g += "<text class='tag " + mc[k].cls + "' x='" + cx + "' y='" + (below ? cy + 26 : cy - 14) + "' text-anchor='middle'>" + esc(mc[k].label) + "</text>";
+      var c = clusters[k], cx = c.x / c.n, cy = c.y / c.n, w = mc[k].label.length * 7 + 8;
+      [cy - 16, cy + 26].some(function (ty) {
+        var b = { x0: cx - w / 2, x1: cx + w / 2, y0: ty - 12, y1: ty + 4 };
+        if (b.x0 < 0 || b.x1 > W || boxes.some(function (o) { return b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0; })) return false;
+        boxes.push(b);
+        g += "<text class='tag " + mc[k].cls + "' x='" + cx + "' y='" + ty + "' text-anchor='middle'>" + esc(mc[k].label) + "</text>";
+        return true;
+      });
     });
     var used = {}; pts.forEach(function (p) { used[p.machine] = (used[p.machine] || 0) + 1; });
     var legend = Object.keys(used).sort().map(function (k) { return "<span class='key'><i class='sw " + mc[k].cls + "'></i>" + esc(mc[k].label) + "</span>"; }).join("");
@@ -88,9 +93,11 @@
     });
     [-DOMAIN, 0, DOMAIN].forEach(function (t) { g += "<text x='" + X(t) + "' y='" + (H - 6) + "' text-anchor='middle'>" + (t > 0 ? "+" : t < 0 ? "−" : "") + Math.abs(t) + "%</text>"; });
     var m = mc[p.machine] || { label: "machine" }, a = p.a, b = p.b;
-    var what = p.kind === "build" ? "engine " + a.engine + " → " + b.engine + ", same configuration" : "engine " + a.engine + ", configuration changed";
+    var tag = function (r) { return r.engine + (a.engine === b.engine && r.binary ? " [" + r.binary + "]" : ""); };      // the same version from two binaries needs the binary to be told apart
+    var what = p.kind === "build" ? "engine " + tag(a) + " → " + tag(b) + ", same configuration" : "engine " + tag(a) + ", configuration changed";
+    var n = support[I.buildOf(a) + " → " + I.buildOf(b)] || 0;
     var note = p.kind === "build"
-      ? ((support[a.engine + " → " + b.engine] || 0) < I.MIN_MACHINES ? "Insufficient data for a verdict on this release: " + (support[a.engine + " → " + b.engine] || 0) + " of " + I.MIN_MACHINES + " machines needed. " : "")
+      ? (n < I.MIN_MACHINES ? "Insufficient data for a verdict on this release: " + n + " of " + I.MIN_MACHINES + " machines needed. " : "")
       : "Single-machine observation. ";
     var val = function (v) { return v === true ? "" : " " + esc(v); };
     var changes = p.args && p.args.length ? "<p class='args'>Configuration changes: " + p.args.map(function (c) {

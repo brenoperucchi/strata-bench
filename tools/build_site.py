@@ -71,6 +71,7 @@ def row(rel: str, doc: dict) -> dict:
         "model_full": mo.get("family") or doc.get("model_path"),
         "cpu": m.get("cpu"), "ram_gb": m.get("ram_gb"), "os": m.get("os"), "driver": m.get("driver"),
         "engine": e.get("version") or doc.get("build_info"), "commit": e.get("commit"), "backend": e.get("backend"),
+        "engine_source": e.get("source"), "binary": (e.get("binary_sha256") or "")[:8] or None,      # two builds with one version number (official and a fork) are different engines
         "model": model_name(mo.get("family") or doc.get("model_path")), "quant": mo.get("quant"), "n_ctx": doc.get("n_ctx"),
         "config_id": cfg.get("config_id"), "config_origin": cfg.get("config_origin"),
         "args": cfg.get("args"),

@@ -32,6 +32,8 @@
   }
   var byDate = function (a, b) { return String(a.date || "").localeCompare(String(b.date || "")); };
   var usable = function (r) { return r.status !== "failed"; };
+  // The version number alone is not the engine: an official build and a fork can both say 0.1.43.1. The binary hash tells them apart when the result declares it.
+  var buildOf = function (r) { return r.engine + (r.binary ? "#" + r.binary : ""); };
   // The model name is free text ("Swift", "Swift Qwen3.8 Flash Next", "Swift (… 125B MoE)"), so results are matched on the family word and the quant.
   var family = function (r) { return String(r.model_full || r.model || "").trim().split(/[\s(]+/)[0].toLowerCase(); };
   var kindOf = function (r) { return [r.protocol, family(r), r.quant].join("|"); };
@@ -73,14 +75,14 @@
     var builds = group(function (r) { return [keys[r.id], kindOf(r), r.config_id].join("#"); });
     Object.keys(builds).forEach(function (k) {
       var latest = {};
-      builds[k].forEach(function (r) { if (!latest[r.engine] || byDate(latest[r.engine], r) < 0) latest[r.engine] = r; });
-      var engines = Object.keys(latest).sort(engineCmp);
+      builds[k].forEach(function (r) { var b = buildOf(r); if (!latest[b] || byDate(latest[b], r) < 0) latest[b] = r; });
+      var engines = Object.keys(latest).sort(function (x, y) { return engineCmp(latest[x].engine, latest[y].engine) || byDate(latest[x], latest[y]); });
       for (var i = 1; i < engines.length; i++) {
-        var p = pairOf("build", latest[engines[i - 1]], latest[engines[i]], keys[latest[engines[i]].id], "same configuration, new engine build");
+        var p = pairOf("build", latest[engines[i - 1]], latest[engines[i]], keys[latest[engines[i]].id], "same configuration, other engine build");
         if (p) out.push(p);
       }
     });
-    var configs = group(function (r) { return [keys[r.id], kindOf(r), r.engine].join("#"); });
+    var configs = group(function (r) { return [keys[r.id], kindOf(r), buildOf(r)].join("#"); });
     Object.keys(configs).forEach(function (k) {
       var latest = {};
       configs[k].forEach(function (r) { if (!latest[r.config_id] || byDate(latest[r.config_id], r) < 0) latest[r.config_id] = r; });
@@ -97,7 +99,7 @@
   function transitionSupport(list) {
     var t = {};
     list.filter(function (p) { return p.kind === "build"; }).forEach(function (p) {
-      var k = p.a.engine + " → " + p.b.engine; t[k] = t[k] || {}; t[k][p.machine] = 1;
+      var k = buildOf(p.a) + " → " + buildOf(p.b); t[k] = t[k] || {}; t[k][p.machine] = 1;
     });
     var out = {};
     Object.keys(t).forEach(function (k) { out[k] = Object.keys(t[k]).length; });
@@ -108,7 +110,7 @@
   // The latest result of each machine is used; the differences that remain (context size, configuration) are listed so they are never hidden.
   function sameModel(rows) {
     var good = rows.filter(usable), keys = machineKeys(good), groups = {};
-    good.forEach(function (r) { var k = [kindOf(r), r.engine].join("#"); (groups[k] = groups[k] || []).push(r); });
+    good.forEach(function (r) { var k = [kindOf(r), buildOf(r)].join("#"); (groups[k] = groups[k] || []).push(r); });
     var out = [];
     Object.keys(groups).forEach(function (k) {
       var latest = {};
@@ -150,7 +152,7 @@
     };
   }
 
-  var api = { METRICS: METRICS, MIN_MACHINES: MIN_MACHINES, machineKeys: machineKeys, engineCmp: engineCmp, pairs: pairs, transitionSupport: transitionSupport, sameModel: sameModel, speedPoints: speedPoints, summary: summary };
+  var api = { buildOf: buildOf, METRICS: METRICS, MIN_MACHINES: MIN_MACHINES, machineKeys: machineKeys, engineCmp: engineCmp, pairs: pairs, transitionSupport: transitionSupport, sameModel: sameModel, speedPoints: speedPoints, summary: summary };
   root.StrataInsights = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : this);
