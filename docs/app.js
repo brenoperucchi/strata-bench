@@ -23,6 +23,21 @@
     var panels = [["ov-map", O.speedMap], ["ov-pairs", O.pairs], ["ov-same", O.sameModel]];
     panels.forEach(function (p) { var html = p[1](rows); $(p[0]).innerHTML = html; $(p[0]).hidden = !html; });
     $("overview").hidden = false;
+    expandable($("ov-map"));
+  }
+
+  // The speed map can be opened over the page: a button on the card, and Escape or the button again to close it.
+  function expandable(panel) {
+    if (!panel || !panel.addEventListener) return;
+    var set = function (on) {
+      panel.classList.toggle("expanded", on);
+      var b = panel.querySelector("[data-expand]");
+      if (b) { b.setAttribute("aria-expanded", String(on)); b.textContent = on ? "Close" : "Expand"; b.title = on ? "Back to the page" : "Show the speed map larger"; }
+    };
+    panel.addEventListener("click", function (e) {
+      if (e.target && e.target.closest && e.target.closest("[data-expand]")) set(!panel.classList.contains("expanded"));
+    });
+    if (typeof document.addEventListener === "function") document.addEventListener("keydown", function (e) { if (e.key === "Escape" && panel.classList.contains("expanded")) set(false); });
   }
 
   function filters(rows) {

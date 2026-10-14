@@ -73,7 +73,7 @@
     var used = {}; pts.forEach(function (p) { used[p.machine] = (used[p.machine] || 0) + 1; });
     var legend = Object.keys(used).sort().map(function (k) { return "<span class='key'><i class='sw " + mc[k].cls + "'></i>" + esc(mc[k].label) + "</span>"; }).join("");
     var shapes = "<span class='key'><i class='sw round'></i>standard-v1</span><span class='key'><i class='sw diamond'></i>standard-v2</span>";
-    return "<h2>Speed map</h2><p class='hint'>One point per result. Right is faster at reading a prompt, up is faster at writing the answer. Click a point for the full result.</p>" +
+    return "<button type='button' class='expand' data-expand aria-expanded='false' title='Show the speed map larger'>Expand</button><h2>Speed map</h2><p class='hint'>One point per result. Right is faster at reading a prompt, up is faster at writing the answer. Click a point for the full result.</p>" +
       "<svg class='viz' viewBox='0 0 " + W + " " + H + "' role='img' aria-label='Decode speed against prompt speed, one point per result'>" + g + "</svg>" +
       "<div class='legend'>" + legend + "</div><div class='legend'>" + shapes + "</div>" +
       "<p class='hint'>A map of what was measured, not a ranking: the points differ in model, quantisation, engine and configuration.</p>";

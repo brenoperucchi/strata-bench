@@ -218,6 +218,14 @@ class OverviewHtml(unittest.TestCase):
         self.assertIn("Show 2 more machines", html)                                  # seven machines: five shown, two folded
         self.assertIn("inside the noise band", html)
 
+    def test_the_speed_map_card_has_an_expand_button_and_the_app_wires_it(self):
+        out = self.render(self.rows())
+        self.assertIn("data-expand", out["ov-map"])
+        self.assertIn("aria-expanded='false'", out["ov-map"])
+        app = (ROOT / "docs" / "app.js").read_text()
+        self.assertIn("data-expand", app)
+        self.assertIn("Escape", app)
+
     def test_the_page_loads_the_insight_modules_before_the_app(self):
         html = (ROOT / "docs" / "index.html").read_text()
         self.assertLess(html.index("insights.js"), html.index("overview.js"))
