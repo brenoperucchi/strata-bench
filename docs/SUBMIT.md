@@ -41,9 +41,11 @@ python3 -m strata_bench run \
 - `--label` names this run. It becomes the file name, and an existing result is never overwritten.
 - Add `--sizes probe,medium,long,xlong,gprobe` to include the short agent-style prompts (about 150, 300 and 450 tokens).
 
+**Start with this default run (`standard-v1`).** The dashboard puts two machines side by side only when they ran the same protocol, and v1 is the one everybody can run, so a v1 result is what lets your machine be compared with the others. If you also run v2 (next section), keep the v1 result: v2 is an addition, not a replacement.
+
 ### Protocol v2: first token, agent session and several clients (optional)
 
-`standard-v2` measures more than speeds: the time to the first token, a five-turn agent conversation with the prompt cache on, and several clients at once. It is additive: your v1 results stay valid and v2 results sit beside them on the dashboard.
+`standard-v2` measures more than speeds: the time to the first token, a five-turn agent conversation with the prompt cache on, and several clients at once. Run it in addition to v1, on the same server and config, so the two results describe the same setup. Your v1 results stay valid and v2 results sit beside them on the dashboard, but a v2 result is compared only with other v2 results.
 
 ```
 python3 -m strata_bench run --protocol standard-v2 --base http://127.0.0.1:18299 --config /path/to/strata-yourmodel.json \
@@ -54,7 +56,7 @@ python3 -m strata_bench run --protocol standard-v2 --base http://127.0.0.1:18299
 - The agent session needs a server context of at least 16,384 tokens; with less it is skipped and recorded as skipped, and the rest still runs. The clients block is skipped if the server says it has fewer than 2 slots.
 - First-token times include the network. A loopback `--base` is recorded as `same-host`; if the client runs on another machine pass `--host-relation lan` or `--host-relation remote`.
 - Thinking is switched off for v2 requests, so the first token is the start of the answer and not of the reasoning.
-- v1 is still the default when you do not pass `--protocol`. Everything about what v2 sends and records is in [PROTOCOL.md](PROTOCOL.md).
+- v1 is still the default when you do not pass `--protocol`, and it is the one to run first. Everything about what v2 sends and records is in [PROTOCOL.md](PROTOCOL.md).
 
 The result is saved after every call. Exit codes: `0` done, `2` refused before measuring (wrong model or context, a modified prompt file, an existing result), `3` stopped early with a partial result kept.
 
