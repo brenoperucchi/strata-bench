@@ -34,8 +34,17 @@
   var usable = function (r) { return r.status !== "failed"; };
   // The version number alone is not the engine: an official build and a fork can both say 0.1.43.1. The binary hash tells them apart when the result declares it.
   var buildOf = function (r) { return r.engine + (r.binary ? "#" + r.binary : ""); };
-  // The model name is free text ("Swift", "Swift Qwen3.8 Flash Next", "Swift (… 125B MoE)"), so results are matched on the family word and the quant.
-  var family = function (r) { return String(r.model_full || r.model || "").trim().split(/[\s(]+/)[0].toLowerCase(); };
+  // The model name is free text ("Qwen3.8-Flash-Next", "Swift Qwen3.8 Flash Next", "Swift (Qwen3.8-Flash-Next 125B MoE)", a bare "Swift"), so results are matched on a normalised name:
+  // case, punctuation and the "Swift" prefix are ignored, and a note in parentheses is read only when nothing else names the model (its size and "MoE" are dropped).
+  // A bare "Swift" is taken as Qwen3.8-Flash-Next, which is what the results that spell it out say it is.
+  var BARE_SWIFT = "qwen3.8flashnext";
+  var words = function (t) { return String(t).toLowerCase().split(/[^a-z0-9.]+/).filter(function (w) { return w && w !== "swift"; }); };
+  var family = function (r) {
+    var name = String(r.model_full || r.model || ""), note = (name.match(/\(([^)]*)\)/) || [])[1] || "";
+    var main = words(name.replace(/\([^)]*\)/g, " ")).join("");
+    if (main) return main;
+    return words(note).filter(function (w) { return w !== "moe" && !/^\d+(\.\d+)?b$/.test(w); }).join("") || BARE_SWIFT;
+  };
   var kindOf = function (r) { return [r.protocol, family(r), r.quant].join("|"); };
 
   function delta(a, b, m) {
@@ -106,28 +115,41 @@
     return out;
   }
 
-  // The same model on the same engine build, on different machines: the closest thing to a hardware comparison the data allows.
-  // The latest result of each machine is used; the differences that remain (context size, configuration) are listed so they are never hidden.
+  // The same model and quantisation under one protocol, on different machines: the closest thing to a hardware comparison the data allows.
+  // The latest result of each machine is used, on the engine build most machines share, so the comparison is as controlled as the results allow;
+  // the differences that remain (engine build, context size, configuration) are listed so they are never hidden.
   function sameModel(rows) {
     var good = rows.filter(usable), keys = machineKeys(good), groups = {};
-    good.forEach(function (r) { var k = [kindOf(r), buildOf(r)].join("#"); (groups[k] = groups[k] || []).push(r); });
+    good.forEach(function (r) { var k = kindOf(r); (groups[k] = groups[k] || []).push(r); });
     var out = [];
     Object.keys(groups).forEach(function (k) {
-      var latest = {};
-      groups[k].forEach(function (r) { var m = keys[r.id]; if (!latest[m] || byDate(latest[m], r) < 0) latest[m] = r; });
-      var list = Object.keys(latest).map(function (m) { return latest[m]; });
-      if (list.length < 2) return;
+      var byMachine = {};
+      groups[k].forEach(function (r) {
+        var m = keys[r.id], b = buildOf(r); byMachine[m] = byMachine[m] || {};
+        if (!byMachine[m][b] || byDate(byMachine[m][b], r) < 0) byMachine[m][b] = r;
+      });
+      var machines = Object.keys(byMachine);
+      if (machines.length < 2) return;
+      var count = {}, newest = {};
+      machines.forEach(function (m) {
+        Object.keys(byMachine[m]).forEach(function (b) { var r = byMachine[m][b]; count[b] = (count[b] || 0) + 1; if (!newest[b] || byDate(newest[b], r) < 0) newest[b] = r; });
+      });
+      var order = Object.keys(count).sort(function (x, y) { return count[y] - count[x] || byDate(newest[y], newest[x]); });
+      var list = machines.map(function (m) { return byMachine[m][order.filter(function (b) { return byMachine[m][b]; })[0]]; });
+      var distinct = function (f) { return new Set(list.map(f)).size > 1; };
       var differs = [];
-      if (new Set(list.map(function (r) { return r.n_ctx; })).size > 1) differs.push("context size");
-      if (new Set(list.map(function (r) { return r.config_id; })).size > 1) differs.push("configuration");
+      if (distinct(buildOf)) differs.push("engine build");
+      if (distinct(function (r) { return r.n_ctx; })) differs.push("context size");
+      if (distinct(function (r) { return r.config_id; })) differs.push("configuration");
       var longTokens = list.map(function (r) { var ms = size(r, "long", "prompt_ms"), tps = size(r, "long", "prompt_tps"); return ms && tps ? ms * tps / 1000 : null; });
       var shown = list.map(function (r, i) {
-        return { row: r, machine: keys[r.id], prefill_medium: size(r, "medium", "prompt_tps"), prefill_long: size(r, "long", "prompt_tps"), decode_medium: size(r, "medium", "decode_tps"), long_seconds: size(r, "long", "prompt_ms") === null ? null : size(r, "long", "prompt_ms") / 1000, long_tokens: longTokens[i] };
+        return { row: r, machine: keys[r.id], build: buildOf(r), prefill_medium: size(r, "medium", "prompt_tps"), prefill_long: size(r, "long", "prompt_tps"), decode_medium: size(r, "medium", "decode_tps"), long_seconds: size(r, "long", "prompt_ms") === null ? null : size(r, "long", "prompt_ms") / 1000, long_tokens: longTokens[i] };
       }).filter(function (m) { return m.prefill_medium !== null || m.decode_medium !== null; });
       if (shown.length < 2) return;
       shown.sort(function (a, b) { return (b.decode_medium || 0) - (a.decode_medium || 0); });
       var toks = shown.map(function (m) { return m.long_tokens; }).filter(Boolean);
-      out.push({ model: list[0].model, model_full: list[0].model_full, quant: list[0].quant, engine: list[0].engine, protocol: list[0].protocol, differs: differs, machines: shown, long_tokens: toks.length ? Math.round(Math.min.apply(null, toks) / 100) * 100 : null });
+      var engines = []; shown.forEach(function (m) { if (engines.indexOf(m.row.engine) < 0) engines.push(m.row.engine); });
+      out.push({ model: list[0].model, model_full: list[0].model_full, quant: list[0].quant, engine: engines.join(", "), protocol: list[0].protocol, differs: differs, machines: shown, long_tokens: toks.length ? Math.round(Math.min.apply(null, toks) / 100) * 100 : null });
     });
     return out.sort(function (a, b) { return b.machines.length - a.machines.length; });
   }
@@ -152,7 +174,7 @@
     };
   }
 
-  var api = { buildOf: buildOf, METRICS: METRICS, MIN_MACHINES: MIN_MACHINES, machineKeys: machineKeys, engineCmp: engineCmp, pairs: pairs, transitionSupport: transitionSupport, sameModel: sameModel, speedPoints: speedPoints, summary: summary };
+  var api = { buildOf: buildOf, kindOf: kindOf, METRICS: METRICS, MIN_MACHINES: MIN_MACHINES, machineKeys: machineKeys, engineCmp: engineCmp, pairs: pairs, transitionSupport: transitionSupport, sameModel: sameModel, speedPoints: speedPoints, summary: summary };
   root.StrataInsights = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : this);

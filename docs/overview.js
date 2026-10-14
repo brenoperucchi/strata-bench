@@ -117,7 +117,7 @@
 
   function sameModel(rows) {
     var list = I.sameModel(rows), mc = machines(rows);
-    if (!list.length) return "<h2>Same model, different machines</h2><p class='hint'>Nothing to compare yet. Results for a model and engine build that two machines both measured appear here. <a href='submit.html'>Submit a result</a> for a model that is already listed.</p>";
+    if (!list.length) return "<h2>Same model, different machines</h2><p class='hint'>Nothing to compare yet. Results for a model and quantisation that two machines both measured appear here. <a href='submit.html'>Submit a result</a> for a model that is already listed.</p>";
     var metrics = [["prefill_medium", "Prompt speed, medium", 0], ["prefill_long", "Prompt speed, long", 0], ["decode_medium", "Decode speed", 1]];
     return "<h2>Same model, different machines</h2>" + list.slice(0, 2).map(function (g) {
       var cols = metrics.map(function (m) {
@@ -131,9 +131,10 @@
       }).join("");
       var sec = g.machines.filter(function (x) { return x.long_seconds !== null; }).map(function (x) { return "<b>" + fmt(x.long_seconds, 1) + " s</b> on " + esc(mc[x.machine].label); }).join(", ");
       var diff = g.differs.length ? " The " + esc(g.differs.join(" and ")) + " differ between these results, so this is not a controlled comparison." : "";
+      if (g.differs.indexOf("engine build") >= 0) diff += " Engine: " + g.machines.map(function (x) { return esc(mc[x.machine].label) + " " + esc(x.row.engine) + (x.row.binary ? " [" + esc(x.row.binary) + "]" : ""); }).join(", ") + ".";
       return "<div class='same'><h3>" + esc(g.model) + " " + esc(g.quant) + " <span class='hint'>engine " + esc(g.engine) + " · " + esc(g.protocol) + "</span></h3><div class='grid3'>" + cols + "</div>" +
         (sec && g.long_tokens ? "<p>A long prompt of about " + fmt(g.long_tokens, 0) + " tokens is read in " + sec + ".</p>" : "") +
-        "<p class='hint'>Same model and engine build; the latest result of each machine.<span>" + diff + "</span></p></div>";
+        "<p class='hint'>Same model, quantisation and protocol; the latest result of each machine, on the engine build most machines share.<span>" + diff + "</span></p></div>";
     }).join("");
   }
 

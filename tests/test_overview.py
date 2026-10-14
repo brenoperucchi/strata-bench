@@ -110,9 +110,31 @@ class Insights(unittest.TestCase):
                 sizes={"medium": {"prompt_tps": 300.0, "decode_tps": 30.0, "prompt_ms": 9000.0}, "long": {"prompt_tps": 600.0, "decode_tps": 28.0, "prompt_ms": 20000.0}})
         got = self.call("I.sameModel(rows).map(g => [g.machines.length, g.differs, g.long_tokens])", [a, b])
         self.assertEqual(got, [[2, ["context size", "configuration"], 12000]])        # the prompt size shown is the smaller one the two machines report
-        # another engine build is another group: never mixed
+
+    def test_machines_on_other_engine_builds_still_meet_and_the_page_says_so(self):
+        a = row("a")
         c = row("c", machine_id="m2", gpu="Tesla V100S", engine="0.1.43")
-        self.assertEqual(self.call("I.sameModel(rows)", [a, c]), [])
+        got = self.call("I.sameModel(rows).map(g => [g.machines.length, g.differs, g.engine.split(', ').sort()])", [a, c])
+        self.assertEqual(got, [[2, ["engine build"], ["0.1.42", "0.1.43"]]])
+
+    def test_the_build_most_machines_share_is_the_one_compared(self):
+        old = row("a-old", date="2026-10-10T10:00:00-03:00")
+        new = row("a-new", engine="0.1.43", date="2026-10-12T10:00:00-03:00")
+        other = row("b", machine_id="m2", gpu="Tesla V100S", date="2026-10-11T10:00:00-03:00")           # the second machine only has 0.1.42
+        got = self.call("I.sameModel(rows).map(g => [g.differs, g.machines.map(m => m.build).sort()])", [old, new, other])
+        self.assertEqual(got, [[[], ["0.1.42", "0.1.42"]]])                                              # m1 is read on 0.1.42 too, not on its newer build
+
+    def test_a_different_protocol_is_never_the_same_model_group(self):
+        a = row("a")
+        b = row("b", machine_id="m2", gpu="Tesla V100S", protocol="standard-v2")
+        self.assertEqual(self.call("I.sameModel(rows)", [a, b]), [])
+
+    def test_model_names_that_spell_one_model_differently_are_matched_and_other_models_are_not(self):
+        names = ["Qwen3.8-Flash-Next", "Swift Qwen3.8 Flash Next", "Qwen3.8 Flash Next", "Swift (Qwen3.8-Flash-Next 125B MoE)", "Swift"]
+        fam = self.call("rows.map(n => (I.kindOf({model_full: n, quant: 'Q', protocol: 'p'})))", names)
+        self.assertEqual(len(set(fam)), 1, fam)
+        other = self.call("['Coder', 'Llama 3 8B', 'Llama 3 70B'].map(n => I.kindOf({model_full: n, quant: 'Q', protocol: 'p'}))", [])
+        self.assertEqual(len(set(other + fam[:1])), 4)                                                    # a size in the main name is a different model
 
     def test_the_summary_counts_machines_and_contributors(self):
         rows = [row("a"), row("b", by="other", machine_id="m2", cpu="x", date="2026-10-12T10:00:00-03:00", engine="0.1.43"), row("c", status="failed", by=None)]
