@@ -279,6 +279,14 @@ class OverviewHtml(unittest.TestCase):
         self.assertIn('id="ov-map"', dash)
         self.assertLess(html.index('id="cards"'), html.index('id="tab-dash"'))                                            # the summary strip stays above the tabs
 
+    def test_the_results_table_shows_the_quantisation_and_keeps_the_model_name_in_the_tooltip(self):
+        out = self.render([row("a", model="Swift Qwen3.8 Flash Next", model_full="Swift Qwen3.8 Flash Next", quant="IQ3_XXS")])
+        table = out["perf"]
+        self.assertIn("<b>IQ3_XXS</b>", table)
+        self.assertIn(">Quant", table)
+        self.assertIn("title='Swift Qwen3.8 Flash Next'", table)                       # the model is one hover away
+        self.assertNotIn(">Swift Qwen3.8 Flash Next<", table)                           # and no longer takes the width of a column
+
     def test_the_page_loads_the_insight_modules_before_the_app(self):
         html = (ROOT / "docs" / "index.html").read_text()
         self.assertLess(html.index("insights.js"), html.index("overview.js"))

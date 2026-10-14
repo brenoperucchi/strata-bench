@@ -196,3 +196,7 @@ svg.viz .sel { fill: var(--accent); fill-opacity: .12; stroke: var(--accent); st
 #ov-map .hint { margin: 2px 0; }
 #ov-map .legend { margin: 2px 0 0; }
 #view-dash > .overview { margin-top: 16px; }
+
+/* the results table: tight enough to fit a laptop screen without sideways scrolling */
+#perf th, #perf td { padding: 8px 6px; }
+#perf td.by a { display: inline-block; max-width: 9.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
