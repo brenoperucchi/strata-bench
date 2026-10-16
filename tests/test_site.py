@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
 sys.path.insert(0, str(ROOT))
 import build_site  # noqa: E402
-from strata_bench import core, validate  # noqa: E402
+from strata_bench import core, schema, validate  # noqa: E402
 from tests import test_core as TC  # noqa: E402
 
 
@@ -28,7 +28,7 @@ class Site(unittest.TestCase):
 
     def make(self, label, mode=None, identity=None):
         TC.Fake.st["mode"], TC.Fake.st["mode_after"] = mode, 1
-        core.run(self.base, TC.CFG, "setup-default", ["medium"], label, self.tmp / "results", identity, log=lambda *a: None)
+        core.run(self.base, TC.CFG, "setup-default", list(schema.V1_SIZES), label, self.tmp / "results", identity, log=lambda *a: None)
         TC.Fake.st["mode"] = None
         return self.tmp / "results" / f"{label}.result.json"
 
@@ -57,7 +57,7 @@ class Site(unittest.TestCase):
         self.assertEqual((old["protocol"], old["suite"], old["host_relation"], old["agent"], old["clients"]), ("standard-v1", None, None, None, None))
         self.assertNotIn("ttft_ms", {k for k, v in old["sizes"]["medium"].items() if v is not None})
         self.assertEqual((new["protocol"], new["suite"], new["host_relation"]), ("standard-v2", "full", "lan"))
-        self.assertEqual(sorted(new["sizes"]), ["chat", "long", "medium", "xlong"])
+        self.assertEqual(sorted(new["sizes"]), ["chat", "gprobe150", "gprobe300", "gprobe450", "long", "medium", "xlong"])
         self.assertIsNotNone(new["sizes"]["medium"]["ttft_ms"])
         self.assertEqual(sorted(new["agent"]), ["hit_pct", "reread_tokens", "ttft_last_turn_ms", "ttft_turn1_ms"])
         self.assertGreater(new["agent"]["hit_pct"], 90)

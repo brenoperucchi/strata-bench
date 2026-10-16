@@ -331,6 +331,12 @@ class OverviewHtml(unittest.TestCase):
         self.assertIn("-7.5%".replace("-", "\u2212"), html)                           # the change is shown as it is: less time is a negative number, in green
         self.assertIn("chip up", html)
 
+    def test_a_legacy_result_is_marked_in_the_results_table(self):
+        out = self.render([row("a"), row("b", legacy=True, machine_id="m2", cpu="x", date="2026-10-12T10:00:00-03:00")])
+        table = out["perf"]
+        self.assertEqual(table.count(">legacy</span>"), 1)
+        self.assertIn("Published before the fixed profiles", table)
+
     def test_the_page_loads_the_insight_modules_before_the_app(self):
         html = (ROOT / "docs" / "index.html").read_text()
         self.assertLess(html.index("insights.js"), html.index("overview.js"))

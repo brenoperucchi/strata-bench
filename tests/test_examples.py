@@ -29,13 +29,16 @@ class Examples(unittest.TestCase):
 
     def test_the_documented_commands_exist(self):
         text = (ROOT / "docs" / "SUBMIT.md").read_text() + (ROOT / "README.md").read_text()
-        for flag in ("--base", "--config", "--origin", "--label", "--out", "--identity", "--sizes", "--api-key", "--protocol", "--suite", "--host-relation"):
+        for flag in ("--base", "--config", "--origin", "--label", "--out", "--identity", "--api-key", "--protocol", "--suite", "--host-relation"):
             self.assertIn(flag, text)
+        for doc in ("docs/SUBMIT.md", "docs/PROTOCOL.md", "README.md", "docs/index.html", "docs/submit.html"):          # nobody picks sizes, so no page tells anyone to
+            self.assertNotIn("--sizes", (ROOT / doc).read_text(), doc)
         import subprocess
         import sys
         h = subprocess.run([sys.executable, "-m", "strata_bench", "run", "--help"], capture_output=True, text=True, cwd=ROOT).stdout
-        for flag in ("--base", "--config", "--origin", "--label", "--out", "--identity", "--sizes", "--api-key"):
+        for flag in ("--base", "--config", "--origin", "--label", "--out", "--identity", "--api-key", "--protocol", "--suite"):
             self.assertIn(flag, h)
+        self.assertNotIn("--sizes", h)
 
 
 if __name__ == "__main__":

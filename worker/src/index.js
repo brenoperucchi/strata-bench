@@ -3,7 +3,7 @@
 //
 // Secrets (wrangler secret put): GITHUB_TOKEN (a fine-grained token limited to this repository: contents and pull requests, read and write),
 // TURNSTILE_SECRET. Vars (wrangler.toml): ALLOWED_ORIGIN, GITHUB_REPO, BASE_BRANCH.
-import { problems } from "../../docs/validator.js";
+import { gate } from "../../docs/validator.js";
 import schema from "../../docs/schema.json" with { type: "json" };
 
 export const MAX_BYTES = 1_000_000;
@@ -96,7 +96,7 @@ export default {
     if (!ts.ok) return json(403, { ok: false, error: "challenge_failed", codes: ts.codes }, c.headers);
 
     const doc = body.result;
-    const probs = problems(doc, schema);
+    const probs = gate(doc, schema);
     if (probs.length) return json(422, { ok: false, error: "not_valid", problems: probs.slice(0, 20), more: Math.max(0, probs.length - 20) }, c.headers);
 
     const content = JSON.stringify(doc, null, 1) + "\n";                      // what is stored is the re-serialized, validated object, not the uploaded bytes

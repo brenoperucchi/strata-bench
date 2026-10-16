@@ -96,10 +96,15 @@ FINISH_REASONS = ("stop", "length", "tool_calls", "content_filter", "function_ca
 RUN_SIZES = ("short", "medium", "long", "xlong", "chat", "probe", "gprobe150", "gprobe300", "gprobe450", "agent", "clients")
 SCHEMA_IDS = {"standard-v1": "strata-bench/v1", "standard-v2": "strata-bench/v2"}   # protocol id -> the schema it is written in
 HOST_RELATIONS = ("same-host", "lan", "remote")       # v2: where the client ran relative to the server (declared); first-token time includes the network
-SUITES = ("custom", "quick", "standard", "full")      # v2: which profile of blocks was run ("custom" = the sizes picked with --sizes)
+SUITES = ("custom", "quick", "standard", "full")      # v2: which profile of blocks was run ("custom" is only in results published before the fixed profiles, see validate.LEGACY)
 BLOCKS = ("first-token", "chat", "agent", "clients")        # decode-curve is reserved and not accepted until a protocol exists for it
 SUITE_SIZES = {"quick": ["chat", "medium", "long"], "standard": ["chat", "medium", "long", "xlong", "agent"],
-               "full": ["chat", "medium", "long", "xlong", "agent", "clients"]}     # what --suite runs; the probes and gprobe are v1-style extras, asked for with --sizes
+               "full": ["chat", "medium", "long", "xlong", "agent", "clients", "gprobe"]}     # what --suite runs; nobody picks sizes: a run is standard-v1 or one of these suites
+V1_SIZES = ["probe", "medium", "long", "xlong"]            # what a standard-v1 run measures, always
+GPROBE_SIZES = ["gprobe150", "gprobe300", "gprobe450"]     # the short agent-style prompts, part of the full suite
+# The keys of `sizes` a result must have, by profile: results are only comparable when everybody measured the same things. agent and clients are blocks of their own, not sizes.
+PROFILE_SIZES = {"standard-v1": V1_SIZES, "quick": ["chat", "medium", "long"], "standard": ["chat", "medium", "long", "xlong"],
+                 "full": ["chat", "medium", "long", "xlong"] + GPROBE_SIZES}
 SUITE_BLOCKS = {"quick": ["first-token", "chat"], "standard": ["first-token", "chat", "agent"],
                 "full": ["first-token", "chat", "agent", "clients"]}                  # the blocks a result of that suite lists, in this order
 

@@ -1,4 +1,4 @@
-import { problems } from "./validator.js";
+import { gate } from "./validator.js";
 import { config } from "./config.js";
 
 const MAX_BYTES = 1_000_000;
@@ -42,7 +42,7 @@ function check(text) {
   if (new TextEncoder().encode(text).length > MAX_BYTES) { render(null, ["the file is larger than 1 MB"]); update(); return; }
   let doc;
   try { doc = JSON.parse(text); } catch { render(null, ["this is not valid JSON"]); update(); return; }
-  const probs = problems(doc, state.schema);
+  const probs = gate(doc, state.schema);
   render(doc, probs);
   if (!probs.length) { state.doc = doc; state.valid = true; }
   update();

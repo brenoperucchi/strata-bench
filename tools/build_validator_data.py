@@ -40,6 +40,7 @@ def data() -> dict:
         "suites": list(schema.SUITES),
         "blocks": list(schema.BLOCKS),
         "suite_blocks": schema.SUITE_BLOCKS,
+        "profile_sizes": schema.PROFILE_SIZES,
         "public": spec(schema.PUBLIC),
         "hex_re": "^(?:" + schema._HEX.pattern + ")$",
         "prompts": schema.STANDARD_V1_PROMPTS,

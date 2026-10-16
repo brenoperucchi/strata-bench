@@ -263,3 +263,28 @@ export function problems(doc, data) {
   }
   return out;
 }
+
+// A result measured exactly what its profile says: standard-v1 is probe, medium, long and xlong; standard-v2 is the quick, standard or full suite. Results are only
+// comparable when everybody measured the same things, so nobody picks sizes. A failed result is a health entry and may stop anywhere.
+export function profileProblems(doc, data) {
+  if (!isObj(doc) || (isObj(doc.validity) ? doc.validity : {}).status === "failed") return [];
+  const proto = isObj(doc.protocol) ? doc.protocol : {};
+  const sizes = isObj(doc.sizes) ? doc.sizes : {};
+  let want;
+  let label;
+  if (proto.id === "standard-v1") { want = data.profile_sizes["standard-v1"]; label = "standard-v1"; }
+  else if (proto.id === "standard-v2") {
+    if (!["quick", "standard", "full"].includes(proto.suite)) return ["protocol.suite must be quick, standard or full: a set of sizes of one's own is not accepted"];
+    want = data.profile_sizes[proto.suite];
+    label = `the ${proto.suite} suite`;
+  } else return [];
+  const have = Object.keys(sizes);
+  if (have.length !== want.length || !want.every((k) => has(sizes, k))) return [`sizes must be exactly ${want.join(", ")} for ${label} (found ${[...have].sort(byUnit2).join(", ") || "none"})`];
+  return [];
+}
+const byUnit2 = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+
+// The export gate of the upload page and the Worker: the data rules, then the profile. (CI and the site build also let the closed list of legacy files skip the profile.)
+export function gate(doc, data) {
+  return problems(doc, data).concat(profileProblems(doc, data));
+}

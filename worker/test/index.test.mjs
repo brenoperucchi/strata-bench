@@ -125,6 +125,28 @@ test("an invalid result is refused with the validator's problems and never reach
   assert.equal(calls.filter((c) => c.url.includes("api.github.com")).length, 0);
 });
 
+test("a result with other sizes than its profile is refused and never reaches GitHub", async () => {
+  const calls = mockFetch(goodRoutes());
+  for (const [name, edit, expected] of [
+    ["only medium", (d) => { d.sizes = { medium: d.sizes.medium }; }, "sizes must be exactly probe, medium, long, xlong for standard-v1"],
+    ["only the short prompts", (d) => { d.sizes = { gprobe150: d.sizes.medium, gprobe300: d.sizes.medium, gprobe450: d.sizes.medium }; }, "sizes must be exactly probe, medium, long, xlong for standard-v1"],
+  ]) {
+    const bad = structuredClone(VALID);
+    edit(bad);
+    const res = await submit(bad);
+    const out = await res.json();
+    assert.equal(res.status, 422, name);
+    assert.equal(out.error, "not_valid", name);
+    assert.ok(out.problems.some((p) => p.startsWith(expected)), name + " " + JSON.stringify(out.problems));
+  }
+  const custom = structuredClone(VALID_V2);
+  custom.protocol.suite = "custom";
+  const res = await submit(custom);
+  assert.equal(res.status, 422);
+  assert.ok((await res.json()).problems.some((p) => p.startsWith("protocol.suite must be quick, standard or full")));
+  assert.equal(calls.filter((c) => c.url.includes("api.github.com")).length, 0);
+});
+
 test("an incomplete or non-object result is refused", async () => {
   mockFetch(goodRoutes());
   const inc = structuredClone(VALID);

@@ -26,7 +26,7 @@ Temperature 0, seed 42, a 256-token cap, and `cache_prompt` off for the size pro
 
 - Sizes `short`, `medium`, `long`, `xlong`: prompt speed and decode speed in tokens per second, from the engine's own `timings`, median, minimum and maximum of the measured runs.
 - `probe`: a fixed system prompt and one public code line per call, 1-token answers, 30 calls with the first 2 skipped. It measures the cached short-request path.
-- `gprobe` (opt-in): agent-shaped requests of about 150, 300 and 450 tokens, 30 calls per size, a different excerpt each time, 1 token out.
+- `gprobe` (the `full` suite of `standard-v2`; not part of `standard-v1`): agent-shaped requests of about 150, 300 and 450 tokens, 30 calls per size, a different excerpt each time, 1 token out.
 
 ### Configuration identity
 
@@ -49,9 +49,9 @@ The hardware description is declared by the submitter. The runner checks the mod
 - **Per request:** `runs[].stream` has `ttft_ms`, `total_ms`, `pieces` and `gap_ms` (p50, p95 and max of the time between pieces, null with fewer than two pieces). Per size: `sizes.<size>.ttft_ms` with median, min and max.
 - **Speeds are still the engine's own** `timings`, read from the last chunk of the stream. A server that sends none gives an `incomplete` result (`no_stream_timings`), not a guess.
 - **Failures:** a connection that closes before the stream finishes is a `crash`; an error event in the stream is `oom` or `server_error`. The server's own words are never kept. `failure.where` names are the same as in v1.
-- `protocol.suite` names the profile that was run (see Suites below) or `custom`, and `protocol.blocks` lists the blocks that were asked for, in the order `first-token`, `chat`, `agent`, `clients`. `decode-curve` is reserved: it is not accepted until a protocol for it exists.
+- `protocol.suite` names the profile that was run (see Suites below), and `protocol.blocks` lists the blocks that were asked for, in the order `first-token`, `chat`, `agent`, `clients`. `decode-curve` is reserved: it is not accepted until a protocol for it exists.
 
-### The agent block (`--sizes ...,agent`)
+### The agent block (`standard` and `full` suites)
 
 One conversation of five turns, repeated in one warm-up session and three measured ones. It measures what a coding agent does: a fixed system text and four tool definitions, a history that grows each turn, and a prompt cache that should keep every turn after the first from reading the past again.
 
@@ -64,11 +64,11 @@ One conversation of five turns, repeated in one warm-up session and three measur
 - **Failures:** the same kinds as everywhere, with `failure.where` such as `agent run 2 turn 3`.
 - `protocol.blocks` lists `agent` when it was asked for, and `protocol.agent` repeats the fixed settings (5 turns, 3 sessions, 1 warm-up, 256 tokens, cache on, `tool_choice` none); the validator rejects any other values.
 
-### The chat block (`--sizes ...,chat`)
+### The chat block (every suite)
 
 The fixed one-sentence prompt `short.txt`, streamed, with the answer capped at 100 tokens: 1 warm-up and 9 measured requests, each with its own first line (`[strata-bench chat run <i>]`) and `cache_prompt` false. It reports the first-token time and the decode speed of a short answer. Results go to `sizes.chat` (prompt and decode speed, prompt time, `ttft_ms`) and `runs[]` with `size: chat`. `protocol.chat` repeats the fixed settings and the validator rejects any other values.
 
-### The clients block (`--sizes ...,clients`)
+### The clients block (`full` suite)
 
 Several clients at once, as when a team or a few agents share one server. For N = 2, 4 and 8, N clients each send the public `medium.txt` (own first line `[strata-bench clients <N> <warmup|run> <round> <client>]`, `cache_prompt` false, streamed, at most 128 tokens). All N start together on a barrier. Each N gets 1 warm-up round and 2 measured rounds.
 
@@ -80,13 +80,26 @@ Several clients at once, as when a team or a few agents share one server. For N 
 
 ### Suites (`--suite`)
 
-`--protocol standard-v2` with no `--sizes` and no `--suite` runs the `standard` suite. A suite is its own fixed list of blocks, so `--suite` and `--sizes` cannot be combined (`--sizes` still gives a `custom` result, and may add `probe` and `gprobe`).
+`--protocol standard-v2` with no `--suite` runs the `standard` suite. A suite is its own fixed list of blocks, and nobody picks sizes: the run takes no list of them.
 
 | Suite | Runs | Blocks listed |
 |---|---|---|
 | `quick` | chat, medium, long | `first-token`, `chat` |
 | `standard` | chat, medium, long, xlong, agent | `first-token`, `chat`, `agent` |
-| `full` | standard plus clients | `first-token`, `chat`, `agent`, `clients` |
+| `full` | standard plus clients and gprobe | `first-token`, `chat`, `agent`, `clients` |
+
+### Profiles: the sizes of a result
+
+Results are only comparable when everybody measured the same things, so nobody picks sizes. A result has exactly the `sizes` of its profile, and the validator (Python, the upload page and the Worker alike) rejects anything else:
+
+| Profile | `sizes` of the result |
+|---|---|
+| `standard-v1` | `probe`, `medium`, `long`, `xlong` |
+| `standard-v2` `quick` | `chat`, `medium`, `long` |
+| `standard-v2` `standard` | `chat`, `medium`, `long`, `xlong` (and the `agent` block) |
+| `standard-v2` `full` | `chat`, `medium`, `long`, `xlong`, `gprobe150`, `gprobe300`, `gprobe450` (and the `agent` and `clients` blocks) |
+
+A `failed` result is a health entry and may stop anywhere. Twelve results were published before this rule, with sizes their contributors picked, and a closed list in `strata_bench/validate.py` (`LEGACY`, by the sha256 of each file) keeps them: they are marked legacy on the dashboard, and the list never grows.
 
 A block the server cannot run is skipped with its closed reason and still listed in `protocol.blocks`; the suite keeps its name. The validator ties each suite name to exactly its list of blocks. Before anything is measured the run prints how many requests it will send, because how long that takes depends on the machine (the `standard` suite can take 30 to 60 minutes on a slow GPU). Ctrl+C keeps what was measured as an `incomplete` result.
 

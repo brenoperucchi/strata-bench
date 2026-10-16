@@ -28,7 +28,7 @@ SIZES = ("short", "medium", "long", "xlong")
 PROTOCOL = "standard-v1"
 PROTOCOL_V2 = "standard-v2"
 LOOPBACK = ("localhost",)
-MEASURED = SIZES + ("chat", "agent", "clients")      # what --sizes may name besides the probes; the last three are standard-v2 blocks
+MEASURED = SIZES + ("chat", "agent", "clients")      # the sizes a run can measure besides the probes; the last three are standard-v2 blocks
 REUSE_LIMIT = 64          # more reused prompt tokens than this on a size run means the prompt was not read fresh
 SECRET_ENV = re.compile(r"(?i)(api_?key|secret|passw(or)?d|token)$")
 
@@ -48,7 +48,7 @@ PROBE_SYSTEM = ("You are a code reviewer for a C++ inference engine. Classify ea
                 " Think about memory ordering, bounds, error handling and thread safety, but never explain: one word "
                 "only. " * 3)
 PROBE_CALLS, PROBE_SKIP = 30, 2
-# gprobe (opt-in, --sizes ...,gprobe): short-request probes shaped like an agent's classifier calls - a short fixed
+# gprobe (part of the standard-v2 full suite): short-request probes shaped like an agent's classifier calls - a short fixed
 # system prompt and a ~150/300/450-token excerpt of the public xlong.txt, a different excerpt per call, 1 token out.
 # It measures the prompt path below Strata's 1024-token streamed walk, which the line probes barely touch.
 GPROBE_SYSTEM = ("You review one excerpt of C++ from an inference engine. Answer with exactly one word: SAFE if the "
@@ -480,12 +480,12 @@ def run(base: str, cfg: dict, origin: str, sizes: list, label: str, out_dir: Pat
         raise SystemExit("--suite is only for --protocol standard-v2")
     if suite != "custom" and suite not in SUITE_SIZES:
         raise SystemExit("--suite must be one of " + ", ".join(SUITE_SIZES))
-    if suite != "custom":                       # a profile is its list of blocks; --sizes would change what the name promises
+    if suite != "custom":                       # a profile is its fixed list of blocks, and the name promises exactly that
         sizes = list(SUITE_SIZES[suite])
     if not v2 and any(x in sizes for x in ("chat", "agent", "clients")):
         raise SystemExit("the chat, agent and clients blocks are only for --protocol standard-v2")
     if v2 and not any(x in MEASURED for x in sizes):
-        raise SystemExit("--protocol standard-v2 needs at least one of " + ", ".join(MEASURED) + " in --sizes")
+        raise SystemExit("--protocol standard-v2 needs at least one of " + ", ".join(MEASURED) + " in its sizes")
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"{label}.result.json"
     if path.exists():

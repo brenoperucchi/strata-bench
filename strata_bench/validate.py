@@ -317,3 +317,59 @@ def problems(doc: dict) -> list:
                         found[what] = m.group(0)
         out.extend(f"contains {what}: {found[what]!r}" for _, what in LEAKS if what in found)
     return out
+
+
+def profile_problems(doc: dict) -> list:
+    """A result measured exactly what its profile says: standard-v1 is probe, medium, long and xlong; standard-v2 is the quick, standard or full suite.
+    Results are only comparable when everybody measured the same things, so nobody picks sizes. A failed result is a health entry and may stop anywhere."""
+    if not isinstance(doc, dict) or view(doc.get("validity")).get("status") == "failed":
+        return []
+    proto, sizes = view(doc.get("protocol")), view(doc.get("sizes"))
+    pid = proto.get("id")
+    if pid == "standard-v1":
+        want, label = schema.PROFILE_SIZES["standard-v1"], "standard-v1"
+    elif pid == "standard-v2":
+        suite = proto.get("suite")
+        if suite not in ("quick", "standard", "full"):
+            return ["protocol.suite must be quick, standard or full: a set of sizes of one's own is not accepted"]
+        want, label = schema.PROFILE_SIZES[suite], f"the {suite} suite"
+    else:
+        return []
+    if set(sizes) != set(want):
+        return [f"sizes must be exactly {', '.join(want)} for {label} (found {', '.join(sorted(str(k) for k in sizes)) or 'none'})"]
+    return []
+
+
+# Results published before the fixed profiles, with the sizes their contributors picked: sha256 of the file's bytes -> its name. The list is closed and never grows;
+# a new result outside the profiles is rejected, whoever sends it.
+LEGACY = {
+    "f127a866a538fbdd966614c18569a0d542a0d306a273f588c747022fb6c82143":
+        "2026-10-11-ryzen9-5090-default-99366938.result.json",
+    "1e621fd71e5338a5713742e2f83fcd25b4d2fad6ef9c5d4945107f8a8f6056a1":
+        "2026-10-12-ryzen9-5090-0143-1-fork1107-v2-full-custom-1e621fd7.result.json",
+    "bcb803a0fd395cefc02bdf4a8d838a0bfe6c0b4bf8f568af32bdc61077aa99ee":
+        "2026-10-12-ryzen9-5090-0143-1-v1-f33dcc54.result.json",
+    "88d7e7f0f210676f3e5cd4e94f0995b651b78f9f15ef35d51f41bbed053b44cc":
+        "2026-10-13-5090-1m-agent-01431-identity-v1.result.json",
+    "a66373ae53879f22a68a17f781f0e52bb565e8999bd8c49787b2e4bc2034eeeb":
+        "2026-10-13-ryzen9-5090-bat5-B-fork01431-iq3s-v2-a66373ae.result.json",
+    "c06b636c2711d70fbe4a19a1d2b74a040785dbb7305a2f7a85c35ef841ee6a0d":
+        "2026-10-13-ryzen9-5090-bat5-C-fork0144-xxs-v2-c06b636c.result.json",
+    "64b8ff7ff9dff7d5e484acfb5ea1d0367f7cf1d7295bb0cd1df7944bf64f7b60":
+        "2026-10-13-ryzen9-5090-bat5-D-fork0144-iq3s-v2-64b8ff7f.result.json",
+    "db909690e494a8dfe7e6214286c2d0ebef941c5b2e0e1239e9918707bed81a21":
+        "2026-10-13-ryzen9-5090-bat5-E-oficial0144-xxs-v2-db909690.result.json",
+    "4649f21492b28070f5ac63e1ff8d124009c3ee2af283fca6571a5a4016c131ec":
+        "2026-10-13-v100s-after-calibrate.result.json",
+    "4cb18443c99bc5a0a2dd62a92b42a71f45a811b05ae3622cc5f9f23600a3d04a":
+        "2026-10-13-v100s-before.result.json",
+    "2aea661e3bfec3eed7b480c1245c3ce3669738e1aefa42458a25c59d46c3e1f0":
+        "2026-10-14-5090-1m-agent-0144-tuned-v2.result.json",
+    "bcfdae7f498a14731094edf76a572d5e69f69c0aa427a4cdb33c3ae4365c4098":
+        "2026-10-16-5090-1m-agent-0144-pre441-v1.result.json",
+}
+
+
+def gate(doc: dict, legacy: bool = False) -> list:
+    """The export gate of the dashboard: the data rules, then the profile. A legacy file keeps only the data rules."""
+    return problems(doc) + ([] if legacy else profile_problems(doc))

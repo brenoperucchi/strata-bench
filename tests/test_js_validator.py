@@ -433,6 +433,33 @@ class JsParity(unittest.TestCase):
         self.assertGreater(sum(1 for c in cases if validate.problems(c["doc"])), 30)        # the tampering cases really are rejected
         self.assertEqual([c["name"] for c in cases if not validate.problems(c["doc"])], ["ok", "failed", "warnings", "v2 ok", "v2 failed", "v2 agent ok", "v2 agent failed", "v2 chat ok", "v2 clients ok", "v2 clients busy", "v2 clients failed", "v2 quick", "v2 full", "by set", "by 39 chars", "machine id set", "host relation lan", "agent skipped", "where agent run 2 turn 3", "where agent warmup 1 turn 5", "clients skipped", "where clients 4 round 2", "where clients 8 warmup 1", "where chat run 9", "where chat warmup 1", "custom with the quick blocks", "container runs as empty list", "v2 container protocol skipped as empty list", "share after a non-ascii letter", "run finish_reason 'length' is fine", "run finish_reason 'tool_calls' is fine", "run finish_reason 'other' is fine", "run finish_reason None is fine", "surrogate pair is fine", "agent skip just under the limit", "args placeholder --api-key 2 is fine", "args placeholder --host=<host> 1 is fine", "args placeholder --token=<redacted> 1 is fine", "args placeholder --api-key 1 is fine", "args placeholder --proxy 4 is fine", "number small in n_ctx", "number small in run index", "number small in machine ram", "garbage run with a failed result", "garbage run with a crash failure", "warnings with a warning", "label not a hostname localhost is fine", "label not a hostname homepage is fine", "label a version is fine", "label 200 chars is fine", "label 150 emoji is fine", "unicode label"])     # and only genuine results (a non-ASCII label is fine) pass
 
+    def test_the_profile_rule_is_the_same_in_javascript_and_python(self):
+        """The sizes of a result are exactly its profile's: standard-v1 is probe, medium, long, xlong; v2 is quick, standard or full. The upload page and the Worker run the JS gate."""
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, True)
+        v2 = core.PROTOCOL_V2
+        docs = {
+            "v1 profile": real(tmp, "p1", sizes=("probe", "medium", "long", "xlong")),
+            "v1 medium only": real(tmp, "p2", sizes=("medium",)),
+            "v1 gprobe only": real(tmp, "p3", sizes=("gprobe",)),
+            "v1 profile plus gprobe": real(tmp, "p4", sizes=("probe", "medium", "long", "xlong", "gprobe")),
+            "v1 failed medium only": real(tmp, "p5", mode="crash", sizes=("medium",)),
+            "v2 quick": real(tmp, "p6", sizes=("medium",), run_kw={"protocol": v2, "suite": "quick"}),
+            "v2 standard": real(tmp, "p7", sizes=("medium",), run_kw={"protocol": v2, "suite": "standard"}),
+            "v2 full": real(tmp, "p8", sizes=("medium",), run_kw={"protocol": v2, "suite": "full"}),
+            "v2 custom": real(tmp, "p9", sizes=("medium", "probe"), run_kw={"protocol": v2}),
+        }
+        (tmp / "cases.json").write_text(json.dumps([{"name": n, "doc": d, "gate": True} for n, d in docs.items()]))
+        r = subprocess.run([NODE, str(ROOT / "tests" / "js" / "run_cases.mjs"), str(tmp / "cases.json"), str(ROOT / "docs" / "schema.json")], capture_output=True, text=True, timeout=60)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        for (name, doc), got in zip(docs.items(), json.loads(r.stdout)):
+            self.assertEqual(got, validate.gate(doc), name)
+        accepted = [n for n, d in docs.items() if not validate.gate(d)]
+        self.assertEqual(accepted, ["v1 profile", "v1 failed medium only", "v2 quick", "v2 standard", "v2 full"])
+        for name in ("v1 medium only", "v1 gprobe only", "v1 profile plus gprobe"):
+            self.assertTrue(validate.gate(docs[name])[0].startswith("sizes must be exactly probe, medium, long, xlong for standard-v1"), name)
+        self.assertEqual(validate.gate(docs["v2 custom"]), ["protocol.suite must be quick, standard or full: a set of sizes of one's own is not accepted"])
+
     def test_a_seeded_fuzz_of_mutations_gets_the_same_problems_from_both_validators(self):
         """Random edits (a value replaced, a key removed, an own or inherited key added) of a v1 result and of v2 results; whatever the edit, both
         validators answer with the same list and neither raises."""

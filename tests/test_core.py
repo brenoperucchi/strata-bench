@@ -12,6 +12,8 @@ from unittest import mock
 from strata_bench import core, schema, validate
 from strata_bench.__main__ import main
 
+ROOT = Path(__file__).resolve().parent.parent
+
 CFG = {"exe": "E:\\strata-0139\\engine\\strata.exe", "args": [
     "--pack", "E:\\strata-data\\packs\\swift", "--native", "E:\\m\\Swift-IQ3_XXS-00001-of-00002.gguf",
     "--expert-cache", "auto", "--prefill", "auto", "--max-context", "32768", "--kv", "int8"],
@@ -507,10 +509,54 @@ class CoreTest(unittest.TestCase):
         cfg = self.tmp / "c.json"
         cfg.write_text(json.dumps(CFG))
         rc = main(["run", "--base", self.base, "--config", str(cfg), "--origin", "custom-2", "--label", "c",
-                   "--out", str(self.tmp), "--sizes", "medium"])
+                   "--out", str(self.tmp)])
         self.assertEqual(rc, 0)
         self.assertEqual(self.doc("c")["config"]["config_origin"], "custom-2")
+        self.assertEqual(sorted(self.doc("c")["sizes"]), sorted(schema.V1_SIZES))                    # nobody picks sizes: standard-v1 is probe, medium, long and xlong
         self.assertEqual(main(["validate", str(self.tmp / "c.result.json")]), 0)
+
+    def test_the_cli_takes_no_sizes(self):
+        cfg = self.tmp / "c.json"
+        cfg.write_text(json.dumps(CFG))
+        for extra in (["--sizes", "medium"], ["--sizes", "probe,medium,long,xlong,gprobe"]):
+            with self.assertRaises(SystemExit) as cm:
+                main(["run", "--base", self.base, "--config", str(cfg), "--origin", "custom-2", "--label", "x", "--out", str(self.tmp), *extra])
+            self.assertEqual(cm.exception.code, 2, extra)
+        self.assertFalse((self.tmp / "x.result.json").exists())
+
+    def test_a_result_with_other_sizes_than_its_profile_is_rejected_by_the_gate_but_not_by_the_data_rules(self):
+        self.go(sizes=("medium",))                                                                   # what the core can still do inside, never what is published
+        d = self.doc("t")
+        self.assertEqual(validate.problems(d), [])
+        self.assertEqual(validate.gate(d), ["sizes must be exactly probe, medium, long, xlong for standard-v1 (found medium)"])
+        self.assertEqual(validate.gate(d, legacy=True), [])
+
+    def test_the_short_prompts_alone_are_not_a_result(self):
+        self.go(sizes=("gprobe",), label="g")
+        got = validate.gate(self.doc("g"))
+        self.assertEqual(len(got), 1)
+        self.assertTrue(got[0].startswith("sizes must be exactly probe, medium, long, xlong for standard-v1") and "gprobe150" in got[0], got)
+
+    def test_a_failed_result_may_stop_anywhere_because_it_is_a_health_entry(self):
+        Fake.st["mode"], Fake.st["mode_after"] = "crash", 1
+        self.go(sizes=("medium",), label="f")
+        d = self.doc("f")
+        self.assertEqual(d["validity"]["status"], "failed")
+        self.assertEqual(validate.gate(d), [])
+
+    def test_every_published_result_passes_the_gate_and_only_the_closed_legacy_list_is_exempt(self):
+        import hashlib
+        seen = set()
+        for f in sorted((ROOT / "results").glob("*.result.json")):
+            raw = f.read_bytes()
+            h = hashlib.sha256(raw).hexdigest()
+            legacy = h in validate.LEGACY
+            seen.add(h) if legacy else None
+            self.assertEqual(validate.gate(schema.strict_loads(raw.decode("utf-8")), legacy=legacy), [], f.name)
+            if legacy:                                                                               # legacy really is outside the profiles, or it would not need the list
+                self.assertTrue(validate.profile_problems(schema.strict_loads(raw.decode("utf-8"))), f.name)
+        self.assertEqual(seen, set(validate.LEGACY))                                                 # no stale entry
+        self.assertEqual(len(validate.LEGACY), 12)                                                   # closed: a new result outside the profiles is rejected, whoever sends it
 
 
 if __name__ == "__main__":

@@ -1,12 +1,15 @@
 """strata-bench command line.
 
   python3 -m strata_bench run --base URL --config RUN-CONFIG.json --origin setup-default|custom-N
-                              --label LABEL --out DIR [--sizes probe,medium,long,xlong[,gprobe][,chat][,agent][,clients]] [--identity IDENTITY.json]
+                              --label LABEL --out DIR [--protocol standard-v1|standard-v2 [--suite quick|standard|full]] [--identity IDENTITY.json]
   python3 -m strata_bench validate RESULT.json [...]
+
+Nobody picks the sizes: standard-v1 measures probe, medium, long and xlong; standard-v2 runs one of the suites quick, standard or full. Results are only comparable when everybody measured the same things.
 
 Exit codes of run: 0 done, 2 preflight refused (nothing measured), 3 incomplete (partial result kept).
 """
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -30,9 +33,8 @@ def main(argv=None) -> int:
                    help="standard-v1 (default) or standard-v2: streamed requests, adds the time to the first token")
     r.add_argument("--host-relation", choices=list(core.HOST_RELATIONS),
                    help="standard-v2: where this machine runs relative to the server (default same-host for a loopback --base)")
-    r.add_argument("--sizes", help="what to measure (default probe,medium,long,xlong; with standard-v2 and no --suite, the standard suite)")
     r.add_argument("--suite", choices=list(schema.SUITE_SIZES),
-                   help="standard-v2 profile: quick (chat, medium, long), standard (adds xlong and the agent block) or full (adds clients); replaces --sizes")
+                   help="standard-v2 profile: quick (chat, medium, long), standard (adds xlong and the agent block; the default) or full (adds the clients block and the short gprobe prompts)")
     r.add_argument("--identity", type=Path)
     r.add_argument("--by", help="optional public name to list the result under (for example your GitHub name); declared, not verified")
     r.add_argument("--probe-offset", type=int, default=0)
@@ -41,15 +43,11 @@ def main(argv=None) -> int:
     v.add_argument("files", nargs="+", type=Path)
     a = p.parse_args(argv)
     if a.cmd == "run":
-        if a.suite and a.sizes:
-            p.error("--suite and --sizes cannot be used together: a suite is its own list of blocks")
         if a.suite and a.protocol != core.PROTOCOL_V2:
             p.error("--suite needs --protocol standard-v2")
-        suite = a.suite or ("standard" if a.protocol == core.PROTOCOL_V2 and not a.sizes else "custom")
-        sizes = [s for s in (a.sizes or "probe,medium,long,xlong").split(",") if s]
-        bad = [s for s in sizes if s not in ("probe", "gprobe") and s not in core.MEASURED]
-        if bad:
-            p.error(f"unknown sizes: {bad}")
+        v2 = a.protocol == core.PROTOCOL_V2
+        suite = a.suite or ("standard" if v2 else "custom")                       # "custom" is only the internal name of the fixed standard-v1 run
+        sizes = [] if v2 else list(schema.V1_SIZES)                                # a v2 suite brings its own list
         cfg = schema.strict_loads(a.config.read_text(encoding="utf-8-sig"))
         ident = schema.strict_loads(a.identity.read_text(encoding="utf-8")) if a.identity else None
         return core.run(a.base.rstrip("/"), cfg, a.origin, sizes, a.label, a.out, ident,
@@ -57,11 +55,14 @@ def main(argv=None) -> int:
                         host_relation=a.host_relation, suite=suite)
     rc = 0
     for f in a.files:
+        legacy = False
         try:
-            probs = validate.problems(schema.strict_loads(f.read_text(encoding="utf-8")))
-        except ValueError as e:
+            raw = f.read_bytes()
+            legacy = hashlib.sha256(raw).hexdigest() in validate.LEGACY
+            probs = validate.gate(schema.strict_loads(raw.decode("utf-8")), legacy=legacy)
+        except (ValueError, OSError) as e:
             probs = [f"not valid JSON: {e}"]
-        print(f"{f}: {'OK' if not probs else 'REJECTED'}")
+        print(f"{f}: {'OK' if not probs else 'REJECTED'}" + (" (legacy: published before the fixed profiles)" if legacy and not probs else ""))
         for x in probs:
             print("  -", x)
         rc |= bool(probs)

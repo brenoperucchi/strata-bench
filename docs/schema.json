@@ -117,6 +117,34 @@
  "max_depth": 20,
  "max_string": 200,
  "probe_system_sha256": "8e80a560647327c04a13869cddac8ab889256730b3af0dd2f6b019b058ba7c44",
+ "profile_sizes": {
+  "full": [
+   "chat",
+   "medium",
+   "long",
+   "xlong",
+   "gprobe150",
+   "gprobe300",
+   "gprobe450"
+  ],
+  "quick": [
+   "chat",
+   "medium",
+   "long"
+  ],
+  "standard": [
+   "chat",
+   "medium",
+   "long",
+   "xlong"
+  ],
+  "standard-v1": [
+   "probe",
+   "medium",
+   "long",
+   "xlong"
+  ]
+ },
  "prompts": {
   "long.txt": "2b54045914a7bd362c93587902dc16af4d589cea3493cd0301a116df8495844a",
   "medium.txt": "e4c2b6ad18b235d3f0466f0aeb1256612c533188c75b2c5c6741ea6e5463b1c6",

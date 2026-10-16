@@ -8,6 +8,7 @@ Only whitelisted fields are copied. The output is deterministic (no timestamps),
   python3 tools/build_site.py --check    exit 1 if docs/data.json is not what the results produce
 """
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -85,16 +86,18 @@ def build(results_dir: Path = ROOT / "results", copies: dict = None) -> dict:
     rows, bad = [], []
     for path in sorted(results_dir.rglob("*.result.json")):
         rel = path.relative_to(results_dir.parent).as_posix()
+        raw = path.read_bytes()
         try:
-            doc = schema.strict_loads(path.read_text(encoding="utf-8"))
+            doc = schema.strict_loads(raw.decode("utf-8"))
         except ValueError as e:
             bad.append(f"{rel}: not JSON ({e})")
             continue
-        probs = validate.problems(doc)
+        legacy = hashlib.sha256(raw).hexdigest() in validate.LEGACY       # published before the fixed profiles: still shown, and marked
+        probs = validate.gate(doc, legacy=legacy)
         if probs:
             bad.extend(f"{rel}: {p}" for p in probs)
             continue
-        rows.append(row(rel, doc))
+        rows.append({**row(rel, doc), **({"legacy": True} if legacy else {})})
         if copies is not None:
             copies[path.relative_to(results_dir).as_posix()] = path.read_text(encoding="utf-8")
     if bad:
