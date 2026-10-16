@@ -99,7 +99,7 @@ Results are only comparable when everybody measured the same things, so nobody p
 | `standard-v2` `standard` | `chat`, `medium`, `long`, `xlong` (and the `agent` block) |
 | `standard-v2` `full` | `chat`, `medium`, `long`, `xlong`, `gprobe150`, `gprobe300`, `gprobe450` (and the `agent` and `clients` blocks) |
 
-A `failed` result is a health entry and may stop anywhere. Twelve results were published before this rule, with sizes their contributors picked, and a closed list in `strata_bench/validate.py` (`LEGACY`, by the sha256 of each file) keeps them: they are marked legacy on the dashboard, and the list never grows.
+A `failed` result is a health entry and may stop anywhere. Fifteen results were measured before this rule, with sizes picked under the plans of the time (twelve were already published, and three came from a window that ran the afternoon the rule was decided), and a closed list in `strata_bench/validate.py` (`LEGACY`, by the sha256 of each file) keeps them: they are marked legacy on the dashboard, and the list does not grow.
 
 A block the server cannot run is skipped with its closed reason and still listed in `protocol.blocks`; the suite keeps its name. The validator ties each suite name to exactly its list of blocks. Before anything is measured the run prints how many requests it will send, because how long that takes depends on the machine (the `standard` suite can take 30 to 60 minutes on a slow GPU). Ctrl+C keeps what was measured as an `incomplete` result.
 

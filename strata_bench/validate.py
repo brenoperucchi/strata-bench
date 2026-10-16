@@ -340,8 +340,9 @@ def profile_problems(doc: dict) -> list:
     return []
 
 
-# Results published before the fixed profiles, with the sizes their contributors picked: sha256 of the file's bytes -> its name. The list is closed and never grows;
-# a new result outside the profiles is rejected, whoever sends it.
+# Results measured before the fixed profiles, with the sizes picked under the plans of the time: sha256 of the file's bytes -> its name. The list is closed:
+# twelve were published before the rule and three came from the J3 window, which ran the afternoon the rule was decided (16 October, 16:04-16:16) under the plan that preceded it.
+# A new result outside the profiles is rejected, whoever sends it.
 LEGACY = {
     "f127a866a538fbdd966614c18569a0d542a0d306a273f588c747022fb6c82143":
         "2026-10-11-ryzen9-5090-default-99366938.result.json",
@@ -367,6 +368,12 @@ LEGACY = {
         "2026-10-14-5090-1m-agent-0144-tuned-v2.result.json",
     "bcfdae7f498a14731094edf76a572d5e69f69c0aa427a4cdb33c3ae4365c4098":
         "2026-10-16-5090-1m-agent-0144-pre441-v1.result.json",
+    "3b1db32afe97ed890a8ca7556d5c655b4f85ef6274af37031c1fb45f98c26a80":
+        "2026-10-16-ryzen9-5090-j3-2-oficial01431-iq3s-v1-3b1db32a.result.json",
+    "f4f7db743253b5f3cfaaabfeffafbf33e309fdda4841fb1c7bca19e56c8503d6":
+        "2026-10-16-ryzen9-5090-j3-3-fork0144-iq3s-v1-f4f7db74.result.json",
+    "a0d77caed3076fcc13e0a1dbd35caeb612b22c479d7720251a4879b7591df11e":
+        "2026-10-15-ryzen9-5090-j3-1-oficial0144-iq3s-v1-a0d77cae.result.json",
 }
 
 

@@ -556,7 +556,7 @@ class CoreTest(unittest.TestCase):
             if legacy:                                                                               # legacy really is outside the profiles, or it would not need the list
                 self.assertTrue(validate.profile_problems(schema.strict_loads(raw.decode("utf-8"))), f.name)
         self.assertEqual(seen, set(validate.LEGACY))                                                 # no stale entry
-        self.assertEqual(len(validate.LEGACY), 12)                                                   # closed: a new result outside the profiles is rejected, whoever sends it
+        self.assertEqual(len(validate.LEGACY), 15)                                                   # closed (12 published before the rule, 3 from the J3 window that ran the day it was decided): a new result outside the profiles is rejected, whoever sends it
 
 
 if __name__ == "__main__":
