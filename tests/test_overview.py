@@ -26,6 +26,13 @@ def row(id, **kw):
     return base
 
 
+def probe_row(id, ms, **kw):
+    """A result with only the short prompts (gprobe), as a contributor who ran --sizes gprobe sends: prompt time, no speeds."""
+    r = row(id, **kw)
+    r["sizes"] = {k: {"prompt_ms": ms, "prompt_tps": None, "decode_tps": None} for k in ("gprobe150", "gprobe300", "gprobe450")}
+    return r
+
+
 def scaled(rows_args, **kw):
     """Same as row() but with the speeds multiplied: prompt by kw['p'], decode by kw['d']."""
     p, d = kw.pop("p", 1.0), kw.pop("d", 1.0)
@@ -153,6 +160,35 @@ class Insights(unittest.TestCase):
         self.assertEqual(rel, [["0.1.42 → 0.1.43", 3, True, 2, [20.0, 20.0, 0.0, 0.0], ["up", "up", "same", "same"]]])
         few = self.call("I.releases(I.pairs(rows)).map(r => [r.machines, r.enough])", rows[:2])
         self.assertEqual(few, [[1, False]])
+
+    def test_results_with_only_the_short_prompts_are_compared_by_prompt_time_and_less_is_better(self):
+        a = probe_row("a", 800.0, config_id="c1", args=["--vram-reserve-mib", "995"])
+        b = probe_row("b", 740.0, config_id="c2", args=["--vram-reserve-mib", "2200"], date="2026-10-12T10:00:00-03:00")      # 7.5% less time
+        got = self.call("I.pairs(rows).map(p => [p.kind, p.set, p.deltas.map(d => [d.key, d.pct, d.verdict]), p.args])", [a, b])
+        self.assertEqual(got, [["config", "probe", [["probe150", -7.5, "up"], ["probe300", -7.5, "up"], ["probe450", -7.5, "up"]], [{"opt": "--vram-reserve-mib", "from": "995", "to": "2200"}]]])
+
+    def test_a_longer_prompt_time_is_a_change_for_the_worse_and_the_band_is_5_percent(self):
+        a = probe_row("a", 1000.0, config_id="c1")
+        def verdicts(ms):
+            b = probe_row("b", ms, config_id="c2", date="2026-10-12T10:00:00-03:00")
+            return self.call("I.pairs(rows)[0].deltas.map(d => d.verdict)", [a, b])
+        self.assertEqual(verdicts(1050.0), ["same"] * 3)                             # +5.0% is on the band
+        self.assertEqual(verdicts(1051.0), ["down"] * 3)                             # +5.1% is past it, and it is worse
+        self.assertEqual(verdicts(949.0), ["up"] * 3)
+
+    def test_a_result_with_medium_and_long_is_compared_by_speed_even_when_it_has_short_prompts_too(self):
+        a, b = row("a", config_id="c1"), row("b", config_id="c2", date="2026-10-12T10:00:00-03:00")
+        for r in (a, b):
+            r["sizes"]["gprobe150"] = {"prompt_ms": 800.0, "prompt_tps": None, "decode_tps": None}
+        self.assertEqual(self.call("I.pairs(rows).map(p => [p.set, p.deltas.length])", [a, b]), [["speed", 4]])
+
+    def test_a_release_of_short_prompt_results_is_its_own_row_with_the_same_machine_rule(self):
+        rows = []
+        for i in range(3):
+            rows.append(probe_row(f"a{i}", 800.0, machine_id=f"m{i}", cpu=f"cpu{i}"))
+            rows.append(probe_row(f"b{i}", 880.0, machine_id=f"m{i}", cpu=f"cpu{i}", engine="0.1.43", date="2026-10-12T10:00:00-03:00"))      # 10% longer
+        got = self.call("I.releases(I.pairs(rows)).map(r => [r.set, r.key, r.machines, r.enough, r.metrics.map(m => [m.median, m.verdict])])", rows)
+        self.assertEqual(got, [["probe", "0.1.42 → 0.1.43", 3, True, [[10.0, "down"]] * 3]])
 
     def test_the_summary_counts_machines_and_contributors(self):
         rows = [row("a"), row("b", by="other", machine_id="m2", cpu="x", date="2026-10-12T10:00:00-03:00", engine="0.1.43"), row("c", status="failed", by=None)]
@@ -286,6 +322,14 @@ class OverviewHtml(unittest.TestCase):
         self.assertIn(">Quant", table)
         self.assertIn("title='Swift Qwen3.8 Flash Next'", table)                       # the model is one hover away
         self.assertNotIn(">Swift Qwen3.8 Flash Next<", table)                           # and no longer takes the width of a column
+
+    def test_short_prompt_pairs_get_their_own_table_and_a_note_that_a_drop_is_good(self):
+        rows = [probe_row("a", 800.0, config_id="c1"), probe_row("b", 740.0, config_id="c2", date="2026-10-12T10:00:00-03:00")]
+        html = self.render(rows)["ov-pairs"]
+        self.assertIn("Prompt time 150", html)
+        self.assertIn("a drop in the time is an improvement", html)
+        self.assertIn("-7.5%".replace("-", "\u2212"), html)                           # the change is shown as it is: less time is a negative number, in green
+        self.assertIn("chip up", html)
 
     def test_the_page_loads_the_insight_modules_before_the_app(self):
         html = (ROOT / "docs" / "index.html").read_text()

@@ -115,7 +115,15 @@
 
   var DOMAIN = 20;                                           // the strips show -20% to +20%; a larger change sits at the edge and its value is written out
   var CAP = 5;                                               // rows shown before "Show N more"
-  var short = function (label) { return String(label).replace(" speed, ", " "); };
+  var short = function (label) { return String(label).replace(" speed, ", " ").replace("time, ", "time "); };
+  // Results with only the short prompts are compared by the time to read the prompt, where a drop is the improvement.
+  var PROBE_NOTE = "<p class='hint'>Short prompts (about 150, 300 and 450 tokens), compared by the time to read the prompt: a drop in the time is an improvement and is shown in green.</p>";
+  var headOf = function (first, set) { return "<tr><th>" + first + "</th>" + I.metricsOf(set).map(function (m) { return "<th>" + esc(short(m.label)) + "</th>"; }).join("") + "</tr>"; };
+  // a table, with the rows after the cap folded away
+  var folded = function (rows, head, rowFn) {
+    var t = function (l) { return "<div class='scroll'><table class='pairs'>" + head + l.map(rowFn).join("") + "</table></div>"; };
+    return t(rows.slice(0, CAP)) + (rows.length > CAP ? "<details class='more'><summary>Show " + (rows.length - CAP) + " more</summary>" + t(rows.slice(CAP)) + "</details>" : "");
+  };
   var proto = function (r) { return String(r.protocol || "").replace(/^standard-/, ""); };
   // the version, and the binary when two builds share one version number
   var tag = function (r, other) { return esc(r.engine) + (other && other.engine === r.engine && r.binary ? " <small>[" + esc(r.binary) + "]</small>" : ""); };
@@ -147,7 +155,6 @@
   function releasesTab(list, mc) {
     var rel = I.releases(list);
     if (!rel.length) return "<p class='hint'>No release step yet. The same configuration measured on two engine builds of one machine appears here.</p>";
-    var head = "<tr><th>Release</th>" + I.METRICS.map(function (m) { return "<th>" + esc(short(m.label)) + "</th>"; }).join("") + "</tr>";
     var row = function (r) {
       var verdict = r.enough ? "<span class='pill " + (r.moved ? "warnings" : "ok") + "'>" + (r.moved ? r.moved + " of " + r.metrics.length + " measures moved" : "inside the noise band") + "</span>"
         : "<span class='pill muted' title='A verdict needs " + I.MIN_MACHINES + " machines'>insufficient data</span> <small>" + r.machines + " of " + I.MIN_MACHINES + " machines</small>";
@@ -158,8 +165,8 @@
       }).join("");
       return "<tr><td class='what'><b>" + arrow({ a: r.from, b: r.to }) + "</b><br>" + verdict + "</td>" + cells + "</tr>";
     };
-    return "<div class='scroll'><table class='pairs'>" + head + rel.slice(0, CAP).map(row).join("") + "</table></div>" +
-      (rel.length > CAP ? "<details class='more'><summary>Show " + (rel.length - CAP) + " more</summary><div class='scroll'><table class='pairs'>" + head + rel.slice(CAP).map(row).join("") + "</table></div></details>" : "") +
+    var speed = rel.filter(function (r) { return r.set !== "probe"; }), probe = rel.filter(function (r) { return r.set === "probe"; });
+    return (speed.length ? folded(speed, headOf("Release", "speed"), row) : "") + (probe.length ? PROBE_NOTE + folded(probe, headOf("Release", "probe"), row) : "") +
       "<p class='hint'>One row per engine release, over every machine that measured both builds with the same configuration. A verdict needs " + I.MIN_MACHINES + " machines; below that the numbers are one machine's observation. Each dot is one pair; with more than one pair the number is their median.</p>";
   }
 
@@ -168,16 +175,16 @@
     var what = p.kind === "config" ? "engine " + esc(p.a.engine) + " · configuration changed" : arrow(p);
     var note = p.kind === "mixed" ? " <span class='pill warnings' title='The engine build and the configuration both changed, so these numbers do not say which of the two moved them.'>build and configuration</span>" : "";
     var who = withMachine ? "<br><small>" + esc((mc[p.machine] || { label: "machine" }).label) + "</small>" : "";
-    var cells = I.METRICS.map(function (m) {
+    var cells = I.metricsOf(p.set).map(function (m) {
       var d = p.deltas.filter(function (x) { return x.key === m.key; })[0];
       return d ? "<td class='num'><span class='chip " + d.verdict + "' title='" + esc(d.label + ": " + fmt(d.from, 1) + " to " + fmt(d.to, 1) + " (noise band ±" + d.band + "%)") + "'>" + signed(d.pct) + "</span></td>" : "<td class='num'>–</td>";
     }).join("");
     return "<tr><td class='what'><b>" + what + "</b> <small>" + esc(p.b.quant || "") + " · " + esc(proto(p.b)) + "</small>" + note + who + (p.args.length ? "<br>" + argChips(p.args) : "") + "</td>" + cells + "</tr>";
   }
   function pairTable(list, mc, withMachine) {
-    var head = "<tr><th>Change</th>" + I.METRICS.map(function (m) { return "<th>" + esc(short(m.label)) + "</th>"; }).join("") + "</tr>";
-    var t = function (l) { return "<div class='scroll'><table class='pairs'>" + head + l.map(function (p) { return pairRow(p, mc, withMachine); }).join("") + "</table></div>"; };
-    return t(list.slice(0, CAP)) + (list.length > CAP ? "<details class='more'><summary>Show " + (list.length - CAP) + " more</summary>" + t(list.slice(CAP)) + "</details>" : "");
+    var row = function (p) { return pairRow(p, mc, withMachine); };
+    var speed = list.filter(function (p) { return p.set !== "probe"; }), probe = list.filter(function (p) { return p.set === "probe"; });
+    return (speed.length ? folded(speed, headOf("Change", "speed"), row) : "") + (probe.length ? PROBE_NOTE + folded(probe, headOf("Change", "probe"), row) : "");
   }
   function gpuTab(list, mc) {
     var by = {}, order = [];

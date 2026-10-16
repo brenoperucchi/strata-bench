@@ -9,6 +9,16 @@
     { key: "decode_medium", label: "Decode speed, medium", size: "medium", field: "decode_tps", band: 10 },
     { key: "decode_long", label: "Decode speed, long", size: "long", field: "decode_tps", band: 10 }
   ];
+  // Results with the short prompts only (gprobe, about 150, 300 and 450 tokens) have no speed on the medium and long prompts. They are compared by the time to read the prompt,
+  // lower is better, with the prompt band: a drop in the time is an improvement, so the sign of the change is read the other way round.
+  var PROBE_METRICS = [
+    { key: "probe150", label: "Prompt time, 150", size: "gprobe150", field: "prompt_ms", band: 5, better: "low" },
+    { key: "probe300", label: "Prompt time, 300", size: "gprobe300", field: "prompt_ms", band: 5, better: "low" },
+    { key: "probe450", label: "Prompt time, 450", size: "gprobe450", field: "prompt_ms", band: 5, better: "low" }
+  ];
+  var metricsOf = function (set) { return set === "probe" ? PROBE_METRICS : METRICS; };
+  // "up" is always a change for the better (green), "down" for the worse (red), whatever the measure: for a time, a smaller number is up.
+  var verdictOf = function (pct, m) { return Math.abs(pct) <= m.band ? "same" : ((pct > 0) === (m.better !== "low")) ? "up" : "down"; };
   var MIN_MACHINES = 3;     // a statement about a release needs this many machines (the community proposal's own floor)
 
   var num = function (v) { return typeof v === "number" && isFinite(v) ? v : null; };
@@ -51,7 +61,7 @@
     var x = size(a, m.size, m.field), y = size(b, m.size, m.field);
     if (x === null || y === null || x <= 0) return null;
     var pct = Math.round((y / x - 1) * 1000) / 10;                       // one decimal, as shown: +5.0% is on the band, not past it
-    return { key: m.key, label: m.label, band: m.band, from: x, to: y, pct: pct, verdict: Math.abs(pct) <= m.band ? "same" : pct > 0 ? "up" : "down" };
+    return { key: m.key, label: m.label, band: m.band, better: m.better || "high", from: x, to: y, pct: pct, verdict: verdictOf(pct, m) };
   }
   // The server arguments as {option: value}; an option without a value counts as true. Paths are already replaced by their role in the file.
   function argMap(args) {
@@ -69,10 +79,11 @@
     return out;
   }
   function pairOf(kind, a, b, key, why) {
-    var deltas = METRICS.map(function (m) { return delta(a, b, m); }).filter(Boolean);
+    var set = "speed", deltas = METRICS.map(function (m) { return delta(a, b, m); }).filter(Boolean);
+    if (!deltas.length) { set = "probe"; deltas = PROBE_METRICS.map(function (m) { return delta(a, b, m); }).filter(Boolean); }
     if (!deltas.length) return null;
     var moved = deltas.filter(function (d) { return d.verdict !== "same"; });
-    return { kind: kind, why: why, machine: key, a: a, b: b, deltas: deltas, moved: moved.length, args: kind === "build" ? [] : argsDiff(a, b),
+    return { kind: kind, set: set, why: why, machine: key, a: a, b: b, deltas: deltas, moved: moved.length, args: kind === "build" ? [] : argsDiff(a, b),
       headline: moved.length ? moved.length + " of " + deltas.length + " measures moved past the noise band" : "inside the noise band" };
   }
 
@@ -136,23 +147,23 @@
   function releases(list) {
     var t = {}, order = [];
     list.filter(function (p) { return p.kind === "build"; }).forEach(function (p) {
-      var k = buildOf(p.a) + " → " + buildOf(p.b);
-      if (!t[k]) { t[k] = { key: k, from: p.a, to: p.b, pairs: [], machines: {} }; order.push(k); }
+      var k = p.set + "|" + buildOf(p.a) + " → " + buildOf(p.b);
+      if (!t[k]) { t[k] = { key: buildOf(p.a) + " → " + buildOf(p.b), set: p.set, from: p.a, to: p.b, pairs: [], machines: {} }; order.push(k); }
       t[k].pairs.push(p); t[k].machines[p.machine] = 1;
       if (byDate(t[k].to, p.b) < 0) t[k].to = p.b;
     });
     return order.map(function (k) {
       var r = t[k], n = Object.keys(r.machines).length;
-      var metrics = METRICS.map(function (m) {
+      var metrics = metricsOf(r.set).map(function (m) {
         var points = [];
         r.pairs.forEach(function (p) { var d = p.deltas.filter(function (x) { return x.key === m.key; })[0]; if (d) points.push({ pct: d.pct, verdict: d.verdict, machine: p.machine, pair: p }); });
-        if (!points.length) return { key: m.key, label: m.label, band: m.band, points: [], median: null, verdict: null };
+        if (!points.length) return { key: m.key, label: m.label, band: m.band, better: m.better || "high", points: [], median: null, verdict: null };
         var v = points.map(function (q) { return q.pct; }).sort(function (x, y) { return x - y; }), h = Math.floor(v.length / 2);
         var median = Math.round((v.length % 2 ? v[h] : (v[h - 1] + v[h]) / 2) * 10) / 10;
-        return { key: m.key, label: m.label, band: m.band, points: points, median: median, verdict: Math.abs(median) <= m.band ? "same" : median > 0 ? "up" : "down" };
+        return { key: m.key, label: m.label, band: m.band, better: m.better || "high", points: points, median: median, verdict: verdictOf(median, m) };
       });
       var moved = metrics.filter(function (m) { return m.verdict && m.verdict !== "same"; }).length;
-      return { key: k, from: r.from, to: r.to, machines: n, enough: n >= MIN_MACHINES, pairs: r.pairs.length, metrics: metrics, moved: moved };
+      return { key: r.key, set: r.set, from: r.from, to: r.to, machines: n, enough: n >= MIN_MACHINES, pairs: r.pairs.length, metrics: metrics, moved: moved };
     }).sort(function (a, b) { return -byDate(a.to, b.to); });
   }
 
@@ -215,7 +226,7 @@
     };
   }
 
-  var api = { buildOf: buildOf, kindOf: kindOf, METRICS: METRICS, MIN_MACHINES: MIN_MACHINES, machineKeys: machineKeys, engineCmp: engineCmp, pairs: pairs, transitionSupport: transitionSupport, releases: releases, sameModel: sameModel, speedPoints: speedPoints, summary: summary };
+  var api = { buildOf: buildOf, kindOf: kindOf, METRICS: METRICS, PROBE_METRICS: PROBE_METRICS, metricsOf: metricsOf, MIN_MACHINES: MIN_MACHINES, machineKeys: machineKeys, engineCmp: engineCmp, pairs: pairs, transitionSupport: transitionSupport, releases: releases, sameModel: sameModel, speedPoints: speedPoints, summary: summary };
   root.StrataInsights = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : this);
