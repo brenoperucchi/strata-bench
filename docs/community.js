@@ -88,7 +88,8 @@
     }).join("") + "<th></th>";
     return "<div class='notice'><b>Not comparable with the Results tab.</b> These reports were measured with the Strata script's own prompts and sizes, by the people who sent them; strata-bench did not run them. " +
       "They are listed here so the cards the community has tried are easy to find, and they are never ranked against the results.</div>" +
-      "<p class='hint'>" + esc(list.length) + " of " + esc(all.length) + " reports from the " + from + " (MIT), " + esc(withSpeed) + " with a speed that could be read. Figures are read from each report's README as written; a dash means the report does not state it in the usual place. " +
+      "<p class='hint'>" + esc(list.length) + " of " + esc(all.length) + " reports shown. " + (data.read ? esc(data.read) + " reports in the " + from + " (MIT) were read; only those that state at least " + esc((data.rule || {}).min_columns) + " of the " + esc((data.rule || {}).columns) + " columns below are listed, because a report with one or two figures says too little to sit next to the others. " : "Reports from the " + from + " (MIT). ") +
+      "Figures are read from each report's README as written; a dash means the report does not state it in the usual place. " +
       (src.commit ? "Read at commit " + esc(String(src.commit).slice(0, 8)) + ". " : "") + "Open the report for the full method and its limits.</p>" +
       "<div class='scroll'><table class='reports'><thead><tr>" + head + "</tr></thead><tbody>" +
       (list.length ? list.map(row).join("") : "<tr><td colspan='" + (COLUMNS.length + 1) + "'>No report matches.</td></tr>") + "</tbody></table></div>";

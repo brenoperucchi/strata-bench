@@ -129,17 +129,22 @@ def humaneval(text):
 def hardware(headline, bullet):
     """CPU, RAM, GPU and its VRAM, from the comma-separated headline ('RTX 5090, Core Ultra 9 285K, 64 GB RAM') and the README's bullets."""
     headline = re.split(r"community report,?\s*", headline or "", flags=re.I)[-1]
+    headline = re.sub(r"^\([^)]*\):\s*", "", headline)                                   # '(rerun): 2x RTX 5060 Ti' -> '2x RTX 5060 Ti'
+    headline = re.sub(r"\s*\(\s*\)", "", headline)                                       # an empty pair of parentheses left by a stripped note
     headline = re.sub(r"^(?:Community benchmark(?: on)?|Benchmark)\s*:?\s*", "", headline, flags=re.I)
     parts = [p.strip() for p in re.split(r",(?![^()]*\))|\s\+\s|\s/\s", headline) if p.strip()]
-    parts = [re.sub(r"\s*\((?:Windows|Linux|WSL)[^)]*\)", "", p).strip() for p in parts]
+    parts = [re.sub(r"\s*\(\s*\)", "", re.sub(r"\s*\((?:Windows|Linux|WSL)[^)]*\)", "", p)).strip() for p in parts]
     short = lambda t: re.split(r"[;.](?:\s|$)", t or "")[0]
     cpu = next((p for p in parts if CPU_RE.search(p) and not GPU_RE.search(p)), None) or short(bullet.get("cpu"))
     ram = next((p for p in parts if RAM_RE.search(p)), None) or None
+    if ram:
+        ram = RAM_RE.search(ram).group(0)                                              # '128 GB RAM - Strata 0.1.41: one card' -> '128 GB RAM'
     gpu = next((p for p in parts if GPU_RE.search(p) and not RAM_RE.search(p)), None)
     if not ram and bullet.get("ram"):
         ram = short(bullet["ram"])
     if not gpu and bullet.get("gpu"):
-        gpu = short(bullet["gpu"])
+        gpu = re.sub(r"\s*\(\s*\)", "", short(bullet["gpu"]))
+    gpu = re.split(r"\s+with\s+", gpu or "")[0] or None                                   # 'Tesla V100-PCIE-32GB with 16 GB of system RAM' -> the card
     vram = re.search(r"(\d+)\s*(?:GB|GiB)", gpu or "")
     gpu_name = re.sub(r"\s*\d+\s*(?:GB|GiB)\b", "", gpu or "").strip() or None
     return {"cpu": clean(cpu, 80), "ram": clean(ram, 60), "gpu": clean(gpu_name, 80), "vram_gb": int(vram.group(1)) if vram else None}
@@ -192,30 +197,44 @@ def entry(folder: Path, idx: dict, commit: str):
     }
 
 
-def build(source: Path):
+# The columns of the page. A report that states fewer than MIN_COMPLETE of them is left out: one figure alone says too little to be listed next to the others.
+FIELDS = (lambda e: e["strata"], lambda e: e["cpu"], lambda e: e["ram"], lambda e: e["gpu"], lambda e: e["vram_gb"], lambda e: e["quant"], lambda e: e["context"],
+          lambda e: e["prompt_tps"]["4k"], lambda e: e["prompt_tps"]["32k"], lambda e: e["prompt_tps"]["128k"], lambda e: e["decode_tps"])
+MIN_COMPLETE = 0.9
+
+
+def completeness(e):
+    return sum(1 for f in FIELDS if f(e) not in (None, "")) / len(FIELDS)
+
+
+def build(source: Path, min_complete: float = MIN_COMPLETE):
     commit = subprocess.run(["git", "-C", str(source), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or None
     guide_path = source / "docs" / "COMMUNITY_BENCHMARKS.md"
     idx = index_entries(guide_path.read_text(encoding="utf-8", errors="replace")) if guide_path.exists() else {}
     folders = sorted(p for p in (source / "bench" / "results").iterdir() if p.is_dir() and "community" in p.name)
-    entries = [entry(f, idx, commit or "main") for f in folders]
+    every = [entry(f, idx, commit or "main") for f in folders]
+    entries = [e for e in every if completeness(e) >= min_complete - 1e-9]
     entries.sort(key=lambda e: (e["date"] or "", e["id"]), reverse=True)
     return {"note": "Reports from the Strata repository, measured with other prompts than strata-bench's. Not comparable with the results.",
-            "source": {"repository": REPO, "commit": commit, "license": "MIT"}, "count": len(entries), "reports": entries}
+            "source": {"repository": REPO, "commit": commit, "license": "MIT"},
+            "rule": {"columns": len(FIELDS), "min_fraction": min_complete, "min_columns": max(0, round(min_complete * len(FIELDS) + 0.4999))},
+            "read": len(every), "count": len(entries), "reports": entries}
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--source", required=True, help="a checkout of the Strata repository (bench/results and docs/COMMUNITY_BENCHMARKS.md)")
+    ap.add_argument("--min-complete", type=float, default=MIN_COMPLETE, help="the fraction of the page's columns a report must state to be listed (default 0.9)")
     ap.add_argument("--out", default=str(Path(__file__).resolve().parent.parent / "docs" / "community.json"))
     a = ap.parse_args(argv)
     src = Path(a.source)
     if not (src / "bench" / "results").is_dir():
         print(f"{src}: no bench/results folder", file=sys.stderr)
         return 2
-    data = build(src)
+    data = build(src, a.min_complete)
     Path(a.out).write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     got = lambda f: sum(1 for e in data["reports"] if f(e))
-    print(f"wrote {a.out}: {data['count']} reports; with a 4K / 16K / 32K prompt speed: {got(lambda e: e['prompt_tps']['4k'] is not None)} / {got(lambda e: e['prompt_tps']['16k'] is not None)} / {got(lambda e: e['prompt_tps']['32k'] is not None)}; chat decode {got(lambda e: e['chat_decode_tps'] is not None)}; HumanEval {got(lambda e: e['humaneval'])}; board {got(lambda e: e['board'])}")
+    print(f"wrote {a.out}: {data['count']} of {data['read']} reports (those that state at least {data['rule']['min_columns']} of {data['rule']['columns']} columns); with a 4K / 16K / 32K prompt speed: {got(lambda e: e['prompt_tps']['4k'] is not None)} / {got(lambda e: e['prompt_tps']['16k'] is not None)} / {got(lambda e: e['prompt_tps']['32k'] is not None)}; chat decode {got(lambda e: e['chat_decode_tps'] is not None)}; HumanEval {got(lambda e: e['humaneval'])}; board {got(lambda e: e['board'])}")
     return 0
 
 

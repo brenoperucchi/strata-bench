@@ -69,7 +69,7 @@ class Importer(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp, True)
         make_source(self.tmp)
-        self.data = imp.build(self.tmp)
+        self.data = imp.build(self.tmp, min_complete=0)
         self.by = {e["id"]: e for e in self.data["reports"]}
 
     def test_only_community_folders_are_read_newest_first(self):
@@ -119,6 +119,19 @@ class Importer(unittest.TestCase):
         self.assertEqual(imp.strata_version("Strata v0.1.41 source build"), "0.1.41")
         self.assertEqual(imp.strata_version("nothing here", "2026-10-08-community-x-0.1.40.3"), None)
         self.assertEqual(imp.strata_version("built from v0.1.38 plus two fixes"), "0.1.38")
+
+    def test_a_report_that_states_fewer_than_nine_tenths_of_the_columns_is_left_out_and_the_rule_is_written_down(self):
+        strict = imp.build(self.tmp)                                               # the default: 10 of the 11 columns
+        self.assertEqual((strict["count"], strict["read"]), (1, 3))               # only the TITAN fixture states 10 of the 11; the other two state a handful
+        self.assertEqual(strict["rule"], {"columns": 11, "min_fraction": 0.9, "min_columns": 10})
+        half = imp.build(self.tmp, min_complete=0.2)
+        self.assertEqual(half["count"], 2)                                         # the one with no table at all is below even that
+        self.assertLess(imp.completeness(self.by["2026-10-02-community-plain"]), 0.2)
+
+    def test_empty_parentheses_and_notes_after_the_amount_of_ram_are_cleaned(self):
+        hw = imp.hardware("(rerun): 2x RTX 5060 Ti (), Ryzen 5 5600X, 128 GB RAM - Strata 0.1.41: one card", {})
+        self.assertEqual((hw["gpu"], hw["ram"], hw["vram_gb"]), ("2x RTX 5060 Ti", "128 GB RAM", None))
+        self.assertEqual(imp.hardware("Tesla V100-PCIE-32GB with 16 GB of system RAM", {})["gpu"], "Tesla V100-PCIE-")
 
     def test_each_entry_says_where_it_came_from(self):
         src = self.by["2026-10-08-community-titan"]["source"]
@@ -202,7 +215,9 @@ class Page(unittest.TestCase):
 class Committed(unittest.TestCase):
     def test_the_committed_catalogue_has_its_provenance_and_stays_out_of_the_results(self):
         data = json.loads((ROOT / "docs" / "community.json").read_text())
-        self.assertGreater(data["count"], 50)
+        self.assertEqual(data["rule"]["min_columns"], 10)                    # only reports that state at least 10 of the 11 columns are listed
+        self.assertGreater(data["read"], data["count"])
+        self.assertGreater(data["count"], 10)
         self.assertEqual(data["source"]["license"], "MIT")
         self.assertTrue(all(e["source"]["url"].startswith("https://github.com/Niko1221/Strata/") for e in data["reports"]))
         self.assertFalse(any("community" in p.name for p in (ROOT / "results").glob("*.result.json")))
