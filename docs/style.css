@@ -203,3 +203,10 @@ svg.viz .sel { fill: var(--accent); fill-opacity: .12; stroke: var(--accent); st
 /* the results table: tight enough to fit a laptop screen without sideways scrolling */
 #perf th, #perf td { padding: 8px 6px; }
 #perf td.by a { display: inline-block; max-width: 9.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+
+/* Strata reports */
+.notice { border: 1px solid var(--warn); border-left-width: 4px; border-radius: 8px; background: var(--card); padding: 10px 14px; margin: 6px 0 10px; }
+table.reports td.hw { min-width: 18em; }
+.filters input[type="search"] { padding: 6px 10px; font: inherit; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 6px; min-width: 18em; }
+table.reports th { cursor: default; vertical-align: bottom; }
+table.reports td { vertical-align: top; }

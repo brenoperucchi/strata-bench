@@ -306,7 +306,7 @@ class OverviewHtml(unittest.TestCase):
 
     def test_the_tabs_are_dashboard_results_health_and_the_overview_lives_under_the_first(self):
         html = (ROOT / "docs" / "index.html").read_text()
-        order = [html.index(f'id="tab-{t}"') for t in ("dash", "perf", "health")]
+        order = [html.index(f'id="tab-{t}"') for t in ("dash", "perf", "reports", "health")]
         self.assertEqual(order, sorted(order))
         self.assertIn(">Dashboard</button>", html)
         self.assertIn(">Results</button>", html)

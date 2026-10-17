@@ -214,9 +214,21 @@
       "<thead><tr><th>Engine</th><th class='num'>Runs</th><th class='num'>Failed</th><th colspan='5'></th></tr></thead><tbody>" + eng + "</tbody>";
   }
 
-  // Dashboard (the overview), Results (the table) and Health. The address keeps the tab: #results, #health, nothing for the Dashboard.
+  // The Strata reports tab reads community.json the first time it is opened.
+  var reportsLoaded = false;
+  function loadReports() {
+    if (reportsLoaded || typeof StrataCommunity === "undefined") return;
+    reportsLoaded = true;
+    fetch("community.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (data) {
+      var draw = function () { $("reports").innerHTML = StrataCommunity.render(data, $("reports-filter").value); };
+      draw();
+      $("reports-filter").addEventListener("input", draw);
+    }).catch(function () { $("reports").innerHTML = "<p class='hint'>The reports could not be loaded.</p>"; });
+  }
+
+  // Dashboard (the overview), Results (the table), the Strata reports and Health. The address keeps the tab: #results, #health, nothing for the Dashboard.
   // A link that carries a filter (?by=, ?machine=, ?compare=) is about the table, so it opens on Results.
-  var TABS = [["dash", "dashboard"], ["perf", "results"], ["health", "health"]];
+  var TABS = [["dash", "dashboard"], ["perf", "results"], ["reports", "reports"], ["health", "health"]];
   function tabs(redrawMap) {
     var fromHash = function () {
       var h = String(location.hash || "").replace(/^#/, "").toLowerCase(), t = TABS.filter(function (x) { return x[1] === h; })[0];
@@ -227,6 +239,7 @@
     var sel = function (which, keep) {
       TABS.forEach(function (t) { $("tab-" + t[0]).setAttribute("aria-selected", t[0] === which); $("view-" + t[0]).hidden = t[0] !== which; });
       if (which === "dash" && redrawMap) redrawMap();
+      if (which === "reports") loadReports();
       if (keep) return;
       var name = TABS.filter(function (t) { return t[0] === which; })[0][1];
       try { history.replaceState(null, "", location.pathname + location.search + (which === "dash" ? "" : "#" + name)); } catch (e) { /* file:// */ }
@@ -241,7 +254,7 @@
     cards(state.rows);
     var redrawMap = overview(state.rows);
     tabs(redrawMap);
-    if (!state.rows.length) { $("empty").hidden = false; $("view-dash").hidden = true; $("view-perf").hidden = true; $("view-health").hidden = true; document.querySelector(".tabs").hidden = true; return; }
+    if (!state.rows.length) { $("empty").hidden = false; $("view-dash").hidden = true; $("view-perf").hidden = true; $("view-reports").hidden = true; $("view-health").hidden = true; document.querySelector(".tabs").hidden = true; return; }
     readLink();
     try { var pre = new URLSearchParams(location.search).get("compare"); if (pre && state.rows.some(function (r) { return r.id === pre; })) state.selected = [pre]; } catch (e) { /* no URL support */ }   // from a detail page: start the comparison with that result
     ["by", "machine_id"].forEach(function (k) { if (uniq(state.rows, k).indexOf(state.filters[k]) < 0) state.filters[k] = ""; });   // a link to an unknown name shows everything

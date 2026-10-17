@@ -27,6 +27,7 @@
   <div class="tabs" role="tablist">
     <button role="tab" id="tab-dash" aria-selected="true" aria-controls="view-dash">Dashboard</button>
     <button role="tab" id="tab-perf" aria-selected="false" aria-controls="view-perf">Results</button>
+    <button role="tab" id="tab-reports" aria-selected="false" aria-controls="view-reports">Strata reports</button>
     <button role="tab" id="tab-health" aria-selected="false" aria-controls="view-health">Health</button>
   </div>
   <section id="view-dash" role="tabpanel" aria-labelledby="tab-dash">
@@ -41,6 +42,10 @@
     <div class="compare-bar" id="compare-bar"><span id="compare-count">Tick two or three rows to compare them: a scoreboard shows who is in front on more measures.</span> <a class="button" id="compare-go" href="#" aria-disabled="true">Compare</a></div>
     <div class="scroll"><table id="perf"></table></div>
     <p class="hint">Click a row for the full details: configuration, every request, charts and the raw file. Speeds are the engine's own timings, median of the measured runs (tokens per second, higher is better). The Medium, Long and XLong columns are prompt speeds for those prompts; decode speed is the medium prompt's. Results with a different configuration or engine are different measurements: compare rows that share the same model and configuration (the details page shows it). The first-token and agent-cache columns exist only for <code>standard-v2</code> results and stay empty for <code>standard-v1</code> ones; the two protocols are never ranked against each other on those columns. A badge such as <i>lan</i> means the client ran on another machine, so first-token times include the network.</p>
+  </section>
+  <section id="view-reports" role="tabpanel" aria-labelledby="tab-reports" hidden>
+    <div class="filters"><label>Filter<input type="search" id="reports-filter" placeholder="GPU, CPU, quantisation..." autocomplete="off"></label></div>
+    <div id="reports"><p class="hint">Loading the reports...</p></div>
   </section>
   <section id="view-health" role="tabpanel" aria-labelledby="tab-health" hidden>
     <div id="health-summary" class="cards"></div>
@@ -59,6 +64,7 @@
 </footer>
 <script src="insights.js"></script>
 <script src="overview.js"></script>
+<script src="community.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
