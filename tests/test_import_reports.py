@@ -132,6 +132,7 @@ class Importer(unittest.TestCase):
         hw = imp.hardware("(rerun): 2x RTX 5060 Ti (), Ryzen 5 5600X, 128 GB RAM - Strata 0.1.41: one card", {})
         self.assertEqual((hw["gpu"], hw["ram"], hw["vram_gb"]), ("2x RTX 5060 Ti", "128 GB RAM", None))
         self.assertEqual(imp.hardware("Tesla V100-PCIE-32GB with 16 GB of system RAM", {})["gpu"], "Tesla V100-PCIE-")
+        self.assertEqual(imp.hardware("Radeon Pro VII, Xeon E5-2666 v3, 125.7 GiB RAM", {})["ram"], "125.7 GiB RAM")      # a decimal amount is not cut at the point
 
     def test_each_entry_says_where_it_came_from(self):
         src = self.by["2026-10-08-community-titan"]["source"]

@@ -94,7 +94,7 @@ def results_rows(readme: str):
 SIZES = {"4k": (3500, 4700), "16k": (14000, 17500), "32k": (30000, 36000), "128k": (115000, 135000)}      # the prompt sizes the catalogue shows, as ranges of the real token count
 CPU_RE = re.compile(r"Ryzen|Xeon|EPYC|Threadripper|Core\s*(?:Ultra|i\d)|\bi\d-\d|Intel|Apple|\bM\d\b|Opteron|Core Ultra", re.I)
 GPU_RE = re.compile(r"RTX|GTX|Radeon|\bRX\b|Tesla|TITAN|Quadro|Arc|Instinct|\bMI\d+|\bP40\b|\bV100\b|A4000|A5000|Pro\s*\d{4}|gfx\d+|8060S|780M|Strix", re.I)
-RAM_RE = re.compile(r"(\d+)\s*(?:GB|GiB)\s*(?:of\s*)?(?:DDR\d\S*\s*)?(?:RAM|unified|system memory|memory)", re.I)
+RAM_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(?:GB|GiB)\s*(?:of\s*)?(?:DDR\d\S*\s*)?(?:RAM|unified|system memory|memory)", re.I)
 
 
 def pick_row(rows, size, quant):

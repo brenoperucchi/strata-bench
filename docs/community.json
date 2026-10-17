@@ -104,7 +104,7 @@
    "headline": "Radeon Pro VII 16 GB (gfx906), Xeon E5-2666 v3, 125.7 GiB RAM",
    "summary": "Source builds of 0.1.40.4 and 0.1.41 on the distribution's ROCm 6.2 (host patches in BUILD.json), IQ2_XS at 131K with KV streaming; decode 24.2/24.0/23.7 tok/s, prompt 350/339/284 tok/s at 4K/32K/128K, two sweeps with telemetry. Build logs trimmed (TRIMMED.md).",
    "cpu": "Xeon E5-2666 v3",
-   "ram": "7 GiB RAM",
+   "ram": "125.7 GiB RAM",
    "gpu": "Radeon Pro VII (gfx906)",
    "vram_gb": 16,
    "board": null,
