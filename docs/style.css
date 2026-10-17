@@ -218,3 +218,12 @@ table.reports th, table.reports td { padding: 7px 6px; }
 #perf { font-size: .84rem; }
 #perf td.strata { font-weight: 700; white-space: nowrap; }
 #perf .cpu { display: inline-block; max-width: 10.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+
+/* the numbers at the top: one quiet line */
+.stats { display: flex; flex-wrap: wrap; gap: 4px 22px; margin: 10px 0 6px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: .9rem; color: var(--muted); }
+.stats .stat b { color: var(--fg); font-size: 1.05rem; font-weight: 600; }
+.stats .stat a { color: var(--muted); text-decoration: none; }
+.stats .stat a:hover { color: var(--accent); text-decoration: underline; }
+.stats .stat a b { color: var(--accent); }
+table.contributors { font-size: .9rem; }
+.lede-text { margin: 14px 0 10px; }

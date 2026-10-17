@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contributors · strata-bench</title>
+<meta name="description" content="The people who ran strata-bench on their own machines and sent a result.">
+<link rel="stylesheet" href="style.css">
+<script src="theme.js"></script>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Thank you</h1>
+    <p class="lede">The people who ran strata-bench on their own machines and sent a result.</p>
+    <nav><a href="index.html">Dashboard</a><a href="submit.html">Submit a result</a><a href="https://github.com/brenoperucchi/strata-bench">Source</a></nav>
+  </div>
+</header>
+<main class="wrap">
+  <div id="people"><p class="hint">Loading...</p></div>
+  <noscript><p class="note">This page needs JavaScript to draw the list. The data is plain JSON in <a href="data.json">data.json</a>.</p></noscript>
+</main>
+<script src="contributors.js"></script>
+<script>
+  fetch("data.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (d) {
+    document.getElementById("people").innerHTML = StrataContributors.render(d.results || []);
+  }).catch(function () { document.getElementById("people").innerHTML = "<p class='hint'>The list could not be loaded.</p>"; });
+</script>
+</body>
+</html>

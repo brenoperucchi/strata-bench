@@ -347,6 +347,15 @@ class OverviewHtml(unittest.TestCase):
         self.assertNotIn("TTFT", table)
         self.assertNotIn(">Agent", table)
 
+    def test_the_top_numbers_are_one_quiet_line_and_the_contributors_are_a_count_that_links_to_the_thanks_page(self):
+        rows = [row(f"r{i}", by=f"person{i}") for i in range(12)]                    # twelve people: the line must not grow with them
+        cards = self.render(rows)["cards"]
+        self.assertEqual(cards.count("class='stat'"), 6)
+        self.assertIn("<a href='contributors.html'>", cards)
+        self.assertIn("<b>12</b> <span>contributors</span>", cards)
+        self.assertNotIn("person3", cards)                                            # no names in the line
+        self.assertNotIn('class="card kpi"', cards)
+
     def test_the_page_loads_the_insight_modules_before_the_app(self):
         html = (ROOT / "docs" / "index.html").read_text()
         self.assertLess(html.index("insights.js"), html.index("overview.js"))

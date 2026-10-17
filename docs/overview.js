@@ -23,19 +23,22 @@
     return out;
   }
 
+  // The numbers at the top, as one quiet line: the contributors are a count that links to the thank-you page, so the line never grows with the people.
   function kpi(rows) {
     var s = I.summary(rows), latest = s.latest;
     var eng = s.engines.length > 1 ? s.engines[0] + " to " + s.engines[s.engines.length - 1] : s.engines[0] || "";
-    var who = s.contributors.map(function (n) { return "<a href='?by=" + encodeURIComponent(n) + "'>" + esc(n) + "</a>"; }).join(", ");
     var items = [
       [fmt(s.results, 0), "results", fmt(s.protocols.v1, 0) + " standard-v1 · " + fmt(s.protocols.v2, 0) + " standard-v2"],
       [fmt(s.machines, 0), "machines", fmt(s.gpus, 0) + " GPU model" + (s.gpus === 1 ? "" : "s")],
-      [fmt(s.engines.length, 0), "engine versions", esc(eng)],
-      [fmt(s.contributors.length, 0), "contributors", who || "no name declared yet"],
-      [latest ? esc(String(latest.date || "").slice(0, 10)) : "–", "latest", latest ? esc(latest.gpu) + " · " + esc(latest.engine) : ""],
+      [fmt(s.engines.length, 0), "Strata versions", eng],
+      [fmt(s.contributors.length, 0), "contributors", "Thank you: see who ran strata-bench", "contributors.html"],
+      [latest ? esc(String(latest.date || "").slice(0, 10)) : "–", "latest", latest ? latest.gpu + " · " + latest.engine : ""],
       [fmt(s.failed, 0), "failed runs", "listed in the Health tab"]
     ];
-    return items.map(function (i) { return '<div class="card kpi"><b>' + i[0] + "</b><span>" + i[1] + "</span><small>" + i[2] + "</small></div>"; }).join("");
+    return items.map(function (i) {
+      var inner = "<b>" + i[0] + "</b> <span>" + esc(i[1]) + "</span>";
+      return "<div class='stat' title='" + esc(i[2]) + "'>" + (i[3] ? "<a href='" + esc(i[3]) + "'>" + inner + " →</a>" : inner) + "</div>";
+    }).join("");
   }
 
   var niceStep = function (v) { var p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; };
