@@ -197,44 +197,44 @@ def entry(folder: Path, idx: dict, commit: str):
     }
 
 
-# The columns of the page. A report that states fewer than MIN_COMPLETE of them is left out: one figure alone says too little to be listed next to the others.
-FIELDS = (lambda e: e["strata"], lambda e: e["cpu"], lambda e: e["ram"], lambda e: e["gpu"], lambda e: e["vram_gb"], lambda e: e["quant"], lambda e: e["context"],
-          lambda e: e["prompt_tps"]["4k"], lambda e: e["prompt_tps"]["32k"], lambda e: e["prompt_tps"]["128k"], lambda e: e["decode_tps"])
-MIN_COMPLETE = 0.9
+# A report is "full" when it states all four speeds the page is about: the prompt speed at 4K, 32K and 128K, and the decode speed.
+# Every report is kept; the page lets the reader show all of them, only the full ones, or only the ones with at least one speed.
+def is_full(e):
+    return all(v is not None for v in (e["prompt_tps"]["4k"], e["prompt_tps"]["32k"], e["prompt_tps"]["128k"], e["decode_tps"]))
 
 
-def completeness(e):
-    return sum(1 for f in FIELDS if f(e) not in (None, "")) / len(FIELDS)
+def has_speed(e):
+    return any(v is not None for v in (e["prompt_tps"]["4k"], e["prompt_tps"]["32k"], e["prompt_tps"]["128k"], e["decode_tps"]))
 
 
-def build(source: Path, min_complete: float = MIN_COMPLETE):
+def build(source: Path):
     commit = subprocess.run(["git", "-C", str(source), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip() or None
     guide_path = source / "docs" / "COMMUNITY_BENCHMARKS.md"
     idx = index_entries(guide_path.read_text(encoding="utf-8", errors="replace")) if guide_path.exists() else {}
     folders = sorted(p for p in (source / "bench" / "results").iterdir() if p.is_dir() and "community" in p.name)
-    every = [entry(f, idx, commit or "main") for f in folders]
-    entries = [e for e in every if completeness(e) >= min_complete - 1e-9]
+    entries = [entry(f, idx, commit or "main") for f in folders]
+    for e in entries:
+        e["full"] = is_full(e)
     entries.sort(key=lambda e: (e["date"] or "", e["id"]), reverse=True)
     return {"note": "Reports from the Strata repository, measured with other prompts than strata-bench's. Not comparable with the results.",
             "source": {"repository": REPO, "commit": commit, "license": "MIT"},
-            "rule": {"columns": len(FIELDS), "min_fraction": min_complete, "min_columns": max(0, round(min_complete * len(FIELDS) + 0.4999))},
-            "read": len(every), "count": len(entries), "reports": entries}
+            "full_means": "states the prompt speed at 4K, 32K and 128K and the decode speed",
+            "count": len(entries), "full": sum(1 for e in entries if e["full"]), "with_speed": sum(1 for e in entries if has_speed(e)), "reports": entries}
 
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--source", required=True, help="a checkout of the Strata repository (bench/results and docs/COMMUNITY_BENCHMARKS.md)")
-    ap.add_argument("--min-complete", type=float, default=MIN_COMPLETE, help="the fraction of the page's columns a report must state to be listed (default 0.9)")
     ap.add_argument("--out", default=str(Path(__file__).resolve().parent.parent / "docs" / "community.json"))
     a = ap.parse_args(argv)
     src = Path(a.source)
     if not (src / "bench" / "results").is_dir():
         print(f"{src}: no bench/results folder", file=sys.stderr)
         return 2
-    data = build(src, a.min_complete)
+    data = build(src)
     Path(a.out).write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     got = lambda f: sum(1 for e in data["reports"] if f(e))
-    print(f"wrote {a.out}: {data['count']} of {data['read']} reports (those that state at least {data['rule']['min_columns']} of {data['rule']['columns']} columns); with a 4K / 16K / 32K prompt speed: {got(lambda e: e['prompt_tps']['4k'] is not None)} / {got(lambda e: e['prompt_tps']['16k'] is not None)} / {got(lambda e: e['prompt_tps']['32k'] is not None)}; chat decode {got(lambda e: e['chat_decode_tps'] is not None)}; HumanEval {got(lambda e: e['humaneval'])}; board {got(lambda e: e['board'])}")
+    print(f"wrote {a.out}: {data['count']} reports, {data['full']} full, {data['with_speed']} with a speed; with a 4K / 16K / 32K prompt speed: {got(lambda e: e['prompt_tps']['4k'] is not None)} / {got(lambda e: e['prompt_tps']['16k'] is not None)} / {got(lambda e: e['prompt_tps']['32k'] is not None)}; chat decode {got(lambda e: e['chat_decode_tps'] is not None)}; HumanEval {got(lambda e: e['humaneval'])}; board {got(lambda e: e['board'])}")
     return 0
 
 

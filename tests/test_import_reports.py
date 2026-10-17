@@ -69,7 +69,7 @@ class Importer(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, self.tmp, True)
         make_source(self.tmp)
-        self.data = imp.build(self.tmp, min_complete=0)
+        self.data = imp.build(self.tmp)
         self.by = {e["id"]: e for e in self.data["reports"]}
 
     def test_only_community_folders_are_read_newest_first(self):
@@ -120,13 +120,14 @@ class Importer(unittest.TestCase):
         self.assertEqual(imp.strata_version("nothing here", "2026-10-08-community-x-0.1.40.3"), None)
         self.assertEqual(imp.strata_version("built from v0.1.38 plus two fixes"), "0.1.38")
 
-    def test_a_report_that_states_fewer_than_nine_tenths_of_the_columns_is_left_out_and_the_rule_is_written_down(self):
-        strict = imp.build(self.tmp)                                               # the default: 10 of the 11 columns
-        self.assertEqual((strict["count"], strict["read"]), (1, 3))               # only the TITAN fixture states 10 of the 11; the other two state a handful
-        self.assertEqual(strict["rule"], {"columns": 11, "min_fraction": 0.9, "min_columns": 10})
-        half = imp.build(self.tmp, min_complete=0.2)
-        self.assertEqual(half["count"], 2)                                         # the one with no table at all is below even that
-        self.assertLess(imp.completeness(self.by["2026-10-02-community-plain"]), 0.2)
+    def test_every_report_is_kept_and_a_full_one_states_all_four_speeds(self):
+        self.assertEqual((self.data["count"], self.data["full"], self.data["with_speed"]), (3, 0, 2))     # the fixtures state some speeds, none states the 128K one
+        e = {"prompt_tps": {"4k": 1.0, "32k": 2.0, "128k": 3.0}, "decode_tps": 4.0}
+        self.assertTrue(imp.is_full(e))
+        self.assertFalse(imp.is_full({**e, "decode_tps": None}))
+        self.assertFalse(imp.is_full({**e, "prompt_tps": {"4k": 1.0, "32k": None, "128k": 3.0}}))
+        self.assertTrue(imp.has_speed({"prompt_tps": {"4k": None, "32k": None, "128k": 3.0}, "decode_tps": None}))
+        self.assertFalse(imp.has_speed({"prompt_tps": {"4k": None, "32k": None, "128k": None}, "decode_tps": None}))
 
     def test_empty_parentheses_and_notes_after_the_amount_of_ram_are_cleaned(self):
         hw = imp.hardware("(rerun): 2x RTX 5060 Ti (), Ryzen 5 5600X, 128 GB RAM - Strata 0.1.41: one card", {})
@@ -180,17 +181,25 @@ class Page(unittest.TestCase):
     def test_the_filters_by_version_quantisation_and_speed_and_the_sorting_work_and_a_missing_value_goes_last(self):
         js = ("const C = require('./docs/community.js'); const d = %s; const ids = (o) => (C.render(d, o).match(/title='(?:[^']*)' rel/g) || []).length;"
               "const order = (o) => (C.render(d, o).match(/<td class='nowrap'>([^<]+)</g) || []).map(s => s.replace(/.*>/, '').replace('<', ''));"
-              "console.log(JSON.stringify({opts: C.options(d.reports), v: C.filter(d.reports, {strata: '0.1.9'}).length, q: C.filter(d.reports, {quant: 'IQ3_S'}).length, s: C.filter(d.reports, {speeds: true}).length,"
+              "console.log(JSON.stringify({opts: C.options(d.reports), v: C.filter(d.reports, {strata: '0.1.9'}).length, q: C.filter(d.reports, {quant: 'IQ3_S'}).length, s: C.filter(d.reports, {show: 'speeds'}).length, full: C.filter(d.reports, {show: 'full'}).length, all: C.filter(d.reports, {show: 'all'}).length,"
               "p4: order({sort: {key: 'p4k', dir: -1}}), p4up: order({sort: {key: 'p4k', dir: 1}}), ver: order({sort: {key: 'strata', dir: -1}}), cmp: C.versionCmp('0.1.40.3', '0.1.9')}));" % json.dumps(self.data()))
         r = subprocess.run([NODE, "-e", js], capture_output=True, text=True, timeout=30, cwd=ROOT)
         self.assertEqual(r.returncode, 0, r.stderr)
         out = json.loads(r.stdout)
         self.assertEqual(out["opts"], {"strata": ["0.1.40.3", "0.1.9"], "quant": ["IQ3_S"]})   # newest version first
-        self.assertEqual((out["v"], out["q"], out["s"]), (1, 1, 1))
+        self.assertEqual((out["v"], out["q"], out["s"], out["full"], out["all"]), (1, 1, 1, 1, 2))
         self.assertEqual(out["p4"], ["2026-10-08", "2026-10-04"])
         self.assertEqual(out["p4up"], ["2026-10-08", "2026-10-04"])                              # the report with no 4K speed stays last both ways
         self.assertEqual(out["ver"], ["2026-10-08", "2026-10-04"])
         self.assertGreater(out["cmp"], 0)                                                         # 0.1.40.3 is newer than 0.1.9: by number, not by text
+
+    def test_the_context_filter_is_an_upper_limit_and_a_report_without_a_context_is_never_placed(self):
+        js = ("const C = require('./docs/community.js'); const rs = [{context: 32768}, {context: 131072}, {context: 262144}, {context: 786432}, {context: 2000000}, {context: null}];"
+              "const n = (k) => C.filter(rs, {show: 'all', context: k}).length;"
+              "console.log(JSON.stringify({any: n(''), c32: n('32k'), c128: n('128k'), c256: n('256k'), c1m: n('1m'), over: n('over')}));")
+        r = subprocess.run([NODE, "-e", js], capture_output=True, text=True, timeout=30, cwd=ROOT)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(json.loads(r.stdout), {"any": 6, "c32": 1, "c128": 2, "c256": 3, "c1m": 4, "over": 1})
 
     def test_the_filter_keeps_the_rows_that_match_every_word(self):
         self.assertIn("RX 7900 GRE", self.render(self.data(), "gre"))
@@ -216,9 +225,9 @@ class Page(unittest.TestCase):
 class Committed(unittest.TestCase):
     def test_the_committed_catalogue_has_its_provenance_and_stays_out_of_the_results(self):
         data = json.loads((ROOT / "docs" / "community.json").read_text())
-        self.assertEqual(data["rule"]["min_columns"], 10)                    # only reports that state at least 10 of the 11 columns are listed
-        self.assertGreater(data["read"], data["count"])
-        self.assertGreater(data["count"], 10)
+        self.assertGreater(data["count"], 50)                                  # every report is kept; the page filters
+        self.assertGreater(data["full"], 10)
+        self.assertEqual(data["full"], sum(1 for e in data["reports"] if e["full"]))
         self.assertEqual(data["source"]["license"], "MIT")
         self.assertTrue(all(e["source"]["url"].startswith("https://github.com/Niko1221/Strata/") for e in data["reports"]))
         self.assertFalse(any("community" in p.name for p in (ROOT / "results").glob("*.result.json")))

@@ -48,7 +48,8 @@
       <label>Search<input type="search" id="reports-filter" placeholder="GPU, CPU, RAM, board..." autocomplete="off"></label>
       <label>Strata version<select id="reports-strata"><option value="">All</option></select></label>
       <label>Quantisation<select id="reports-quant"><option value="">All</option></select></label>
-      <label class="check"><input type="checkbox" id="reports-speeds"> Only with speeds</label>
+      <label>Show<select id="reports-show"><option value="full">Only full</option><option value="speeds">Only with speeds</option><option value="all">All</option></select></label>
+      <label>Context<select id="reports-context"><option value="">Any</option><option value="32k">Up to 32K</option><option value="128k">Up to 128K</option><option value="256k">Up to 256K</option><option value="1m">Up to 1M</option><option value="over">Over 1M</option></select></label>
     </div>
     <div id="reports"><p class="hint">Loading the reports...</p></div>
   </section>

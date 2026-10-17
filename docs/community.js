@@ -33,16 +33,29 @@
   ];
 
   var hasSpeed = function (r) { return ["4k", "32k", "128k"].some(function (k) { return speed(r, k) !== null; }) || num(r.decode_tps) !== null; };
+  // full: the prompt speed at 4K, 32K and 128K and the decode speed are all stated
+  var isFull = function (r) { return ["4k", "32k", "128k"].every(function (k) { return speed(r, k) !== null; }) && num(r.decode_tps) !== null; };
   var haystack = function (r) { return [r.headline, r.gpu, r.cpu, r.ram, r.board, r.strata, r.quant, r.summary, r.id].join(" ").toLowerCase(); };
+  // "up to" limits of the context size, in tokens; the last one is everything above 1M
+  var CONTEXT = [["32k", "Up to 32K", 32768], ["128k", "Up to 128K", 131072], ["256k", "Up to 256K", 262144], ["1m", "Up to 1M", 1048576], ["over", "Over 1M", Infinity]];
+  var inContext = function (r, key) {
+    var n = num(r.context);
+    if (!key) return true;
+    if (n === null) return false;                                                    // a report that does not state its context cannot be placed
+    if (key === "over") return n > 1048576;
+    return n <= CONTEXT.filter(function (c) { return c[0] === key; })[0][2];
+  };
 
-  // opts: {query, strata, quant, speeds}
+  // opts: {query, strata, quant, show: "full" | "speeds" | "all", context: "32k" | "128k" | "256k" | "1m" | "over"}
   function filter(reports, opts) {
     opts = typeof opts === "string" ? { query: opts } : (opts || {});
     var words = String(opts.query || "").toLowerCase().trim().split(/\s+/).filter(Boolean);
     return reports.filter(function (r) {
       if (opts.strata && r.strata !== opts.strata) return false;
       if (opts.quant && r.quant !== opts.quant) return false;
-      if (opts.speeds && !hasSpeed(r)) return false;
+      if (opts.show === "full" && !isFull(r)) return false;
+      if (opts.show === "speeds" && !hasSpeed(r)) return false;
+      if (!inContext(r, opts.context)) return false;
       return words.every(function (w) { return haystack(r).indexOf(w) >= 0; });
     });
   }
@@ -86,16 +99,17 @@
       var on = opts.sort && opts.sort.key === c.key;
       return "<th data-sort='" + c.key + "'" + (c.num ? " class='num'" : "") + (c.title ? " title='" + esc(c.title) + "'" : "") + ">" + esc(c.label) + (on ? (opts.sort.dir < 0 ? " ▼" : " ▲") : "") + "</th>";
     }).join("") + "<th></th>";
+    var full = all.filter(isFull).length;
     return "<div class='notice'><b>Not comparable with the Results tab.</b> These reports were measured with the Strata script's own prompts and sizes, by the people who sent them; strata-bench did not run them. " +
       "They are listed here so the cards the community has tried are easy to find, and they are never ranked against the results.</div>" +
-      "<p class='hint'>" + esc(list.length) + " of " + esc(all.length) + " reports shown. " + (data.read ? esc(data.read) + " reports in the " + from + " (MIT) were read; only those that state at least " + esc((data.rule || {}).min_columns) + " of the " + esc((data.rule || {}).columns) + " columns below are listed, because a report with one or two figures says too little to sit next to the others. " : "Reports from the " + from + " (MIT). ") +
-      "Figures are read from each report's README as written; a dash means the report does not state it in the usual place. " +
+      "<p class='hint'>" + esc(list.length) + " of " + esc(all.length) + " reports shown, from the " + from + " (MIT): " + esc(full) + " are <b>full</b> (they state the prompt speed at 4K, 32K and 128K and the decode speed) and " + esc(withSpeed) + " state at least one speed. " +
+      "Figures are read from each report's README as written; a dash means the report does not state it in the usual place. The context column is the context the reporter ran with, not a measurement. " +
       (src.commit ? "Read at commit " + esc(String(src.commit).slice(0, 8)) + ". " : "") + "Open the report for the full method and its limits.</p>" +
       "<div class='scroll'><table class='reports'><thead><tr>" + head + "</tr></thead><tbody>" +
       (list.length ? list.map(row).join("") : "<tr><td colspan='" + (COLUMNS.length + 1) + "'>No report matches.</td></tr>") + "</tbody></table></div>";
   }
 
-  var api = { render: render, filter: filter, options: options, versionCmp: versionCmp, safeUrl: safeUrl };
+  var api = { render: render, filter: filter, options: options, CONTEXT: CONTEXT, versionCmp: versionCmp, safeUrl: safeUrl };
   root.StrataCommunity = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : this);

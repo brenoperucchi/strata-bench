@@ -223,9 +223,9 @@
       var C = StrataCommunity, sort = { key: "date", dir: -1 };
       var fill = function (id, values) { $(id).innerHTML = '<option value="">All</option>' + values.map(function (v) { return "<option value='" + esc(v) + "'>" + esc(v) + "</option>"; }).join(""); };
       var o = C.options(data.reports || []); fill("reports-strata", o.strata); fill("reports-quant", o.quant);
-      var draw = function () { $("reports").innerHTML = C.render(data, { query: $("reports-filter").value, strata: $("reports-strata").value, quant: $("reports-quant").value, speeds: $("reports-speeds").checked, sort: sort }); };
+      var draw = function () { $("reports").innerHTML = C.render(data, { query: $("reports-filter").value, strata: $("reports-strata").value, quant: $("reports-quant").value, show: $("reports-show").value, context: $("reports-context").value, sort: sort }); };
       draw();
-      ["reports-filter", "reports-strata", "reports-quant", "reports-speeds"].forEach(function (id) { $(id).addEventListener(id === "reports-filter" ? "input" : "change", draw); });
+      ["reports-filter", "reports-strata", "reports-quant", "reports-show", "reports-context"].forEach(function (id) { $(id).addEventListener(id === "reports-filter" ? "input" : "change", draw); });
       $("reports").addEventListener("click", function (e) {            // a column header sorts; the same one again reverses it
         var th = e.target && e.target.closest && e.target.closest("th[data-sort]"); if (!th) return;
         var k = th.getAttribute("data-sort"); sort = { key: k, dir: sort.key === k ? -sort.dir : -1 }; draw();
