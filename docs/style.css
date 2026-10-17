@@ -210,3 +210,8 @@ table.reports td.hw { min-width: 18em; }
 .filters input[type="search"] { padding: 6px 10px; font: inherit; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 6px; min-width: 18em; }
 table.reports th { cursor: default; vertical-align: bottom; }
 table.reports td { vertical-align: top; }
+.filters label.check { flex-direction: row; align-items: center; gap: 6px; align-self: end; padding-bottom: 8px; }
+table.reports { font-size: .84rem; }
+table.reports th { cursor: pointer; white-space: nowrap; }
+table.reports td.strata { font-weight: 700; white-space: nowrap; }
+table.reports th, table.reports td { padding: 7px 6px; }

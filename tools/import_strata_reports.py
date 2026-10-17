@@ -78,25 +78,84 @@ def results_rows(readme: str):
         if i is not None and i + 1 < len(head) and head[i + 1].startswith("median") and "median" not in head[i]:
             return i + 1
         return i
-    col = {"label": 0, "tokens": find("prompt tokens"), "prompt_tps": median_of(find("prompt tok/s", "prompt t/s")), "decode_tps": median_of(find("decode tok/s", "decode t/s")), "ttft_s": median_of(find("ttft"))}
+    col = {"label": 0, "tokens": find("prompt tokens"), "reused": find("reused"), "prompt_tps": median_of(find("prompt tok/s", "prompt t/s")), "decode_tps": median_of(find("decode tok/s", "decode t/s")), "ttft_s": median_of(find("ttft"))}
     if col["prompt_tps"] is None and col["decode_tps"] is None:
         return []
     rows = []
     for line in lines[2:]:
         c = cells(line)
         get = lambda k: number(c[col[k]]) if col[k] is not None and col[k] < len(c) else None
-        row = {"label": clean(c[0], 60), "prompt_tokens": get("tokens"), "prompt_tps": get("prompt_tps"), "decode_tps": get("decode_tps"), "ttft_s": get("ttft_s")}
+        row = {"label": clean(c[0], 60), "prompt_tokens": get("tokens"), "reused": get("reused"), "prompt_tps": get("prompt_tps"), "decode_tps": get("decode_tps"), "ttft_s": get("ttft_s")}
         if row["prompt_tps"] is not None or row["decode_tps"] is not None:
             rows.append(row)
     return rows[:MAX_ROWS]
 
 
-def headline_row(rows):
-    """The row nearest a 4K prompt that reports a prompt speed: what the catalogue's table shows."""
-    cand = [r for r in rows if r["prompt_tps"] is not None and r["prompt_tokens"]]
+SIZES = {"4k": (3500, 4700), "16k": (14000, 17500), "32k": (30000, 36000), "128k": (115000, 135000)}      # the prompt sizes the catalogue shows, as ranges of the real token count
+CPU_RE = re.compile(r"Ryzen|Xeon|EPYC|Threadripper|Core\s*(?:Ultra|i\d)|\bi\d-\d|Intel|Apple|\bM\d\b|Opteron|Core Ultra", re.I)
+GPU_RE = re.compile(r"RTX|GTX|Radeon|\bRX\b|Tesla|TITAN|Quadro|Arc|Instinct|\bMI\d+|\bP40\b|\bV100\b|A4000|A5000|Pro\s*\d{4}|gfx\d+|8060S|780M|Strix", re.I)
+RAM_RE = re.compile(r"(\d+)\s*(?:GB|GiB)\s*(?:of\s*)?(?:DDR\d\S*\s*)?(?:RAM|unified|system memory|memory)", re.I)
+
+
+def pick_row(rows, size, quant):
+    """The row of a prompt size (4K, 16K, 32K) that reports a prompt speed, a fresh prompt (nothing reused) first, the report's own quantisation first."""
+    lo, hi = SIZES[size]
+    cand = [r for r in rows if r["prompt_tokens"] and lo <= r["prompt_tokens"] <= hi and r["prompt_tps"] is not None]
     if not cand:
         return None
-    return min(cand, key=lambda r: abs(r["prompt_tokens"] - 4096))
+    fresh = [r for r in cand if not r.get("reused")] or cand
+    own = [r for r in fresh if quant and quant.replace("_", "").lower() in (r["label"] or "").replace("_", "").lower()]
+    return (own or fresh)[0]
+
+
+def chat_decode(rows):
+    for r in rows:
+        if re.search(r"chat", r["label"] or "", re.I) and r["decode_tps"] is not None:
+            return r["decode_tps"]
+    return None
+
+
+def humaneval(text):
+    """'HumanEval (164, greedy, ...): **158/164**' or 'HumanEval pass@1 87.5%': the score as the README writes it, on the line that names HumanEval.
+    A line that only describes the test (the ids it ran, the tasks it counted) has no score and gives None."""
+    for line in text.replace("*", "").splitlines():
+        if re.search(r"human-?\s?eval", line, re.I):
+            m = re.search(r"human-?\s?eval[^\n]{0,120}?:\s*(\d{1,3}\s*/\s*\d{1,3}|\d{1,3}(?:\.\d+)?\s?%)", line, re.I) or re.search(r"human-?\s?eval[^\n|]{0,50}?(\d{1,3}\s*/\s*\d{1,3}|\d{1,3}(?:\.\d+)?\s?%)", line, re.I)
+            if m:
+                return re.sub(r"\s+", "", m.group(1))
+    return None
+
+
+def hardware(headline, bullet):
+    """CPU, RAM, GPU and its VRAM, from the comma-separated headline ('RTX 5090, Core Ultra 9 285K, 64 GB RAM') and the README's bullets."""
+    headline = re.split(r"community report,?\s*", headline or "", flags=re.I)[-1]
+    headline = re.sub(r"^(?:Community benchmark(?: on)?|Benchmark)\s*:?\s*", "", headline, flags=re.I)
+    parts = [p.strip() for p in re.split(r",(?![^()]*\))|\s\+\s|\s/\s", headline) if p.strip()]
+    parts = [re.sub(r"\s*\((?:Windows|Linux|WSL)[^)]*\)", "", p).strip() for p in parts]
+    short = lambda t: re.split(r"[;.](?:\s|$)", t or "")[0]
+    cpu = next((p for p in parts if CPU_RE.search(p) and not GPU_RE.search(p)), None) or short(bullet.get("cpu"))
+    ram = next((p for p in parts if RAM_RE.search(p)), None) or None
+    gpu = next((p for p in parts if GPU_RE.search(p) and not RAM_RE.search(p)), None)
+    if not ram and bullet.get("ram"):
+        ram = short(bullet["ram"])
+    if not gpu and bullet.get("gpu"):
+        gpu = short(bullet["gpu"])
+    vram = re.search(r"(\d+)\s*(?:GB|GiB)", gpu or "")
+    gpu_name = re.sub(r"\s*\d+\s*(?:GB|GiB)\b", "", gpu or "").strip() or None
+    return {"cpu": clean(cpu, 80), "ram": clean(ram, 60), "gpu": clean(gpu_name, 80), "vram_gb": int(vram.group(1)) if vram else None}
+
+
+def strata_version(*texts):
+    """The Strata version the report says it ran: after 'Strata' or 'engine', then a 'v0.1.x' written alone, then the folder name."""
+    for t in texts:
+        m = re.search(r"(?:Strata|engine)[^\n]{0,40}?\bv?(0\.\d+\.\d+(?:\.\d+)?)", t or "")
+        if m:
+            return m.group(1)
+    for t in texts:
+        m = re.search(r"\bv(0\.1\.\d+(?:\.\d+)?)\b", t or "")
+        if m:
+            return m.group(1)
+    return None
 
 
 def entry(folder: Path, idx: dict, commit: str):
@@ -105,25 +164,30 @@ def entry(folder: Path, idx: dict, commit: str):
     info = idx.get(name, {})
     b = bullets(text)
     rows = results_rows(text)
-    head = headline_row(rows)
-    quant = QUANT_RE.search(" ".join(filter(None, [b.get("model"), b.get("model and quantization"), (idx.get(name) or {}).get("summary")])) or text[:2000])
+    quant_m = QUANT_RE.search(" ".join(filter(None, [b.get("model"), b.get("model and quantization"), info.get("summary")])) or text[:2000])
+    quant = quant_m.group(1) if quant_m else None
     ctx = re.search(r"([\d,]{4,9})[- ]token context|context[: ]+([\d,]{4,9})", (info.get("summary") or "") + " " + text[:6000], re.I)
-    engine = b.get("strata") or b.get("engine")
     date = info.get("date") or (re.match(r"\d{4}-\d{2}-\d{2}", name) or [None])[0]
+    headline = info.get("headline") or (clean(text.splitlines()[0].lstrip("# ")) if text else None)
+    hw = hardware(headline, b)
+    board = next((v for k, v in b.items() if k in ("board", "motherboard", "mainboard")), None)
+    sizes = {k: pick_row(rows, k, quant) for k in SIZES}
+    four = sizes["4k"]
     return {
         "id": name,
         "date": date,
-        "headline": info.get("headline") or clean(text.splitlines()[0].lstrip("# ")) if text else info.get("headline"),
+        "headline": headline,
         "summary": info.get("summary"),
-        "gpu": b.get("gpu") or b.get("gpu and vram") or b.get("gpu memory"),
-        "cpu": b.get("cpu"),
-        "ram": b.get("ram") or b.get("memory"),
-        "os": b.get("os"),
-        "engine": engine,
-        "quant": quant.group(1) if quant else None,
+        **hw,
+        "board": clean(board, 80),
+        "strata": strata_version(b.get("strata"), info.get("summary"), headline, text[:4000], name),
+        "quant": quant,
         "context": int((ctx.group(1) or ctx.group(2)).replace(",", "")) if ctx else None,
+        "chat_decode_tps": chat_decode(rows),
+        "prompt_tps": {k: (r["prompt_tps"] if r else None) for k, r in sizes.items()},
+        "decode_tps": four["decode_tps"] if four else None,
+        "humaneval": humaneval(text),
         "rows": rows,
-        "headline_row": head,
         "source": {"url": f"{REPO}/tree/{commit}/bench/results/{name}", "readme_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest() if text else None},
     }
 
@@ -150,8 +214,8 @@ def main(argv=None):
         return 2
     data = build(src)
     Path(a.out).write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
-    withrow = sum(1 for e in data["reports"] if e["headline_row"])
-    print(f"wrote {a.out}: {data['count']} reports, {withrow} with a parsed prompt speed")
+    got = lambda f: sum(1 for e in data["reports"] if f(e))
+    print(f"wrote {a.out}: {data['count']} reports; with a 4K / 16K / 32K prompt speed: {got(lambda e: e['prompt_tps']['4k'] is not None)} / {got(lambda e: e['prompt_tps']['16k'] is not None)} / {got(lambda e: e['prompt_tps']['32k'] is not None)}; chat decode {got(lambda e: e['chat_decode_tps'] is not None)}; HumanEval {got(lambda e: e['humaneval'])}; board {got(lambda e: e['board'])}")
     return 0
 
 

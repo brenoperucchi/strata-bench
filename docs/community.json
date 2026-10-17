@@ -12,15 +12,24 @@
    "date": "2026-10-12",
    "headline": "Radeon 780M (gfx1103), Ryzen 7 8745HS, 60 GB RAM, GTT 50 GiB",
    "summary": "the gfx1103 port (native dot4, the gfx11 WMMA kernels, the exact speed switches and a calibrated hipBLASLt table), hand-built on ROCm 10.1, Q2_0 + MTP at 32K: prompts 90 tok/s plain, 186 with the table, 277 with the WMMA opt-ins (4K), decode 13.1 -> 14.3 tok/s; zero GPU resets.",
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Ryzen 7 8745HS",
+   "ram": "60 GB RAM",
+   "gpu": "Radeon 780M (gfx1103)",
+   "vram_gb": null,
+   "board": null,
+   "strata": null,
    "quant": "Q2_0",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-12-community-gfx1103",
     "readme_sha256": "f5779ff8e7415ff79f658292f9869113340f809e6ff935cae8de3c4b62bfe4ef"
@@ -31,15 +40,24 @@
    "date": "2026-10-11",
    "headline": "Pin by need (STRATA_PIN_BY_NEED=1) — community report, RTX 3090 + Ryzen 5 5600X (Windows 11)",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 5 5600X",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 3090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.42",
    "quant": "IQ3_S",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-11-community-rtx3090-5600x-arena-pin-by-need",
     "readme_sha256": "ca81498067a02ee62bd48156bb54411bd599e42d81d973c876d997ad9cb3c7a2"
@@ -50,15 +68,24 @@
    "date": "2026-10-11",
    "headline": "--adapt-async 1 in the arena mode — community report, RTX 3090 + Ryzen 5 5600X (Windows 11)",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 5 5600X",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 3090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.42",
    "quant": "IQ3_S",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-11-community-rtx3090-5600x-arena-async",
     "readme_sha256": "d547650735cd8e1574200a8a510aac24192a12966c2901cba9ecaa81dd82e550"
@@ -69,15 +96,24 @@
    "date": "2026-10-10",
    "headline": "AMD Radeon RX 9070 16 GB (gfx1201), Ryzen 7 5800X3D, 64 GB RAM",
    "summary": "Strata 0.1.41 prebuilt Windows HIP engine, Flash-Next IQ3_XXS, 131,072-token context; three runs each at 4,195, 33,467 and about 130,000 prompt tokens with a 256-token cap, plus six recall checks. Decode 58.7/57.9/57.9 tok/s, prompt 586/804/833 tok/s at those three lengths, needles 6/6 at 33.5k and 130k; one engine session, no clock capture.",
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Ryzen 7 5800X3D",
+   "ram": "64 GB RAM",
+   "gpu": "AMD Radeon RX 9070 (gfx1201)",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.41",
    "quant": "IQ3_XXS",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-10-community-rx-9070",
     "readme_sha256": "b9560111ff09b02aaee4fc6d186ec9a1358441a585a03015ee0ad146f8bdd116"
@@ -88,17 +124,28 @@
    "date": "2026-10-10",
    "headline": "AMD Radeon RX 9060 XT 16 GB (gfx1200), Ryzen 7 9800X3D, 64 GB RAM",
    "summary": "Strata 0.1.40.3 prebuilt Windows HIP engine, Flash-Next IQ2_XS and IQ3_XXS: a prefill-size sweep (8,192 best), a matched 32K coding comparison (9/9 tasks each, IQ2_XS about 17% faster decode), one 113K recall request. Sanitized data, fixtures and scripts included.",
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Ryzen 7 9800X3D",
+   "ram": "64 GB RAM",
+   "gpu": "AMD Radeon RX 9060 XT (gfx1200)",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.40.3",
    "quant": "IQ2_XS",
    "context": 122880,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "2,048",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 346.3,
      "decode_tps": 53.2,
      "ttft_s": null
@@ -106,6 +153,7 @@
     {
      "label": "4,096",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 593.3,
      "decode_tps": 52.7,
      "ttft_s": null
@@ -113,6 +161,7 @@
     {
      "label": "8,192",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 879.4,
      "decode_tps": 56.3,
      "ttft_s": null
@@ -120,6 +169,7 @@
     {
      "label": "16,384",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 876.3,
      "decode_tps": 55.3,
      "ttft_s": null
@@ -127,6 +177,7 @@
     {
      "label": "2,048",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 347.0,
      "decode_tps": 57.9,
      "ttft_s": null
@@ -134,6 +185,7 @@
     {
      "label": "4,096",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 593.1,
      "decode_tps": 57.0,
      "ttft_s": null
@@ -141,6 +193,7 @@
     {
      "label": "8,192",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 807.4,
      "decode_tps": 57.6,
      "ttft_s": null
@@ -148,6 +201,7 @@
     {
      "label": "16,384",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 811.2,
      "decode_tps": 57.8,
      "ttft_s": null
@@ -155,6 +209,7 @@
     {
      "label": "Median task seconds [min–max]",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 136.321,
      "decode_tps": null,
      "ttft_s": null
@@ -162,6 +217,7 @@
     {
      "label": "Weighted engine decode tok/s",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 42.52,
      "decode_tps": null,
      "ttft_s": null
@@ -169,6 +225,7 @@
     {
      "label": "Minimum available host RAM, GiB",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 3.11,
      "decode_tps": null,
      "ttft_s": null
@@ -176,6 +233,7 @@
     {
      "label": "Peak dedicated GPU counter, GiB",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 15.04,
      "decode_tps": null,
      "ttft_s": null
@@ -183,6 +241,7 @@
     {
      "label": "Peak shared GPU counter, GiB",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 41.12,
      "decode_tps": null,
      "ttft_s": null
@@ -190,12 +249,12 @@
     {
      "label": "113,501 / 119 / 0",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 46.9,
      "decode_tps": 144.157,
      "ttft_s": null
     }
    ],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-10-community-rx-9060-xt",
     "readme_sha256": "91af52d7894ced09bd76273e21e8f65bf4203b496cb5ed42f8bbe7d2942564d3"
@@ -206,15 +265,24 @@
    "date": "2026-10-10",
    "headline": "2x Tesla P40 24 GB, Xeon E5-2699 v3, 125 GB RAM",
    "summary": "Strata 0.1.41 CUDA 12 source build (sm_61), Flash-Next IQ3_S, 131,072-token context, layer split; decode 35.0 tok/s, prompt 350/558 tok/s at 3.9K/21.9K, needles 6/6, conversation checkpoints.",
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Xeon E5-2699 v3",
+   "ram": "125 GB RAM",
+   "gpu": "2x Tesla P40",
+   "vram_gb": 24,
+   "board": null,
+   "strata": "0.1.41",
    "quant": "IQ3_S",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-10-community-2x-p40-iq3_s",
     "readme_sha256": "9440fb1c2c7d08354ecfa92faa27457db49bfa85ae6f46769a3dc582d30876e0"
@@ -225,17 +293,28 @@
    "date": "2026-10-09",
    "headline": "Radeon 8060S / Ryzen AI Max+ 395 Strix Halo laptop (HP ZBook Ultra G1a, 70 W), 128 GB unified memory",
    "summary": "Strata v0.1.41 source build, ROCm 7.14.1, Unsloth UD-IQ4_XS, docs/STRIX_HALO.md §5 fast config with --spec 5 --mtp-window 8192; 4–6 fresh-process runs at 8,192 / 32,768 / 131,072 prompt tokens: prompt 969 / 1,067 / 1,031 tok/s, decode 59.2 / 57.8 / 42.0 tok/s (medians). Prompt is power-limited (70 W package limit); needle 15/15, agentic 5/5.",
-   "gpu": "Radeon 8060S (gfx1151), unified memory; 112 GiB GTT pool (ttm.pages_limit=29360128)",
-   "cpu": "Ryzen AI Max+ 395; RAM: 128 GB LPDDR5X; storage: NVMe SSD",
-   "ram": null,
-   "os": "Ubuntu 26.04, kernel 7.0.0-38, kernel args amd_iommu=off amdgpu.lockup_timeout=10000,60000,10000,10000",
-   "engine": "tag v0.1.41 (fb58e0d), source build per docs/STRIX_HALO.md §2 (-DSTRATA_PREFILL_MMQ=ON, gfx1151 only)",
+   "cpu": "Ryzen AI Max+ 395",
+   "ram": "128 GB unified memory",
+   "gpu": "Radeon 8060S",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.41",
    "quant": "UD-IQ4_XS",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": 1067.0,
+    "128k": 1031.0
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "fast config, --spec 5 --mtp-window 8192",
      "prompt_tokens": 8192.0,
+     "reused": 0.0,
      "prompt_tps": 969.0,
      "decode_tps": 59.2,
      "ttft_s": null
@@ -243,6 +322,7 @@
     {
      "label": "same",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 1067.0,
      "decode_tps": 57.8,
      "ttft_s": null
@@ -250,18 +330,12 @@
     {
      "label": "same",
      "prompt_tokens": 131072.0,
+     "reused": 0.0,
      "prompt_tps": 1031.0,
      "decode_tps": 42.0,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "fast config, --spec 5 --mtp-window 8192",
-    "prompt_tokens": 8192.0,
-    "prompt_tps": 969.0,
-    "decode_tps": 59.2,
-    "ttft_s": null
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-strix-halo-laptop-70w",
     "readme_sha256": "63997c38c9dbf4ef69e0f19ea6c898915884fc4f406879bb513e20ef8ea8b16e"
@@ -272,15 +346,24 @@
    "date": "2026-10-09",
    "headline": "Community benchmark: RTX 5090 / 9800X3D, Swift IQ3_XXS, 1M context",
    "summary": null,
-   "gpu": "NVIDIA GeForce RTX 5090, 32,607 MiB reported VRAM, PCIe Gen 5 x16,",
-   "cpu": "AMD Ryzen 7 9800X3D, 8 cores / 16 threads. The engine selected seven",
-   "ram": "91.9 GiB usable (MemTotal); DIMM inventory was not captured.",
-   "os": "CachyOS Linux (rolling), kernel 7.2.9-2-cachyos; NVIDIA driver 615.78.08.",
-   "engine": null,
+   "cpu": "AMD Ryzen 7 9800X3D, 8 cores / 16 threads",
+   "ram": "91.9 GiB usable (MemTotal)",
+   "gpu": "RTX 5090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.41",
    "quant": "IQ3_XXS",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-rtx5090-9800x3d-swift-1m",
     "readme_sha256": "93cfc8e66db3da118fc472983c5a1947d8f51d2cebaab0e50b8558894cc0ee67"
@@ -291,17 +374,28 @@
    "date": "2026-10-09",
    "headline": "Community benchmark: RTX 5080 16 GB, Xeon w7-2475X, 128 GB DDR5, Unsloth UD-IQ4_XS at a 786,432-token context (YaRN x3)",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Xeon w7-2475X",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 5080",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.41",
    "quant": "UD-IQ4_XS",
    "context": 786432,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 1814.0,
+    "16k": null,
+    "32k": 3299.0,
+    "128k": 3398.0
+   },
+   "decode_tps": 68.6,
+   "humaneval": null,
    "rows": [
     {
      "label": "4K synthetic",
      "prompt_tokens": 4093.0,
+     "reused": 0.0,
      "prompt_tps": 1814.0,
      "decode_tps": 68.6,
      "ttft_s": 2.28
@@ -309,6 +403,7 @@
     {
      "label": "32K synthetic",
      "prompt_tokens": 32708.0,
+     "reused": 0.0,
      "prompt_tps": 3299.0,
      "decode_tps": 70.2,
      "ttft_s": 9.96
@@ -316,6 +411,7 @@
     {
      "label": "128K synthetic",
      "prompt_tokens": 128835.0,
+     "reused": 0.0,
      "prompt_tps": 3398.0,
      "decode_tps": 64.1,
      "ttft_s": 38.0
@@ -323,6 +419,7 @@
     {
      "label": "352K synthetic, warm expert cache (synthetic-352k.json)",
      "prompt_tokens": 354285.0,
+     "reused": 0.0,
      "prompt_tps": 3111.0,
      "decode_tps": 60.7,
      "ttft_s": 114.1
@@ -330,6 +427,7 @@
     {
      "label": "352K real conversation, first request after engine start (re",
      "prompt_tokens": 352130.0,
+     "reused": 0.0,
      "prompt_tps": 2253.0,
      "decode_tps": 51.3,
      "ttft_s": 166.6
@@ -337,6 +435,7 @@
     {
      "label": "352K real conversation, warm expert cache, full read (real-t",
      "prompt_tokens": 352130.0,
+     "reused": 0.0,
      "prompt_tps": 2635.0,
      "decode_tps": 51.3,
      "ttft_s": 143.9
@@ -344,18 +443,12 @@
     {
      "label": "352K real conversation, prefix reused, decode only (same fil",
      "prompt_tokens": 352130.0,
+     "reused": 352123.0,
      "prompt_tps": null,
      "decode_tps": 56.3,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "4K synthetic",
-    "prompt_tokens": 4093.0,
-    "prompt_tps": 1814.0,
-    "decode_tps": 68.6,
-    "ttft_s": 2.28
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-rtx-5080-w7-2475x-ud-iq4xs-786k",
     "readme_sha256": "a6813c5d1b0ab2ad25f0658e1ad9d6c48e78b55f3a69249c065d364257f5c90a"
@@ -366,15 +459,24 @@
    "date": "2026-10-09",
    "headline": "Community benchmark on RTX 5080 16 GB + RTX 4060 Ti 8 GB (helper expert cache), Ryzen 9 9950X3D, 96 GB",
    "summary": null,
-   "gpu": null,
-   "cpu": "AMD Ryzen 9 9950X3D, 16 cores / 32 threads, AVX-512. RAM: 96 GB DDR5 (MemTotal 91.96 GiB). Storage: Samsung 9100",
+   "cpu": "Ryzen 9 9950X3D",
    "ram": null,
-   "os": "an Ubuntu 24.04-based distribution, Linux 7.0. NVIDIA driver 610.57.04, CUDA 13.3 (nvcc 13.3.73).",
-   "engine": "tag v0.1.41 (fb58e0db), source build: Release, -DSTRATA_ENABLE_CUDA=ON -DSTRATA_BUILD_TESTS=OFF",
+   "gpu": "RTX 5080",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.41",
    "quant": "IQ3_S",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-rtx-5080-4060ti-0.1.41",
     "readme_sha256": "c9bed025e9c962048a4bf2e280f785f9546489cd85da2a14fb29c77a7b886fff"
@@ -385,17 +487,28 @@
    "date": "2026-10-09",
    "headline": "RTX 5060 Ti 16 GB under WSL2, Ryzen 7 3700X, 128 GB RAM",
    "summary": "Strata 0.1.41 source build, IQ3_S with experimental speed projection; single runs only (decode 48.2/47.7 tok/s, prompt 343/598 tok/s at 3.8K/19.2K), no needle test, no TTFT.",
-   "gpu": "NVIDIA GeForce RTX 5060 Ti 16 GB (16311 MiB), single-GPU",
-   "cpu": "AMD Ryzen 7 3700X, 8 cores / 16 threads, no AVX-512 (AVX2 expert",
-   "ram": null,
-   "os": "Windows 11 26H2 (build 26300); WSL components 3.0.1.0 with the",
-   "engine": null,
+   "cpu": "Ryzen 7 3700X",
+   "ram": "128 GB RAM",
+   "gpu": "RTX 5060 Ti under WSL2",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.41",
    "quant": "IQ3_S",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 343.0,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "decode-story (1100-word lighthouse story)",
      "prompt_tokens": 48.0,
+     "reused": 0.0,
      "prompt_tps": 45.4,
      "decode_tps": 48.2,
      "ttft_s": null
@@ -403,6 +516,7 @@
     {
      "label": "decode-explan (1100-word tides article)",
      "prompt_tokens": 47.0,
+     "reused": 0.0,
      "prompt_tps": 41.9,
      "decode_tps": 47.7,
      "ttft_s": null
@@ -410,6 +524,7 @@
     {
      "label": "prompt-4k (unique nonsense-word document)",
      "prompt_tokens": 3820.0,
+     "reused": 0.0,
      "prompt_tps": 343.0,
      "decode_tps": null,
      "ttft_s": null
@@ -417,18 +532,12 @@
     {
      "label": "prompt-20k (same, longer document)",
      "prompt_tokens": 19196.0,
+     "reused": 0.0,
      "prompt_tps": 598.3,
      "decode_tps": null,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "prompt-4k (unique nonsense-word document)",
-    "prompt_tokens": 3820.0,
-    "prompt_tps": 343.0,
-    "decode_tps": null,
-    "ttft_s": null
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-rtx-5060ti-wsl2-iq3_s-0141",
     "readme_sha256": "2dfba8d777b6ea1607e5a86e3e46552248ec3d27d93263c023b2294ed3c647c7"
@@ -439,15 +548,24 @@
    "date": "2026-10-09",
    "headline": "RTX 5060 Ti 16 GB + Xeon E5-2680 v4 (Windows 10)",
    "summary": "Strata 0.1.41, Coder IQ1_M and abliterated Q2_0 at 262K; prompt and decode at 4K / 32K / 128K.",
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Xeon E5-2680 v4",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 5060 Ti",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.41",
    "quant": "IQ1_M",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-rtx-5060-ti-e5-2680-v4",
     "readme_sha256": "e3378b653424115bc9f1aa543bb4f22ae48e6dc48529b3a964804ede74f01d57"
@@ -458,15 +576,24 @@
    "date": "2026-10-09",
    "headline": "RTX 3060 12 GB, Core i7-12700, 64 GB RAM",
    "summary": "Strata v0.1.41 official Windows release, original Flash-Next Q2_0, IQ2_XS, IQ3_XXS and IQ3_S; prompt sweep from 128 to 128K tokens (260K for three of the four), plus recall, HumanEval 0-39, cache, MTP and concurrency checks.",
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Core i7-12700",
+   "ram": "64 GB RAM",
+   "gpu": "RTX 3060",
+   "vram_gb": 12,
+   "board": null,
+   "strata": "0.1.41",
    "quant": "Q2_0",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-rtx-3060-0141",
     "readme_sha256": "24ffbaf55bd1cb31ff16226e99368167716789cc61c3246b0fb728fdd56da169"
@@ -477,17 +604,28 @@
    "date": "2026-10-09",
    "headline": "Radeon Pro VII 16 GB (gfx906), Xeon E5-2666 v3, 125.7 GiB RAM",
    "summary": "Source builds of 0.1.40.4 and 0.1.41 on the distribution's ROCm 6.2 (host patches in BUILD.json), IQ2_XS at 131K with KV streaming; decode 24.2/24.0/23.7 tok/s, prompt 350/339/284 tok/s at 4K/32K/128K, two sweeps with telemetry. Build logs trimmed (TRIMMED.md).",
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Xeon E5-2666 v3",
+   "ram": "125.7 GiB RAM",
+   "gpu": "Radeon Pro VII (gfx906)",
+   "vram_gb": 16,
+   "board": null,
+   "strata": null,
    "quant": "IQ2_XS",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 350.0,
+    "16k": null,
+    "32k": 339.0,
+    "128k": 284.0
+   },
+   "decode_tps": 24.2,
+   "humaneval": null,
    "rows": [
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 350.0,
      "decode_tps": 24.2,
      "ttft_s": 11.8
@@ -495,6 +633,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 339.0,
      "decode_tps": 24.0,
      "ttft_s": 96.8
@@ -502,6 +641,7 @@
     {
      "label": "128,000",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 284.0,
      "decode_tps": 23.7,
      "ttft_s": 451.7
@@ -509,6 +649,7 @@
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 350.0,
      "decode_tps": 24.1,
      "ttft_s": 11.8
@@ -516,6 +657,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 343.0,
      "decode_tps": 24.1,
      "ttft_s": 95.7
@@ -523,6 +665,7 @@
     {
      "label": "128,000",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 317.0,
      "decode_tps": 23.4,
      "ttft_s": 404.1
@@ -530,6 +673,7 @@
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 349.0,
      "decode_tps": 23.9,
      "ttft_s": 11.8
@@ -537,6 +681,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 322.0,
      "decode_tps": 23.9,
      "ttft_s": 101.8
@@ -544,6 +689,7 @@
     {
      "label": "128,000",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 280.0,
      "decode_tps": 23.5,
      "ttft_s": 458.2
@@ -551,6 +697,7 @@
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 349.0,
      "decode_tps": 23.8,
      "ttft_s": 11.8
@@ -558,6 +705,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 346.0,
      "decode_tps": 23.8,
      "ttft_s": 94.8
@@ -565,18 +713,12 @@
     {
      "label": "128,000",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 318.0,
      "decode_tps": 23.2,
      "ttft_s": 403.0
     }
    ],
-   "headline_row": {
-    "label": "4,096",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 350.0,
-    "decode_tps": 24.2,
-    "ttft_s": 11.8
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-radeon-pro-vii-16gb",
     "readme_sha256": "eeed98ab872aa7f4c6c827667054a21614fa4766cd6883abc02b0889faf62361"
@@ -587,15 +729,24 @@
    "date": "2026-10-09",
    "headline": "Tesla P4 prefill: transfer reuse and chunk sizing",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "Tesla P4 prefill: transfer reuse and chunk sizing",
+   "vram_gb": null,
+   "board": null,
+   "strata": null,
    "quant": "IQ3_XXS",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-p4-prefill-roofline",
     "readme_sha256": "843e424b7eb996a07204105047a6d8dcd252c230f741743c3127515b62e2fe60"
@@ -606,15 +757,24 @@
    "date": "2026-10-09",
    "headline": "Community benchmark: EVO-X2, Ryzen AI Max+ 395 / Radeon 8060S (gfx1151), 128 GB UMA",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen AI Max+ 395",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "Radeon 8060S (gfx1151)",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.41",
    "quant": "UD-IQ4_XS",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-gfx1151-ud-iq4xs-0.1.41",
     "readme_sha256": "8fe211db162e733c8f5c0dfa0e9b6e134fc3257b223a02d4e11a14c22bbf53ab"
@@ -625,17 +785,28 @@
    "date": "2026-10-09",
    "headline": "Community benchmark on 4x AMD Radeon RX 7900 XT",
    "summary": null,
-   "gpu": "4x AMD Radeon RX 7900 XT (gfx1100), 20 GiB (21.46 GB) each, all four used (HIP_VISIBLE_DEVICES=0,1,2,3)",
-   "cpu": "Intel Core i9-9900K (8 cores, 16 threads), ASUS WS Z390 PRO; RAM: 60.4 GiB visible to the OS (installed size not recorded)",
+   "cpu": "Intel Core i9-9900K (8 cores, 16 threads), ASUS WS Z390 PRO",
    "ram": null,
-   "os": "Linux, kernel 7.0.0-34-generic; ROCm 10.0.0 inside the runner container (TheRock gfx110X build)",
-   "engine": "tag v0.1.41 (fb58e0d), clean tree, built from source in a container: -DSTRATA_ENABLE_HIP=ON",
+   "gpu": "4x AMD Radeon RX 7900 XT",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.41",
    "quant": "IQ3_S",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 2052.0,
+    "16k": null,
+    "32k": 3804.0,
+    "128k": 4307.0
+   },
+   "decode_tps": 60.0,
+   "humaneval": null,
    "rows": [
     {
      "label": "opt-ins on",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 2052.0,
      "decode_tps": 60.0,
      "ttft_s": 2.03
@@ -643,6 +814,7 @@
     {
      "label": "opt-ins on",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 3804.0,
      "decode_tps": 52.7,
      "ttft_s": 8.68
@@ -650,6 +822,7 @@
     {
      "label": "opt-ins on",
      "prompt_tokens": 128005.0,
+     "reused": 0.0,
      "prompt_tps": 4307.0,
      "decode_tps": 50.4,
      "ttft_s": 29.87
@@ -657,6 +830,7 @@
     {
      "label": "opt-ins off",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 756.0,
      "decode_tps": 59.3,
      "ttft_s": 5.45
@@ -664,6 +838,7 @@
     {
      "label": "opt-ins off",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 1722.0,
      "decode_tps": 52.0,
      "ttft_s": 19.17
@@ -671,6 +846,7 @@
     {
      "label": "opt-ins off",
      "prompt_tokens": 128005.0,
+     "reused": 0.0,
      "prompt_tps": 2433.0,
      "decode_tps": 49.6,
      "ttft_s": 52.98
@@ -678,6 +854,7 @@
     {
      "label": "opt-ins on, loaded (before first request)",
      "prompt_tokens": 15.66,
+     "reused": 14.77,
      "prompt_tps": 62.4,
      "decode_tps": 8.2,
      "ttft_s": null
@@ -685,6 +862,7 @@
     {
      "label": "opt-ins on, peak during requests",
      "prompt_tokens": 15.69,
+     "reused": 14.81,
      "prompt_tps": 62.6,
      "decode_tps": 8.7,
      "ttft_s": null
@@ -692,6 +870,7 @@
     {
      "label": "opt-ins off, loaded (before first request)",
      "prompt_tokens": 17.26,
+     "reused": 16.4,
      "prompt_tps": 68.9,
      "decode_tps": 10.6,
      "ttft_s": null
@@ -699,18 +878,12 @@
     {
      "label": "opt-ins off, peak during requests",
      "prompt_tokens": 17.3,
+     "reused": 16.44,
      "prompt_tps": 69.0,
      "decode_tps": 9.7,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "opt-ins on",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 2052.0,
-    "decode_tps": 60.0,
-    "ttft_s": 2.03
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-4x-rx-7900-xt",
     "readme_sha256": "2c6f3e01f7b22a206e27c1473efb247f1b3f82845e8f0af1dbe82cdb3d023698"
@@ -721,17 +894,28 @@
    "date": "2026-10-09",
    "headline": "Community benchmark: 2x AMD Radeon RX 6900 XT 16 GB (gfx1030), Ryzen 5 5600X, 128 GB RAM - Strata 0.1.41: one card, layer split, expert helper, and the decode window",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Ryzen 5 5600X",
+   "ram": "128 GB RAM - Strata 0.1.41: one card",
+   "gpu": "2x AMD Radeon RX 6900 XT (gfx1030)",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.41",
    "quant": null,
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 472.9,
+    "16k": null,
+    "32k": 502.1,
+    "128k": 486.3
+   },
+   "decode_tps": 45.6,
+   "humaneval": null,
    "rows": [
     {
      "label": "stock",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": 472.9,
      "decode_tps": 45.6,
      "ttft_s": 8.7
@@ -739,6 +923,7 @@
     {
      "label": "stock",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": 502.1,
      "decode_tps": 48.0,
      "ttft_s": 65.32
@@ -746,6 +931,7 @@
     {
      "label": "stock",
      "prompt_tokens": 128000.0,
+     "reused": null,
      "prompt_tps": 486.3,
      "decode_tps": 46.6,
      "ttft_s": 263.29
@@ -753,6 +939,7 @@
     {
      "label": "switches",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": 849.9,
      "decode_tps": 49.0,
      "ttft_s": 4.86
@@ -760,6 +947,7 @@
     {
      "label": "switches",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": 1102.4,
      "decode_tps": 51.6,
      "ttft_s": 29.77
@@ -767,6 +955,7 @@
     {
      "label": "switches",
      "prompt_tokens": 128000.0,
+     "reused": null,
      "prompt_tps": 1026.9,
      "decode_tps": 49.3,
      "ttft_s": 124.74
@@ -774,6 +963,7 @@
     {
      "label": "PRs + ggml",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": 976.2,
      "decode_tps": 49.0,
      "ttft_s": 4.23
@@ -781,6 +971,7 @@
     {
      "label": "PRs + ggml",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": 1173.6,
      "decode_tps": 50.9,
      "ttft_s": 27.97
@@ -788,6 +979,7 @@
     {
      "label": "PRs + ggml",
      "prompt_tokens": 128000.0,
+     "reused": null,
      "prompt_tps": 1146.6,
      "decode_tps": 49.8,
      "ttft_s": 111.73
@@ -795,6 +987,7 @@
     {
      "label": "stock + kernel-copy",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": 477.5,
      "decode_tps": 67.7,
      "ttft_s": 8.61
@@ -802,6 +995,7 @@
     {
      "label": "stock + kernel-copy",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": 503.2,
      "decode_tps": 66.5,
      "ttft_s": 65.16
@@ -809,6 +1003,7 @@
     {
      "label": "stock + kernel-copy",
      "prompt_tokens": 128000.0,
+     "reused": null,
      "prompt_tps": 486.8,
      "decode_tps": 65.2,
      "ttft_s": 263.03
@@ -816,6 +1011,7 @@
     {
      "label": "switches + kernel-copy",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": 858.6,
      "decode_tps": 69.0,
      "ttft_s": 4.8
@@ -823,18 +1019,12 @@
     {
      "label": "switches + kernel-copy",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": 1103.5,
      "decode_tps": 74.9,
      "ttft_s": 29.74
     }
    ],
-   "headline_row": {
-    "label": "stock",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 472.9,
-    "decode_tps": 45.6,
-    "ttft_s": 8.7
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-2x-rx-6900xt-0.1.41",
     "readme_sha256": "1b7840a147ee9ade44bc71744b96b955938a0d252bd86474cb278636bb14a89b"
@@ -845,17 +1035,28 @@
    "date": "2026-10-08",
    "headline": "Tesla V100-SXM2-32GB (sm_70), Threadripper 2990WX without AVX-512, 96 GB RAM",
    "summary": "Strata fb58e0d (v0.1.41) source build for sm_70, Unsloth UD-IQ4_XS with a native-experts pack, 262,144-token context, --kv int8, --prefill auto; confirms the opt-in Volta decode kernels (STRATA_SM70_TABLE=1) that [NVIDIA_V100.md](NVIDIA_V100.md) asks a V100 owner to check: decode +9.8% and +15.0% in two order-swapped pairs (28.16/28.64 → 30.92/32.94 tok/s), prompt throughput unchanged, and the gen",
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Threadripper 2990WX without AVX-512",
+   "ram": "96 GB RAM",
+   "gpu": "Tesla V100-SXM2- (sm_70)",
+   "vram_gb": 32,
+   "board": null,
+   "strata": "0.1.41",
    "quant": "UD-IQ4_XS",
    "context": 262144,
+   "chat_decode_tps": 21.5,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "1",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 28.16,
      "ttft_s": 5.91
@@ -863,6 +1064,7 @@
     {
      "label": "2",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 28.64,
      "ttft_s": 5.99
@@ -870,6 +1072,7 @@
     {
      "label": "chat0",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 21.5,
      "ttft_s": 31.1
@@ -877,6 +1080,7 @@
     {
      "label": "chat1",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 30.3,
      "ttft_s": 30.2
@@ -884,12 +1088,12 @@
     {
      "label": "chat2",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 26.4,
      "ttft_s": 30.6
     }
    ],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-v100-sm70-table",
     "readme_sha256": "a4c29536905ce802b3ac0e8fcf32a3f09c23d3ea3f03d7fd0fe3d8cc0d9a400d"
@@ -900,17 +1104,28 @@
    "date": "2026-10-08",
    "headline": "Community benchmark: NVIDIA GeForce RTX 4090 (Russian prompts)",
    "summary": null,
-   "gpu": "NVIDIA GeForce RTX 4090; 23028 MiB reported VRAM; 480.00 W power limit; PCIe bus 00000000:01:00.0; PCIe link speed and width: not measured. GPU clocks were not fixed.",
-   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs).",
-   "ram": "46464 MiB installed.",
-   "os": null,
-   "engine": null,
+   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs)",
+   "ram": "46464 MiB installed",
+   "gpu": "NVIDIA GeForce RTX 4090 (Russian prompts)",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.40.3",
    "quant": null,
    "context": 204800,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 2199.3,
+    "16k": null,
+    "32k": 3375.1,
+    "128k": 3336.2
+   },
+   "decode_tps": 102.0,
+   "humaneval": null,
    "rows": [
     {
      "label": "4096-prompt",
      "prompt_tokens": 4028.0,
+     "reused": 0.0,
      "prompt_tps": 2199.3,
      "decode_tps": 102.0,
      "ttft_s": 1.86
@@ -918,6 +1133,7 @@
     {
      "label": "32768-prompt",
      "prompt_tokens": 31828.0,
+     "reused": 0.0,
      "prompt_tps": 3375.1,
      "decode_tps": 98.5,
      "ttft_s": 9.56
@@ -925,6 +1141,7 @@
     {
      "label": "131072-prompt",
      "prompt_tokens": 127228.0,
+     "reused": 0.0,
      "prompt_tps": 3336.2,
      "decode_tps": 118.9,
      "ttft_s": 38.59
@@ -932,18 +1149,12 @@
     {
      "label": "gen-only",
      "prompt_tokens": 228.0,
+     "reused": 0.0,
      "prompt_tps": 320.4,
      "decode_tps": 97.0,
      "ttft_s": 0.73
     }
    ],
-   "headline_row": {
-    "label": "4096-prompt",
-    "prompt_tokens": 4028.0,
-    "prompt_tps": 2199.3,
-    "decode_tps": 102.0,
-    "ttft_s": 1.86
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-rtx4090-iq3xxs-200k-ru",
     "readme_sha256": "f639fc0ea7b467e63ca68b8926850c25c6c03e94b2699cfbf9c9bdd92168e7fa"
@@ -954,17 +1165,28 @@
    "date": "2026-10-08",
    "headline": "Community benchmark: NVIDIA GeForce RTX 4090",
    "summary": null,
-   "gpu": "NVIDIA GeForce RTX 4090; 23028 MiB reported VRAM; 480.00 W power limit; PCIe bus 00000000:01:00.0; PCIe link speed and width: not measured. GPU clocks were not fixed.",
-   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs).",
-   "ram": "46464 MiB installed.",
-   "os": null,
-   "engine": null,
+   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs)",
+   "ram": "46464 MiB installed",
+   "gpu": "NVIDIA GeForce RTX 4090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.40.3",
    "quant": null,
    "context": 204800,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 2146.4,
+    "16k": null,
+    "32k": 3341.8,
+    "128k": 3292.3
+   },
+   "decode_tps": 128.2,
+   "humaneval": null,
    "rows": [
     {
      "label": "4096-prompt",
      "prompt_tokens": 3971.0,
+     "reused": 0.0,
      "prompt_tps": 2146.4,
      "decode_tps": 128.2,
      "ttft_s": 1.87
@@ -972,6 +1194,7 @@
     {
      "label": "32768-prompt",
      "prompt_tokens": 31307.0,
+     "reused": 0.0,
      "prompt_tps": 3341.8,
      "decode_tps": 138.4,
      "ttft_s": 9.46
@@ -979,6 +1202,7 @@
     {
      "label": "131072-prompt",
      "prompt_tokens": 125011.0,
+     "reused": 0.0,
      "prompt_tps": 3292.3,
      "decode_tps": 121.7,
      "ttft_s": 38.27
@@ -986,18 +1210,12 @@
     {
      "label": "gen-only",
      "prompt_tokens": 163.0,
+     "reused": 0.0,
      "prompt_tps": 218.3,
      "decode_tps": 143.3,
      "ttft_s": 0.77
     }
    ],
-   "headline_row": {
-    "label": "4096-prompt",
-    "prompt_tokens": 3971.0,
-    "prompt_tps": 2146.4,
-    "decode_tps": 128.2,
-    "ttft_s": 1.87
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-rtx4090-iq3xxs-200k-code",
     "readme_sha256": "b739f44b5ad9a68371a7d6aeb6a99b478676fec09bfd699890785fb711d22fef"
@@ -1008,15 +1226,24 @@
    "date": "2026-10-08",
    "headline": "RTX 4070 12 GB, Core i5-12600KF, 32 GB DDR4",
    "summary": "IQ2_XS with adaptive cache E4/S24: 48.23 accepted-decode tok/s (median of 5) on a modified, locally built engine (not an official release; source commit and hashes in provenance.json, steps in REPRODUCE.md).",
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Core i5-12600KF",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 4070",
+   "vram_gb": 12,
+   "board": null,
+   "strata": null,
    "quant": "IQ2_XS",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-rtx4070-iq2-xs",
     "readme_sha256": "d43346897e6ad41cdbaec48ff22263cdf7d8006b01cdd1f87cb8a65b73b980ee"
@@ -1027,15 +1254,24 @@
    "date": "2026-10-08",
    "headline": "Community benchmark: RTX 5090 Laptop GPU (24 GB), engine 0.1.40.3",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 5090 Laptop GPU ()",
+   "vram_gb": 24,
+   "board": null,
+   "strata": "0.1.40.3",
    "quant": null,
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-rtx-5090-laptop-engine-0.1.40.3",
     "readme_sha256": "0e39382a94fa60c5a837b2c7810c03ba89bfcfad690652e44b2c082e71589b78"
@@ -1046,15 +1282,24 @@
    "date": "2026-10-08",
    "headline": "one AMD Radeon AI PRO R9700 32 GB, two EPYC 9334 CPUs, 503 GiB RAM",
    "summary": "Linux/ROCm 7.2.3, frozen experimental 0.1.40.3 source, original Flash-Next IQ3_S fresh 1K/4K/32K/128K at three repeats each; separate IQ3_S five-pair and IQ2_XS two-pair short-increment comparisons for #1107. Includes per-request data and regressions; no all-workload recommendation or newer-main measurement.",
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "two EPYC 9334 CPUs",
+   "ram": "503 GiB RAM",
+   "gpu": "one AMD Radeon AI PRO R9700",
+   "vram_gb": 32,
+   "board": null,
+   "strata": null,
    "quant": "IQ3_S",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-r9700-linux",
     "readme_sha256": "73fe64144390faf3a64e543ad0e5836989a22eec8a6fdd72df939679f15451d6"
@@ -1065,17 +1310,28 @@
    "date": "2026-10-08",
    "headline": "2x TITAN RTX 24 GB (sm_75, NVLink present but unused), Xeon E5-2696 v4 without AVX-512, 125 GiB RAM",
    "summary": "Strata v0.1.40.3 source build, original Flash-Next IQ3_S, 262,144-token context (the model native window) with --vision and --reasoning-budget-tokens 12000; three runs each at 4,096, 32,768 and 128,000 prompt tokens. Decode 70.9/77.3/71.1 tok/s, prompt 868.9/1548.9/1626.9 tok/s at those three lengths, 8,649 cached experts, needles 6/6 at 32k and 128k. Notes that NVLink is not used by the engine.",
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Xeon E5-2696 v4 without AVX-512",
+   "ram": "125 GiB RAM",
+   "gpu": "2x TITAN RTX (sm_75, NVLink present but unused)",
+   "vram_gb": 24,
+   "board": null,
+   "strata": "0.1.40.3",
    "quant": "IQ3_S",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 922.6,
+    "16k": null,
+    "32k": 1642.1,
+    "128k": 1853.6
+   },
+   "decode_tps": 75.4,
+   "humaneval": null,
    "rows": [
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": 922.6,
      "decode_tps": 75.4,
      "ttft_s": null
@@ -1083,6 +1339,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": 1642.1,
      "decode_tps": 80.2,
      "ttft_s": null
@@ -1090,18 +1347,12 @@
     {
      "label": "128,000",
      "prompt_tokens": 128000.0,
+     "reused": null,
      "prompt_tps": 1853.6,
      "decode_tps": 70.6,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "4,096",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 922.6,
-    "decode_tps": 75.4,
-    "ttft_s": null
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-2x-titan-rtx-0.1.40.3",
     "readme_sha256": "ceb36b0a508ff292528620371ccbdac15e60ba47df2d0979f8d0ffef41fd686d"
@@ -1112,17 +1363,28 @@
    "date": "2026-10-08",
    "headline": "Community benchmark: 2x RTX 3080 20 GB, Xeon E5-2696 v4, UD-Q4_K_XL, 512k-token shared KV pool",
    "summary": null,
-   "gpu": null,
-   "cpu": "Intel Xeon E5-2696 v4 (2016), 22 cores / 44 threads, up to 3.7 GHz, 55 MB L3, AVX2, no AVX-512",
+   "cpu": "Xeon E5-2696 v4",
    "ram": "4 x 32 GB DDR4-2400 (Hynix) = 128 GB",
-   "os": "Proxmox VE 9.2 host. Strata runs in an LXC with 90 GiB RAM and 24 threads",
-   "engine": null,
+   "gpu": "2x RTX 3080",
+   "vram_gb": 20,
+   "board": "MACHINIST X99-MR9A PRO MAX (one socket)",
+   "strata": "0.1.40.3",
    "quant": "UD-Q4_K_XL",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 718.0,
+    "16k": null,
+    "32k": null,
+    "128k": 3080.0
+   },
+   "decode_tps": 81.2,
+   "humaneval": null,
    "rows": [
     {
      "label": "4K",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 718.0,
      "decode_tps": 81.2,
      "ttft_s": 5.8
@@ -1130,6 +1392,7 @@
     {
      "label": "25K",
      "prompt_tokens": 25000.0,
+     "reused": 0.0,
      "prompt_tps": 2219.0,
      "decode_tps": 84.0,
      "ttft_s": 11.4
@@ -1137,6 +1400,7 @@
     {
      "label": "51K",
      "prompt_tokens": 51000.0,
+     "reused": 0.0,
      "prompt_tps": 2585.0,
      "decode_tps": 90.6,
      "ttft_s": 19.9
@@ -1144,6 +1408,7 @@
     {
      "label": "104K",
      "prompt_tokens": 103999.0,
+     "reused": 0.0,
      "prompt_tps": 2996.0,
      "decode_tps": 86.3,
      "ttft_s": 35.1
@@ -1151,6 +1416,7 @@
     {
      "label": "127K",
      "prompt_tokens": 127000.0,
+     "reused": 0.0,
      "prompt_tps": 3080.0,
      "decode_tps": 80.7,
      "ttft_s": 41.7
@@ -1158,6 +1424,7 @@
     {
      "label": "two concurrent streams, summed",
      "prompt_tokens": 12.0,
+     "reused": 24.0,
      "prompt_tps": 0.996,
      "decode_tps": null,
      "ttft_s": null
@@ -1165,18 +1432,12 @@
     {
      "label": "one stream",
      "prompt_tokens": 12.0,
+     "reused": 24.0,
      "prompt_tps": 0.956,
      "decode_tps": null,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "4K",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 718.0,
-    "decode_tps": 81.2,
-    "ttft_s": 5.8
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-2x-rtx3080-20gb-ud-q4-k-xl-512k-pool",
     "readme_sha256": "f820313f0ae906887a42c7d33edb816c654f14fa25adbfad485042f299ab03aa"
@@ -1187,15 +1448,24 @@
    "date": "2026-10-07",
    "headline": "RX 7900 XTX + RX 6800 XT helper cache, Xeon E5-2696 v4, 1M context",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Xeon E5-2696 v4",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RX 7900 XTX",
+   "vram_gb": null,
+   "board": null,
+   "strata": null,
    "quant": "UD-Q4_K_XL",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-xtx-6800xt-1m-helper",
     "readme_sha256": "1e5ba600c7be203e376652482211be7d448599dcd206bd9521c77b813fe41f48"
@@ -1206,17 +1476,28 @@
    "date": "2026-10-07",
    "headline": "Community benchmark: Tesla V100-PCIE-32GB + Tesla P100-PCIE-16GB, P100 as expert-helper card (mixed Volta/Pascal)",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "Tesla V100-PCIE-",
+   "vram_gb": 32,
+   "board": null,
+   "strata": "0.1.40.2",
    "quant": "IQ3_XXS",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": 1410.5
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "V100+P100 helper, IQ3_XXS, ~550-token prompt",
      "prompt_tokens": 809.0,
+     "reused": 0.0,
      "prompt_tps": 424.5,
      "decode_tps": 77.0,
      "ttft_s": 1.94
@@ -1224,6 +1505,7 @@
     {
      "label": "… ~17.9K-token prompt",
      "prompt_tokens": 17971.0,
+     "reused": 0.0,
      "prompt_tps": 1436.9,
      "decode_tps": 72.8,
      "ttft_s": 12.66
@@ -1231,6 +1513,7 @@
     {
      "label": "… ~44K-token prompt",
      "prompt_tokens": 44011.0,
+     "reused": 0.0,
      "prompt_tps": 1446.4,
      "decode_tps": 74.2,
      "ttft_s": 30.79
@@ -1238,18 +1521,12 @@
     {
      "label": "… ~120K-token prompt (single run)",
      "prompt_tokens": 119731.0,
+     "reused": 0.0,
      "prompt_tps": 1410.5,
      "decode_tps": 69.5,
      "ttft_s": 85.79
     }
    ],
-   "headline_row": {
-    "label": "V100+P100 helper, IQ3_XXS, ~550-token prompt",
-    "prompt_tokens": 809.0,
-    "prompt_tps": 424.5,
-    "decode_tps": 77.0,
-    "ttft_s": 1.94
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-v100-p100-helper",
     "readme_sha256": "18940715844cd913372629d53115fc26f855ae661ab907705fcd9590c40d7ff6"
@@ -1260,17 +1537,28 @@
    "date": "2026-10-07",
    "headline": "Community benchmark: RTX 5090 + RTX PRO 4000 Blackwell, UD-Q4_K_XL on the helper-cache config, engine 0.1.40.3",
    "summary": null,
-   "gpu": null,
-   "cpu": "AMD Ryzen 7 9800X3D (8 cores / 16 threads). RAM: 128 GB. OS: Windows 11 Pro",
+   "cpu": "AMD Ryzen 7 9800X3D (8 cores / 16 threads)",
    "ram": null,
-   "os": null,
-   "engine": "ready-made CUDA 13.0 build (engine-BUILD.json), repo at d5ea713 (v0.1.40.3)",
+   "gpu": "RTX 5090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.40.3",
    "quant": "UD-Q4_K_XL",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": 2048.0,
+    "128k": 2200.6
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "4k",
      "prompt_tokens": 5083.0,
+     "reused": null,
      "prompt_tps": 1513.7,
      "decode_tps": 103.3,
      "ttft_s": null
@@ -1278,6 +1566,7 @@
     {
      "label": "32k",
      "prompt_tokens": 33008.0,
+     "reused": null,
      "prompt_tps": 2048.0,
      "decode_tps": 92.2,
      "ttft_s": null
@@ -1285,18 +1574,12 @@
     {
      "label": "128k",
      "prompt_tokens": 115048.0,
+     "reused": null,
      "prompt_tps": 2200.6,
      "decode_tps": 93.9,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "4k",
-    "prompt_tokens": 5083.0,
-    "prompt_tps": 1513.7,
-    "decode_tps": 103.3,
-    "ttft_s": null
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-rtx5090-pro4000-helper",
     "readme_sha256": "50596034eabb78f8bc652d351370dc95b45829c3cdb77aea73d6a1031019885c"
@@ -1307,17 +1590,28 @@
    "date": "2026-10-07",
    "headline": "Community benchmark: RTX 5090 Laptop, Core Ultra 9 275HX, 188 GB RAM — Unsloth UD-IQ4_XS (first NVIDIA measurement)",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Core Ultra 9 275HX",
+   "ram": "188 GB RAM — Unsloth UD-IQ4_XS (first NVIDIA measurement)",
+   "gpu": "RTX 5090 Laptop",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.40",
    "quant": "UD-IQ4_XS",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "Chinese, temp 1.0",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 29.6,
      "ttft_s": null
@@ -1325,6 +1619,7 @@
     {
      "label": "English code, temp 1.0",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 21.3,
      "ttft_s": null
@@ -1332,6 +1627,7 @@
     {
      "label": "Chinese, greedy (warm 1)",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 21.6,
      "ttft_s": null
@@ -1339,6 +1635,7 @@
     {
      "label": "Chinese, greedy (warm 2)",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 28.1,
      "ttft_s": null
@@ -1346,6 +1643,7 @@
     {
      "label": "0.00",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 26.6,
      "ttft_s": null
@@ -1353,6 +1651,7 @@
     {
      "label": "0.20",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 27.6,
      "ttft_s": null
@@ -1360,6 +1659,7 @@
     {
      "label": "0.25",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 25.1,
      "ttft_s": null
@@ -1367,6 +1667,7 @@
     {
      "label": "0.35",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 27.5,
      "ttft_s": null
@@ -1374,12 +1675,12 @@
     {
      "label": "0.75",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 21.9,
      "ttft_s": null
     }
    ],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-rtx-5090-laptop-ud-iq4xs",
     "readme_sha256": "74f2a8dde87ff3bfbe9d5a6708b56a78553ef7538a3a5371496833207eb11473"
@@ -1390,17 +1691,28 @@
    "date": "2026-10-07",
    "headline": "Community benchmark: RTX 5080 in Docker Desktop on Windows (WSL2)",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 5080 in Docker Desktop on Windows",
+   "vram_gb": null,
+   "board": null,
+   "strata": null,
    "quant": "IQ1_M",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 2252.8,
+    "16k": 3197.3,
+    "32k": 3304.3,
+    "128k": 3076.5
+   },
+   "decode_tps": 75.7,
+   "humaneval": null,
    "rows": [
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 2252.8,
      "decode_tps": 75.7,
      "ttft_s": 1.849
@@ -1408,6 +1720,7 @@
     {
      "label": "8,192",
      "prompt_tokens": 8192.0,
+     "reused": 0.0,
      "prompt_tps": 3009.2,
      "decode_tps": 79.9,
      "ttft_s": 2.772
@@ -1415,6 +1728,7 @@
     {
      "label": "16,384",
      "prompt_tokens": 16384.0,
+     "reused": 0.0,
      "prompt_tps": 3197.3,
      "decode_tps": 79.1,
      "ttft_s": 5.166
@@ -1422,6 +1736,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 3304.3,
      "decode_tps": 80.8,
      "ttft_s": 9.981
@@ -1429,6 +1744,7 @@
     {
      "label": "65,536",
      "prompt_tokens": 65536.0,
+     "reused": 0.0,
      "prompt_tps": 3299.4,
      "decode_tps": 73.8,
      "ttft_s": 19.958
@@ -1436,6 +1752,7 @@
     {
      "label": "130,560",
      "prompt_tokens": 130560.0,
+     "reused": 0.0,
      "prompt_tps": 3076.5,
      "decode_tps": 72.2,
      "ttft_s": 42.612
@@ -1443,6 +1760,7 @@
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 2194.1,
      "decode_tps": 73.1,
      "ttft_s": 1.904
@@ -1450,6 +1768,7 @@
     {
      "label": "8,192",
      "prompt_tokens": 8192.0,
+     "reused": 0.0,
      "prompt_tps": 2781.6,
      "decode_tps": 76.4,
      "ttft_s": 2.981
@@ -1457,6 +1776,7 @@
     {
      "label": "16,384",
      "prompt_tokens": 16384.0,
+     "reused": 0.0,
      "prompt_tps": 3001.3,
      "decode_tps": 78.5,
      "ttft_s": 5.523
@@ -1464,6 +1784,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 3034.9,
      "decode_tps": 71.5,
      "ttft_s": 10.873
@@ -1471,6 +1792,7 @@
     {
      "label": "65,024",
      "prompt_tokens": 65024.0,
+     "reused": 0.0,
      "prompt_tps": 3027.7,
      "decode_tps": 73.8,
      "ttft_s": 21.582
@@ -1478,6 +1800,7 @@
     {
      "label": null,
      "prompt_tokens": null,
+     "reused": 131072.0,
      "prompt_tps": 65536.0,
      "decode_tps": null,
      "ttft_s": null
@@ -1485,6 +1808,7 @@
     {
      "label": "GPU memory used, peak (of 15.92 GiB)",
      "prompt_tokens": null,
+     "reused": 15.82,
      "prompt_tps": 15.74,
      "decode_tps": null,
      "ttft_s": null
@@ -1492,18 +1816,12 @@
     {
      "label": "Host RAM used, peak (of 54.92 GiB)",
      "prompt_tokens": null,
+     "reused": 29.77,
      "prompt_tps": 29.49,
      "decode_tps": null,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "4,096",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 2252.8,
-    "decode_tps": 75.7,
-    "ttft_s": 1.849
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-rtx-5080-docker-wsl2",
     "readme_sha256": "81a761be58373f97bf9a99f4033d90377fd3b3b61f8cc9d0683e7cddefaf1f27"
@@ -1514,15 +1832,24 @@
    "date": "2026-10-07",
    "headline": "Radeon 890M (gfx1150): a hipBLASLt table, and the gfx1151 exact switches (2026-10-07)",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "Radeon 890M (gfx1150): a hipBLASLt table",
+   "vram_gb": null,
+   "board": null,
+   "strata": null,
    "quant": null,
    "context": 65536,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-gfx1150",
     "readme_sha256": "f908366bc219bcdc64be636baf931e37b03e9ed55a285779a2988552c71f1d79"
@@ -1533,15 +1860,24 @@
    "date": "2026-10-07",
    "headline": "Arc Pro B65: Strata v0.1.40.2 on PCIe Gen4",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "Arc Pro B65: Strata v0.1.40.2 on PCIe Gen4",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.40.2",
    "quant": "IQ2_XS",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-arc-b65-v01402",
     "readme_sha256": "0520362fedfd22c7dab170dbd11ab8d059a53b6ac0509592540b4d8b3c262278"
@@ -1552,15 +1888,24 @@
    "date": "2026-10-07",
    "headline": "2x NVIDIA Quadro RTX 4000 8 GB, Xeon E5-2620 v3, 96 GB RAM",
    "summary": "Strata 0.1.38, Swift-Qwen3.8-Flash-Next IQ2_XS, 131,072-token context, layer split across dual GPUs with RAM-tiered expert cache; measured deep-context prompt ingestion (73k–74k tokens at 100–250 tok/s, 18–23 tok/s decode) and production pipeline comparison against a 12B model.",
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Xeon E5-2620 v3",
+   "ram": "96 GB RAM",
+   "gpu": "2x NVIDIA Quadro RTX 4000",
+   "vram_gb": 8,
+   "board": null,
+   "strata": "0.1.38",
    "quant": "IQ2_XS",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-2x-rtx-4000",
     "readme_sha256": "4f3d8b94ddaec897703ba4878163786724316fa9993f0dd71848d74bb6a394b2"
@@ -1571,17 +1916,28 @@
    "date": "2026-10-06",
    "headline": "Community benchmark on RX 7900 XTX (Windows 11)",
    "summary": null,
-   "gpu": "AMD Radeon RX 7900 XTX, 24 GB (gfx1100). An AMD integrated GPU (gfx1036) is also present; setup listed it as not supported and used the 7900 XTX (GPU 0).",
    "cpu": "AMD Ryzen 9 7950X3D 16-core (AVX-512 detected by setup)",
    "ram": null,
-   "os": "Windows 11 Pro, version 10.0.26200 (build 26200)",
-   "engine": null,
+   "gpu": "RX 7900 XTX",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.40",
    "quant": "IQ3_S",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "Short",
      "prompt_tokens": 98.0,
+     "reused": 0.0,
      "prompt_tps": 84.5,
      "decode_tps": 77.5,
      "ttft_s": null
@@ -1589,6 +1945,7 @@
     {
      "label": "Long, 38K",
      "prompt_tokens": 38170.0,
+     "reused": 0.0,
      "prompt_tps": 1612.0,
      "decode_tps": 79.7,
      "ttft_s": null
@@ -1596,6 +1953,7 @@
     {
      "label": "short",
      "prompt_tokens": 103.0,
+     "reused": 0.0,
      "prompt_tps": 256.0,
      "decode_tps": 73.8,
      "ttft_s": 64.1
@@ -1603,6 +1961,7 @@
     {
      "label": "short",
      "prompt_tokens": 98.0,
+     "reused": 0.0,
      "prompt_tps": 256.0,
      "decode_tps": 78.7,
      "ttft_s": 65.9
@@ -1610,6 +1969,7 @@
     {
      "label": "short",
      "prompt_tokens": 99.0,
+     "reused": 0.0,
      "prompt_tps": 256.0,
      "decode_tps": 77.5,
      "ttft_s": 63.3
@@ -1617,6 +1977,7 @@
     {
      "label": "long-38K",
      "prompt_tokens": 38174.0,
+     "reused": 0.0,
      "prompt_tps": 138.0,
      "decode_tps": 66.7,
      "ttft_s": 74.1
@@ -1624,6 +1985,7 @@
     {
      "label": "long-38K",
      "prompt_tokens": 38170.0,
+     "reused": 0.0,
      "prompt_tps": 131.0,
      "decode_tps": 79.7,
      "ttft_s": 80.0
@@ -1631,18 +1993,12 @@
     {
      "label": "long-38K",
      "prompt_tokens": 38173.0,
+     "reused": 0.0,
      "prompt_tps": 138.0,
      "decode_tps": 83.2,
      "ttft_s": 78.5
     }
    ],
-   "headline_row": {
-    "label": "short",
-    "prompt_tokens": 103.0,
-    "prompt_tps": 256.0,
-    "decode_tps": 73.8,
-    "ttft_s": 64.1
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rx-7900-xtx",
     "readme_sha256": "ebd9a939aec77fcbd96f2ddf9f9050fdd1f9be51b05ba86b8735df367ee463ef"
@@ -1653,17 +2009,28 @@
    "date": "2026-10-06",
    "headline": "Community benchmark on AMD Radeon RX 6800M (gfx1031)",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "AMD Radeon RX 6800M (gfx1031)",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.40",
    "quant": "Q2_0",
    "context": 65536,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "default, short",
      "prompt_tokens": 556.0,
+     "reused": 0.0,
      "prompt_tps": 50.4,
      "decode_tps": 19.3,
      "ttft_s": 11.0
@@ -1671,6 +2038,7 @@
     {
      "label": "default, ~2K",
      "prompt_tokens": 2309.0,
+     "reused": 0.0,
      "prompt_tps": 59.6,
      "decode_tps": 9.1,
      "ttft_s": 38.7
@@ -1678,6 +2046,7 @@
     {
      "label": "default, ~8K",
      "prompt_tokens": 8726.0,
+     "reused": 0.0,
      "prompt_tps": 92.2,
      "decode_tps": 14.7,
      "ttft_s": 94.6
@@ -1685,6 +2054,7 @@
     {
      "label": "f16, short",
      "prompt_tokens": 558.0,
+     "reused": 0.0,
      "prompt_tps": 64.9,
      "decode_tps": 26.5,
      "ttft_s": 8.6
@@ -1692,6 +2062,7 @@
     {
      "label": "f16, ~2K",
      "prompt_tokens": 2311.0,
+     "reused": 0.0,
      "prompt_tps": 63.0,
      "decode_tps": 14.5,
      "ttft_s": 36.7
@@ -1699,18 +2070,12 @@
     {
      "label": "f16, ~8K",
      "prompt_tokens": 8727.0,
+     "reused": 0.0,
      "prompt_tps": 113.5,
      "decode_tps": 14.1,
      "ttft_s": 76.9
     }
    ],
-   "headline_row": {
-    "label": "f16, ~2K",
-    "prompt_tokens": 2311.0,
-    "prompt_tps": 63.0,
-    "decode_tps": 14.5,
-    "ttft_s": 36.7
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rx-6800m",
     "readme_sha256": "05285db74312a350e7053cecbc1ecac89f8ad691734bf558ba1605caee269d44"
@@ -1721,17 +2086,28 @@
    "date": "2026-10-06",
    "headline": "Community results: Strata 0.1.39 versus 0.1.40 on RTX PRO 6000",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "Community results: Strata 0.1.39 versus 0.1.40 on RTX PRO 6000",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "UD-Q4_K_XL",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "Q4_K_XL, MTP T4",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 244.2,
      "ttft_s": null
@@ -1739,12 +2115,12 @@
     {
      "label": "Q4_K_XL, no MTP",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 118.5,
      "ttft_s": null
     }
    ],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rtxpro-v0140",
     "readme_sha256": "8b0eaab0f3751fbc51f23b48300c2394f152e4d76efccb4aed72e6fe88de62a7"
@@ -1755,17 +2131,28 @@
    "date": "2026-10-06",
    "headline": "Community benchmark: RTX 5070 Ti, Ryzen 9 5900X, 64 GB DDR4-3600 (Windows 10)",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 9 5900X",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 5070 Ti",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ2_XS",
    "context": 65536,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 1992.0,
+    "16k": null,
+    "32k": 2817.0,
+    "128k": null
+   },
+   "decode_tps": 102.0,
+   "humaneval": null,
    "rows": [
     {
      "label": "IQ2_XS",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 1992.0,
      "decode_tps": 102.0,
      "ttft_s": 2.1
@@ -1773,6 +2160,7 @@
     {
      "label": "IQ2_XS",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 2817.0,
      "decode_tps": 101.3,
      "ttft_s": 11.72
@@ -1780,6 +2168,7 @@
     {
      "label": "IQ3_XXS",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 1653.0,
      "decode_tps": 72.5,
      "ttft_s": 2.51
@@ -1787,6 +2176,7 @@
     {
      "label": "IQ3_XXS",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 2482.0,
      "decode_tps": 73.7,
      "ttft_s": 13.29
@@ -1794,6 +2184,7 @@
     {
      "label": "IQ3_S",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 1439.0,
      "decode_tps": 62.9,
      "ttft_s": 2.89
@@ -1801,6 +2192,7 @@
     {
      "label": "IQ3_S",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 2261.0,
      "decode_tps": 66.1,
      "ttft_s": 14.59
@@ -1808,6 +2200,7 @@
     {
      "label": "arm",
      "prompt_tokens": 4.0,
+     "reused": 32.0,
      "prompt_tps": 4.0,
      "decode_tps": 32.0,
      "ttft_s": null
@@ -1815,6 +2208,7 @@
     {
      "label": "A baseline",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 61.6,
      "decode_tps": 64.5,
      "ttft_s": null
@@ -1822,6 +2216,7 @@
     {
      "label": "F auto:32768",
      "prompt_tokens": 1450.0,
+     "reused": null,
      "prompt_tps": 62.1,
      "decode_tps": 64.7,
      "ttft_s": null
@@ -1829,6 +2224,7 @@
     {
      "label": "D env trio",
      "prompt_tokens": 1459.0,
+     "reused": 2282.0,
      "prompt_tps": 62.6,
      "decode_tps": 63.1,
      "ttft_s": null
@@ -1836,6 +2232,7 @@
     {
      "label": "B q4_0 + env + cap",
      "prompt_tokens": 1168.0,
+     "reused": 2427.0,
      "prompt_tps": 60.0,
      "decode_tps": 63.2,
      "ttft_s": null
@@ -1843,6 +2240,7 @@
     {
      "label": "C q4_0 + env",
      "prompt_tokens": 1186.0,
+     "reused": 1899.0,
      "prompt_tps": 62.6,
      "decode_tps": 64.2,
      "ttft_s": null
@@ -1850,18 +2248,12 @@
     {
      "label": "E q4_0 only",
      "prompt_tokens": 1180.0,
+     "reused": 1902.0,
      "prompt_tps": 60.6,
      "decode_tps": 65.0,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "IQ2_XS",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 1992.0,
-    "decode_tps": 102.0,
-    "ttft_s": 2.1
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rtx5070ti-5900x",
     "readme_sha256": "cdd26037a00b1f54108cf94b001cbbfc050a240b20f9ad2c1478219db783833f"
@@ -1872,15 +2264,24 @@
    "date": "2026-10-06",
    "headline": "What 0.1.40.1 does with a <tool_call> the model writes, and with requests waiting for a dead engine",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": null,
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.40",
    "quant": null,
    "context": 204800,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rtx4090-toolcall-hotfix",
     "readme_sha256": "34f79e5f275b46c942e33e35c7c41e783cff1710f44b31f5feb4bfb5a5228ce0"
@@ -1891,15 +2292,24 @@
    "date": "2026-10-06",
    "headline": "What two opt-ins cost on a single-GPU RTX 4090: STRATA_KV_PREFETCH=1, and \"parallel\": 2 with --batch-mtp",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "What two opt-ins cost on a single-GPU RTX 4090: STRATA_KV_PREFETCH=1",
+   "vram_gb": null,
+   "board": null,
+   "strata": null,
    "quant": null,
    "context": 204800,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rtx4090-opt-ins",
     "readme_sha256": "0f96ca64466b68c9630fed66a2c000ef3b29a2b24f4ca7a9d37be9ca090b44e6"
@@ -1910,17 +2320,28 @@
    "date": "2026-10-06",
    "headline": "Community benchmark — RTX 3090 in Thunderbolt eGPU, 64 GB RAM — 2026-10-06",
    "summary": null,
-   "gpu": null,
    "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "ram": "64 GB RAM — 2026-10-06",
+   "gpu": "— RTX 3090 in Thunderbolt eGPU",
+   "vram_gb": null,
+   "board": null,
+   "strata": null,
    "quant": "IQ2_XS",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "IQ2_XS",
      "prompt_tokens": 1748.0,
+     "reused": 0.0,
      "prompt_tps": 188.3,
      "decode_tps": 112.2,
      "ttft_s": null
@@ -1928,6 +2349,7 @@
     {
      "label": "IQ2_XS",
      "prompt_tokens": 6488.0,
+     "reused": 0.0,
      "prompt_tps": 560.2,
      "decode_tps": 101.1,
      "ttft_s": null
@@ -1935,6 +2357,7 @@
     {
      "label": "IQ2_XS",
      "prompt_tokens": 26990.0,
+     "reused": 0.0,
      "prompt_tps": 618.1,
      "decode_tps": 111.5,
      "ttft_s": null
@@ -1942,6 +2365,7 @@
     {
      "label": "IQ2_XS (TTFT, short prompt)",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": null,
      "decode_tps": 81.1,
      "ttft_s": 2.171
@@ -1949,6 +2373,7 @@
     {
      "label": "IQ3_XXS",
      "prompt_tokens": 1748.0,
+     "reused": 0.0,
      "prompt_tps": 128.0,
      "decode_tps": 60.2,
      "ttft_s": null
@@ -1956,6 +2381,7 @@
     {
      "label": "IQ3_XXS",
      "prompt_tokens": 6490.0,
+     "reused": 0.0,
      "prompt_tps": 421.4,
      "decode_tps": 74.2,
      "ttft_s": null
@@ -1963,6 +2389,7 @@
     {
      "label": "IQ3_XXS",
      "prompt_tokens": 26991.0,
+     "reused": 0.0,
      "prompt_tps": 467.6,
      "decode_tps": 81.3,
      "ttft_s": null
@@ -1970,18 +2397,12 @@
     {
      "label": "IQ3_XXS (TTFT, short prompt)",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": null,
      "decode_tps": 60.3,
      "ttft_s": 3.587
     }
    ],
-   "headline_row": {
-    "label": "IQ2_XS",
-    "prompt_tokens": 1748.0,
-    "prompt_tps": 188.3,
-    "decode_tps": 112.2,
-    "ttft_s": null
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rtx3090-egpu-64gb",
     "readme_sha256": "79f4e6e605e98f0d7841c9d25e15998e15fad1ed10c10f02fd7034b0096ab716"
@@ -1992,17 +2413,28 @@
    "date": "2026-10-06",
    "headline": "Community benchmark: RTX 5090 Laptop GPU (24 GB), Ryzen 9 9955HX3D",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 9 9955HX3D",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 5090 Laptop GPU ()",
+   "vram_gb": 24,
+   "board": null,
+   "strata": "0.1.40.1",
    "quant": "Q2_0",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 1952.5,
+    "16k": null,
+    "32k": 2877.8,
+    "128k": 2764.1
+   },
+   "decode_tps": 136.9,
+   "humaneval": null,
    "rows": [
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 1952.5,
      "decode_tps": 136.9,
      "ttft_s": 2.124
@@ -2010,6 +2442,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 2877.8,
      "decode_tps": 137.7,
      "ttft_s": 11.458
@@ -2017,18 +2450,12 @@
     {
      "label": "128,000",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 2764.1,
      "decode_tps": 134.6,
      "ttft_s": 46.498
     }
    ],
-   "headline_row": {
-    "label": "4,096",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 1952.5,
-    "decode_tps": 136.9,
-    "ttft_s": 2.124
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rtx-5090-laptop",
     "readme_sha256": "f219af63c865c30a0d857e0480287114fa688bf1ee38b111fd0c5b30ef4126b9"
@@ -2039,17 +2466,28 @@
    "date": "2026-10-06",
    "headline": "Community benchmark: RTX 5060 Ti 16 GB, Ryzen 9 7945HX",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
-   "ram": "/proc/meminfo reported MemTotal 60.53 GiB and lsmem reported 65.5",
-   "os": null,
-   "engine": null,
+   "cpu": "Ryzen 9 7945HX",
+   "ram": "/proc/meminfo reported MemTotal 60.53 GiB and lsmem reported",
+   "gpu": "RTX 5060 Ti",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.35",
    "quant": null,
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 1157.7,
+    "16k": null,
+    "32k": 1225.3,
+    "128k": 1175.9
+   },
+   "decode_tps": 56.6,
+   "humaneval": null,
    "rows": [
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 1157.7,
      "decode_tps": 56.6,
      "ttft_s": 3.573
@@ -2057,6 +2495,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 1225.3,
      "decode_tps": 60.2,
      "ttft_s": 26.811
@@ -2064,18 +2503,12 @@
     {
      "label": "128,000",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 1175.9,
      "decode_tps": 57.2,
      "ttft_s": 109.024
     }
    ],
-   "headline_row": {
-    "label": "4,096",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 1157.7,
-    "decode_tps": 56.6,
-    "ttft_s": 3.573
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rtx-5060ti",
     "readme_sha256": "0c9fca17ebb0f7d566fc6d1cd1a1df91bd2f49a020f16011ce0e17527f0996d2"
@@ -2086,17 +2519,28 @@
    "date": "2026-10-06",
    "headline": "Community benchmark: 2x NVIDIA GeForce RTX 2080 Ti, Ryzen 9 5950X",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 9 5950X",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "2x NVIDIA GeForce RTX 2080 Ti",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.40",
    "quant": "IQ3_XXS",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 411.1,
+    "16k": null,
+    "32k": 477.2,
+    "128k": null
+   },
+   "decode_tps": 52.8,
+   "humaneval": null,
    "rows": [
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 411.1,
      "decode_tps": 52.8,
      "ttft_s": 10.0
@@ -2104,18 +2548,12 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 477.2,
      "decode_tps": 42.5,
      "ttft_s": 68.77
     }
    ],
-   "headline_row": {
-    "label": "4,096",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 411.1,
-    "decode_tps": 52.8,
-    "ttft_s": 10.0
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-r9-2x-rtx-2080-ti",
     "readme_sha256": "cc1c4330efc32d4c07caa92786b4ac3077750ce59ddae812eb11797d5ebec2d4"
@@ -2126,17 +2564,28 @@
    "date": "2026-10-06",
    "headline": "Community benchmark on 4x Tesla P100 16 GB (Pascal, sm_60)",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": "engine-cuda12/strata, built by setup with STRATA_NVCC=/usr/bin/nvcc CUDAHOSTCXX=/usr/bin/g++-13,",
+   "gpu": "4x Tesla P100 (Pascal, sm_60)",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ3_XXS",
    "context": 65536,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 239.4,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": 29.0,
+   "humaneval": null,
    "rows": [
     {
      "label": "reasoning-v1 (short)",
      "prompt_tokens": 301.0,
+     "reused": 0.0,
      "prompt_tps": 94.0,
      "decode_tps": 33.5,
      "ttft_s": 3.3
@@ -2144,6 +2593,7 @@
     {
      "label": "code-v1 (short)",
      "prompt_tokens": 239.0,
+     "reused": 0.0,
      "prompt_tps": 86.1,
      "decode_tps": 32.6,
      "ttft_s": 2.83
@@ -2151,6 +2601,7 @@
     {
      "label": "Strata docs, ~4.4K",
      "prompt_tokens": 4441.0,
+     "reused": 0.0,
      "prompt_tps": 239.4,
      "decode_tps": 29.0,
      "ttft_s": 18.63
@@ -2158,18 +2609,12 @@
     {
      "label": "Strata docs, ~36.4K",
      "prompt_tokens": 36356.0,
+     "reused": 0.0,
      "prompt_tps": 593.5,
      "decode_tps": 28.0,
      "ttft_s": 61.59
     }
    ],
-   "headline_row": {
-    "label": "Strata docs, ~4.4K",
-    "prompt_tokens": 4441.0,
-    "prompt_tps": 239.4,
-    "decode_tps": 29.0,
-    "ttft_s": 18.63
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-4x-tesla-p100",
     "readme_sha256": "bb3b444026ad14e53e6485b53fbfd5a182a4d2db60ea4d2e282740dc89c60a3e"
@@ -2180,17 +2625,28 @@
    "date": "2026-10-06",
    "headline": "Community benchmark: 2x AMD Radeon RX 7900 GRE 16 GiB (gfx1100), Ryzen 7 5700X3D",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 7 5700X3D",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "2x AMD Radeon RX 7900 GRE (gfx1100)",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.40",
    "quant": "IQ1_M",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 1582.8,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": 77.1,
+   "humaneval": null,
    "rows": [
     {
      "label": "--pipeline-windows 2 (A), 500-token, interleaved",
      "prompt_tokens": 1757.0,
+     "reused": 0.0,
      "prompt_tps": 961.0,
      "decode_tps": null,
      "ttft_s": 2.9
@@ -2198,6 +2654,7 @@
     {
      "label": "--pipeline-windows 1 (B), 500-token, interleaved",
      "prompt_tokens": 1757.0,
+     "reused": 0.0,
      "prompt_tps": 959.9,
      "decode_tps": null,
      "ttft_s": 2.9
@@ -2205,6 +2662,7 @@
     {
      "label": "baseline (A) fresh, pipeline-off arm",
      "prompt_tokens": 4210.0,
+     "reused": 0.0,
      "prompt_tps": 1582.8,
      "decode_tps": 77.1,
      "ttft_s": null
@@ -2212,6 +2670,7 @@
     {
      "label": "baseline (A) follow-up, pipeline-off arm",
      "prompt_tokens": 4451.0,
+     "reused": 4203.0,
      "prompt_tps": 185.8,
      "decode_tps": 66.2,
      "ttft_s": null
@@ -2219,6 +2678,7 @@
     {
      "label": "--pipeline-windows 1 (B) fresh",
      "prompt_tokens": 4210.0,
+     "reused": 0.0,
      "prompt_tps": 1568.0,
      "decode_tps": 70.0,
      "ttft_s": null
@@ -2226,6 +2686,7 @@
     {
      "label": "--pipeline-windows 1 (B) follow-up",
      "prompt_tokens": 4451.0,
+     "reused": 4337.0,
      "prompt_tps": 246.8,
      "decode_tps": 62.8,
      "ttft_s": null
@@ -2233,6 +2694,7 @@
     {
      "label": "baseline (A) fresh, stage-trim-off arm",
      "prompt_tokens": 4210.0,
+     "reused": 0.0,
      "prompt_tps": 1582.9,
      "decode_tps": 75.7,
      "ttft_s": null
@@ -2240,6 +2702,7 @@
     {
      "label": "baseline (A) follow-up, stage-trim-off arm",
      "prompt_tokens": 4451.0,
+     "reused": 4337.0,
      "prompt_tps": 186.1,
      "decode_tps": 73.5,
      "ttft_s": null
@@ -2247,6 +2710,7 @@
     {
      "label": "STRATA_STAGE_TRIM=0 (B) fresh",
      "prompt_tokens": 4210.0,
+     "reused": 0.0,
      "prompt_tps": 1103.4,
      "decode_tps": 67.6,
      "ttft_s": null
@@ -2254,6 +2718,7 @@
     {
      "label": "STRATA_STAGE_TRIM=0 (B) follow-up",
      "prompt_tokens": 4451.0,
+     "reused": 4203.0,
      "prompt_tps": 193.4,
      "decode_tps": 70.9,
      "ttft_s": null
@@ -2261,6 +2726,7 @@
     {
      "label": "baseline (A) fresh, resident arm",
      "prompt_tokens": 4210.0,
+     "reused": 0.0,
      "prompt_tps": 1558.5,
      "decode_tps": 72.1,
      "ttft_s": null
@@ -2268,6 +2734,7 @@
     {
      "label": "baseline (A) follow-up, resident arm",
      "prompt_tokens": 4451.0,
+     "reused": 4203.0,
      "prompt_tps": 186.6,
      "decode_tps": 63.4,
      "ttft_s": null
@@ -2275,6 +2742,7 @@
     {
      "label": "--resident-budget-gib 30 (B) fresh",
      "prompt_tokens": 4210.0,
+     "reused": 0.0,
      "prompt_tps": 1550.0,
      "decode_tps": 69.0,
      "ttft_s": null
@@ -2282,18 +2750,12 @@
     {
      "label": "--resident-budget-gib 30 (B) follow-up",
      "prompt_tokens": 4451.0,
+     "reused": 4203.0,
      "prompt_tps": 243.9,
      "decode_tps": 64.6,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "baseline (A) fresh, pipeline-off arm",
-    "prompt_tokens": 4210.0,
-    "prompt_tps": 1582.8,
-    "decode_tps": 77.1,
-    "ttft_s": null
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-2x-rx-7900-gre",
     "readme_sha256": "29c06d9a879f2e12b3d0666c7f479846f1f13e210d6bb010f79d238c73accb20"
@@ -2304,17 +2766,28 @@
    "date": "2026-10-06",
    "headline": "Community benchmark: 2x AMD Radeon RX 6900 XT 16 GB (gfx1030), Ryzen 5 5600X, 128 GB RAM - Strata 0.1.40.1",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Ryzen 5 5600X",
+   "ram": "128 GB RAM - Strata 0.1.40.1",
+   "gpu": "2x AMD Radeon RX 6900 XT (gfx1030)",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.40.1",
    "quant": "IQ3_S",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 458.0,
+    "16k": null,
+    "32k": 473.4,
+    "128k": 458.5
+   },
+   "decode_tps": 47.5,
+   "humaneval": null,
    "rows": [
     {
      "label": "stock",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": 458.0,
      "decode_tps": 47.5,
      "ttft_s": 8.98
@@ -2322,6 +2795,7 @@
     {
      "label": "stock",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": 473.4,
      "decode_tps": 46.9,
      "ttft_s": 69.3
@@ -2329,6 +2803,7 @@
     {
      "label": "stock",
      "prompt_tokens": 128000.0,
+     "reused": null,
      "prompt_tps": 458.5,
      "decode_tps": 48.3,
      "ttft_s": 279.37
@@ -2336,6 +2811,7 @@
     {
      "label": "switches",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 50.5,
      "ttft_s": 5.09
@@ -2343,6 +2819,7 @@
     {
      "label": "switches",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 48.5,
      "ttft_s": 33.74
@@ -2350,6 +2827,7 @@
     {
      "label": "switches",
      "prompt_tokens": 128000.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 51.3,
      "ttft_s": 140.42
@@ -2357,6 +2835,7 @@
     {
      "label": "PRs",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 51.8,
      "ttft_s": 4.26
@@ -2364,6 +2843,7 @@
     {
      "label": "PRs",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 50.9,
      "ttft_s": 28.51
@@ -2371,6 +2851,7 @@
     {
      "label": "PRs",
      "prompt_tokens": 128000.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 50.0,
      "ttft_s": 113.92
@@ -2378,6 +2859,7 @@
     {
      "label": "stock",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": 446.5,
      "decode_tps": 62.1,
      "ttft_s": 9.21
@@ -2385,6 +2867,7 @@
     {
      "label": "stock",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": 723.4,
      "decode_tps": 67.0,
      "ttft_s": 45.37
@@ -2392,6 +2875,7 @@
     {
      "label": "stock",
      "prompt_tokens": 128000.0,
+     "reused": null,
      "prompt_tps": 821.2,
      "decode_tps": 59.0,
      "ttft_s": 156.06
@@ -2399,6 +2883,7 @@
     {
      "label": "stock",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": 459.2,
      "decode_tps": 71.3,
      "ttft_s": 8.95
@@ -2406,18 +2891,12 @@
     {
      "label": "stock",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": 473.6,
      "decode_tps": 66.4,
      "ttft_s": 69.26
     }
    ],
-   "headline_row": {
-    "label": "stock",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 458.0,
-    "decode_tps": 47.5,
-    "ttft_s": 8.98
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-2x-rx-6900xt-0.1.40.1",
     "readme_sha256": "7bb2fb4ab5875142d92e847137fb3563f7bb858f56cfccc28af0d407d8c70836"
@@ -2428,17 +2907,28 @@
    "date": "2026-10-06",
    "headline": "Community benchmark on 2x RTX PRO 4500 Blackwell, Swift IQ3_XXS, engine 0.1.40.1",
    "summary": null,
-   "gpu": "2x NVIDIA RTX PRO 4500 Blackwell, 32 GB GDDR7 each (GB203, SM 12.0, 200 W limit, unchanged), no NVLink, PCIe Gen 5 x16 to each card (maximum link as reported by nvidia-smi)",
-   "cpu": "AMD Ryzen Threadripper 7960X, 24 cores / 48 threads. RAM: 64 GB DDR5 (61 GiB usable)",
+   "cpu": "AMD Ryzen Threadripper 7960X, 24 cores / 48 threads",
    "ram": null,
-   "os": "Ubuntu 26.04.1 LTS, kernel 7.0.0-38-generic. Driver 595.91.07. CUDA 13.4 toolkit",
-   "engine": "tag v0.1.40.1, commit 82f46a8c8f475f001ad76d92f58f4a4f8ffb0253, source build for SM 120 (build.txt). Control: v0.1.39, commit 6f32ec070f23ced9f50e704d854d775da52591ab, source build",
+   "gpu": "2x RTX PRO 4500 Blackwell",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.40.1",
    "quant": "IQ3_XXS",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 3073.0,
+    "16k": null,
+    "32k": 5244.0,
+    "128k": 6127.0
+   },
+   "decode_tps": 154.8,
+   "humaneval": null,
    "rows": [
     {
      "label": "1k",
      "prompt_tokens": 1023.0,
+     "reused": 0.0,
      "prompt_tps": 1889.0,
      "decode_tps": 162.3,
      "ttft_s": null
@@ -2446,6 +2936,7 @@
     {
      "label": "4k",
      "prompt_tokens": 4234.0,
+     "reused": 0.0,
      "prompt_tps": 3073.0,
      "decode_tps": 154.8,
      "ttft_s": null
@@ -2453,6 +2944,7 @@
     {
      "label": "32k",
      "prompt_tokens": 30797.0,
+     "reused": 0.0,
      "prompt_tps": 5244.0,
      "decode_tps": 142.3,
      "ttft_s": null
@@ -2460,6 +2952,7 @@
     {
      "label": "128k",
      "prompt_tokens": 120608.0,
+     "reused": 0.0,
      "prompt_tps": 6127.0,
      "decode_tps": 133.6,
      "ttft_s": null
@@ -2467,6 +2960,7 @@
     {
      "label": "256k",
      "prompt_tokens": 248489.0,
+     "reused": 0.0,
      "prompt_tps": 5977.0,
      "decode_tps": 142.5,
      "ttft_s": null
@@ -2474,6 +2968,7 @@
     {
      "label": "1k",
      "prompt_tokens": 1870.0,
+     "reused": 1889.0,
      "prompt_tps": 162.3,
      "decode_tps": null,
      "ttft_s": null
@@ -2481,6 +2976,7 @@
     {
      "label": "4k",
      "prompt_tokens": 3036.0,
+     "reused": 3073.0,
      "prompt_tps": 154.8,
      "decode_tps": null,
      "ttft_s": null
@@ -2488,6 +2984,7 @@
     {
      "label": "32k",
      "prompt_tokens": 5136.0,
+     "reused": 5244.0,
      "prompt_tps": 142.3,
      "decode_tps": null,
      "ttft_s": null
@@ -2495,6 +2992,7 @@
     {
      "label": "128k",
      "prompt_tokens": 6073.0,
+     "reused": 6127.0,
      "prompt_tps": 133.6,
      "decode_tps": null,
      "ttft_s": null
@@ -2502,18 +3000,12 @@
     {
      "label": "256k",
      "prompt_tokens": 5958.0,
+     "reused": 5977.0,
      "prompt_tps": 142.5,
      "decode_tps": null,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "4k",
-    "prompt_tokens": 4234.0,
-    "prompt_tps": 3073.0,
-    "decode_tps": 154.8,
-    "ttft_s": null
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-2x-rtx-pro-4500-engine-0.1.40.1",
     "readme_sha256": "5ca31fc23c760635f852237fb3efa6cd22de6126d8516162e96219e074fdf2d5"
@@ -2524,17 +3016,28 @@
    "date": "2026-10-06",
    "headline": "Community benchmark: 2x Tesla P100 PCIe 16GB, Xeon E5-2699 v4",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Xeon E5-2699 v4",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "2x Tesla P100 PCIe",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ3_S",
    "context": 128000,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": 531.4
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "127,736-token fresh prompt, 256-token cap",
      "prompt_tokens": 127736.0,
+     "reused": 0.0,
      "prompt_tps": 531.4,
      "decode_tps": 31.2,
      "ttft_s": 350.9
@@ -2542,6 +3045,7 @@
     {
      "label": "1",
      "prompt_tokens": 240367.0,
+     "reused": 9084.0,
      "prompt_tps": 84.0,
      "decode_tps": 350.9,
      "ttft_s": 360.0
@@ -2549,6 +3053,7 @@
     {
      "label": "2",
      "prompt_tokens": 242588.0,
+     "reused": 8217.0,
      "prompt_tps": 89.2,
      "decode_tps": 352.4,
      "ttft_s": 360.6
@@ -2556,18 +3061,12 @@
     {
      "label": "3",
      "prompt_tokens": 240038.0,
+     "reused": 8088.0,
      "prompt_tps": 95.5,
      "decode_tps": 240.4,
      "ttft_s": 248.4
     }
    ],
-   "headline_row": {
-    "label": "127,736-token fresh prompt, 256-token cap",
-    "prompt_tokens": 127736.0,
-    "prompt_tps": 531.4,
-    "decode_tps": 31.2,
-    "ttft_s": 350.9
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-2x-p100",
     "readme_sha256": "831ee76c46a43fb879f3df0d5e9afe932797e2976c3555488672ae7b8d5ac35a"
@@ -2578,15 +3077,24 @@
    "date": "2026-10-05",
    "headline": "Community benchmark: Tesla V100-SXM2-32GB on Windows (CUDA 12.6, MSVC), three quantizations",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "Tesla V100-SXM2- on Windows (CUDA 12.6, MSVC)",
+   "vram_gb": 32,
+   "board": null,
+   "strata": "0.1.27",
    "quant": "Q2_0",
    "context": 32768,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-v100-sxm2",
     "readme_sha256": "43d1bae7c7496fa6fd3766ee44e6fa6fef24b04119eb3e08b6f066a606a4f225"
@@ -2597,17 +3105,28 @@
    "date": "2026-10-05",
    "headline": "Community benchmark: AMD Radeon RX 6700 XT 12 GB (gfx1031), Ryzen 7 5700G",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 7 5700G",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "AMD Radeon RX 6700 XT (gfx1031)",
+   "vram_gb": 12,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ2_XS",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 301.6,
+    "16k": null,
+    "32k": 309.4,
+    "128k": 298.2
+   },
+   "decode_tps": 32.1,
+   "humaneval": null,
    "rows": [
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 301.6,
      "decode_tps": 32.1,
      "ttft_s": 13.64
@@ -2615,6 +3134,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 309.4,
      "decode_tps": 30.7,
      "ttft_s": 106.02
@@ -2622,18 +3142,12 @@
     {
      "label": "128,000",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 298.2,
      "decode_tps": 30.2,
      "ttft_s": 429.52
     }
    ],
-   "headline_row": {
-    "label": "4,096",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 301.6,
-    "decode_tps": 32.1,
-    "ttft_s": 13.64
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-rx-6700-xt",
     "readme_sha256": "d48c6705f6d610c6892b6b3aa14b13c8b8c3c3759dce8359854befa6780811e4"
@@ -2644,17 +3158,28 @@
    "date": "2026-10-05",
    "headline": "Community benchmark on RTX 5080 + Ryzen 9 9900X3D",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 9 9900X3D",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 5080",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ3_S",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 2344.3,
+    "16k": null,
+    "32k": 3603.3,
+    "128k": 3488.3
+   },
+   "decode_tps": 93.3,
+   "humaneval": null,
    "rows": [
     {
      "label": "1k",
      "prompt_tokens": 1042.0,
+     "reused": null,
      "prompt_tps": 673.8,
      "decode_tps": 80.3,
      "ttft_s": 1.71
@@ -2662,6 +3187,7 @@
     {
      "label": "4k",
      "prompt_tokens": 4184.0,
+     "reused": null,
      "prompt_tps": 2344.3,
      "decode_tps": 93.3,
      "ttft_s": 1.84
@@ -2669,6 +3195,7 @@
     {
      "label": "32k",
      "prompt_tokens": 31513.0,
+     "reused": null,
      "prompt_tps": 3603.3,
      "decode_tps": 98.1,
      "ttft_s": 8.86
@@ -2676,6 +3203,7 @@
     {
      "label": "64k",
      "prompt_tokens": 64376.0,
+     "reused": null,
      "prompt_tps": 3596.1,
      "decode_tps": 85.5,
      "ttft_s": 18.08
@@ -2683,6 +3211,7 @@
     {
      "label": "128k",
      "prompt_tokens": 129580.0,
+     "reused": null,
      "prompt_tps": 3488.3,
      "decode_tps": 90.2,
      "ttft_s": 37.43
@@ -2690,6 +3219,7 @@
     {
      "label": "262k",
      "prompt_tokens": 257832.0,
+     "reused": null,
      "prompt_tps": 3255.5,
      "decode_tps": 91.0,
      "ttft_s": 80.63
@@ -2697,6 +3227,7 @@
     {
      "label": "1k",
      "prompt_tokens": 1042.0,
+     "reused": null,
      "prompt_tps": 482.9,
      "decode_tps": 48.3,
      "ttft_s": 2.42
@@ -2704,6 +3235,7 @@
     {
      "label": "4k",
      "prompt_tokens": 4185.0,
+     "reused": null,
      "prompt_tps": 1503.5,
      "decode_tps": 51.3,
      "ttft_s": 2.84
@@ -2711,6 +3243,7 @@
     {
      "label": "32k",
      "prompt_tokens": 31487.0,
+     "reused": null,
      "prompt_tps": 2214.5,
      "decode_tps": 39.0,
      "ttft_s": 14.37
@@ -2718,6 +3251,7 @@
     {
      "label": "64k",
      "prompt_tokens": 64377.0,
+     "reused": null,
      "prompt_tps": 2423.8,
      "decode_tps": 47.0,
      "ttft_s": 26.75
@@ -2725,6 +3259,7 @@
     {
      "label": "128k",
      "prompt_tokens": 129581.0,
+     "reused": null,
      "prompt_tps": 2285.0,
      "decode_tps": 39.6,
      "ttft_s": 57.0
@@ -2732,6 +3267,7 @@
     {
      "label": "262k",
      "prompt_tokens": 257822.0,
+     "reused": null,
      "prompt_tps": 1497.5,
      "decode_tps": 50.6,
      "ttft_s": 174.89
@@ -2739,6 +3275,7 @@
     {
      "label": "1k",
      "prompt_tokens": 1043.0,
+     "reused": null,
      "prompt_tps": 479.4,
      "decode_tps": 58.7,
      "ttft_s": 2.42
@@ -2746,18 +3283,12 @@
     {
      "label": "4k",
      "prompt_tokens": 4184.0,
+     "reused": null,
      "prompt_tps": 1480.1,
      "decode_tps": 59.2,
      "ttft_s": 2.87
     }
    ],
-   "headline_row": {
-    "label": "4k",
-    "prompt_tokens": 4184.0,
-    "prompt_tps": 2344.3,
-    "decode_tps": 93.3,
-    "ttft_s": 1.84
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-rtx5080-9900x3d",
     "readme_sha256": "4c6a921fe8e7592e9177189b2337eeaaf23ebafb885bcf7e8afc5ecf2a512c5e"
@@ -2768,17 +3299,28 @@
    "date": "2026-10-05",
    "headline": "Community benchmark: RTX 5090, Ryzen 7 9700X, IQ3_S",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 7 9700X",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 5090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ3_S",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 3072.0,
+    "16k": null,
+    "32k": 5963.0,
+    "128k": 5803.0
+   },
+   "decode_tps": 164.3,
+   "humaneval": null,
    "rows": [
     {
      "label": "4096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 3072.0,
      "decode_tps": 164.3,
      "ttft_s": 1.36
@@ -2786,6 +3328,7 @@
     {
      "label": "32768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 5963.0,
      "decode_tps": 161.3,
      "ttft_s": 5.55
@@ -2793,6 +3336,7 @@
     {
      "label": "128000",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 5803.0,
      "decode_tps": 168.4,
      "ttft_s": 22.25
@@ -2800,18 +3344,12 @@
     {
      "label": "261880",
      "prompt_tokens": 261880.0,
+     "reused": 0.0,
      "prompt_tps": 5535.0,
      "decode_tps": 170.5,
      "ttft_s": 47.67
     }
    ],
-   "headline_row": {
-    "label": "4096",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 3072.0,
-    "decode_tps": 164.3,
-    "ttft_s": 1.36
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-rtx-5090-9700x-iq3s",
     "readme_sha256": "8320ad96bb3bceed8ba5955fc53bbc72b3ee57a90b899ba83d451ceea7a44ee3"
@@ -2822,17 +3360,28 @@
    "date": "2026-10-05",
    "headline": "Community benchmark (rerun): 2x RTX 5060 Ti (16 GB), Xeon E5-2690 v4",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Xeon E5-2690 v4",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "(rerun): 2x RTX 5060 Ti ()",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ3_XXS",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 911.0,
+    "16k": null,
+    "32k": 2087.0,
+    "128k": 2440.0
+   },
+   "decode_tps": 84.8,
+   "humaneval": null,
    "rows": [
     {
      "label": "IQ3_XXS, 2 GPUs, 4,096-token prompt",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 911.0,
      "decode_tps": 84.8,
      "ttft_s": 4.54
@@ -2840,6 +3389,7 @@
     {
      "label": "IQ3_XXS, 2 GPUs, 32,768-token prompt",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 2087.0,
      "decode_tps": 86.5,
      "ttft_s": 15.82
@@ -2847,18 +3397,12 @@
     {
      "label": "IQ3_XXS, 2 GPUs, 128,000-token prompt",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 2440.0,
      "decode_tps": 83.8,
      "ttft_s": 52.87
     }
    ],
-   "headline_row": {
-    "label": "IQ3_XXS, 2 GPUs, 4,096-token prompt",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 911.0,
-    "decode_tps": 84.8,
-    "ttft_s": 4.54
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-rtx-5060-ti-x2",
     "readme_sha256": "c039eeea8991a68c426de7c710bb9347faddf14c28cff6e716cb47380d28fd7a"
@@ -2869,15 +3413,24 @@
    "date": "2026-10-05",
    "headline": "Community benchmark: RTX 4070 Ti SUPER, Ryzen 7 9800X3D",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 7 9800X3D",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 4070 Ti SUPER",
+   "vram_gb": null,
+   "board": null,
+   "strata": null,
    "quant": "IQ2_XS",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-rtx-4070-ti-super",
     "readme_sha256": "284fa769934a85788fed7d962733eab18c159010f7e2869e7bc9b3d293769fda"
@@ -2888,15 +3441,24 @@
    "date": "2026-10-05",
    "headline": "Community report: Radeon 8060S (gfx1151), Ryzen AI Max+ 395",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen AI Max+ 395",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": ": Radeon 8060S (gfx1151)",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "Q2_0",
    "context": 65536,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-gfx1151",
     "readme_sha256": "effb2c3358442b4e08430a2e33b81af2e483c7a689ac98ce46454e02275344a7"
@@ -2907,15 +3469,24 @@
    "date": "2026-10-05",
    "headline": "Community benchmark: RTX 4060 Ti 16 GB, Xeon E5-2673 v3 (AVX2), DDR3, PCIe 3.0 x8",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Xeon E5-2673 v3 (AVX2)",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 4060 Ti",
+   "vram_gb": 16,
+   "board": null,
+   "strata": null,
    "quant": "Q2_0",
    "context": 65536,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-e5-2673v3-rtx-4060ti",
     "readme_sha256": "87522fa5a70a034dad24bc6a9106aa237683b8e551666f47522c1fbbddeba74d"
@@ -2926,17 +3497,28 @@
    "date": "2026-10-05",
    "headline": "Community benchmark: Intel Arc Pro B65, PCIe Gen4 x16",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "Intel Arc Pro B65",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.40",
    "quant": "IQ2_XS",
    "context": 8192,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "512",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": 352.96,
      "decode_tps": 48.82,
      "ttft_s": 1.48
@@ -2944,6 +3526,7 @@
     {
      "label": "512",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": 353.54,
      "decode_tps": 47.29,
      "ttft_s": 1.48
@@ -2951,6 +3534,7 @@
     {
      "label": "512",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": 349.61,
      "decode_tps": 37.46,
      "ttft_s": 1.5
@@ -2958,6 +3542,7 @@
     {
      "label": "512",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": 358.77,
      "decode_tps": 41.21,
      "ttft_s": 1.46
@@ -2965,6 +3550,7 @@
     {
      "label": "512",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": 350.93,
      "decode_tps": 41.28,
      "ttft_s": 1.49
@@ -2972,6 +3558,7 @@
     {
      "label": "7000",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": 307.75,
      "decode_tps": 47.24,
      "ttft_s": 22.78
@@ -2979,6 +3566,7 @@
     {
      "label": "7000",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": 307.71,
      "decode_tps": 47.73,
      "ttft_s": 22.78
@@ -2986,6 +3574,7 @@
     {
      "label": "7000",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": 307.35,
      "decode_tps": 35.82,
      "ttft_s": 22.81
@@ -2993,6 +3582,7 @@
     {
      "label": "7000",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": 307.16,
      "decode_tps": 40.89,
      "ttft_s": 22.82
@@ -3000,6 +3590,7 @@
     {
      "label": "7000",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": 307.61,
      "decode_tps": 40.16,
      "ttft_s": 22.79
@@ -3007,6 +3598,7 @@
     {
      "label": "1",
      "prompt_tokens": null,
+     "reused": 1.48,
      "prompt_tps": 16.96,
      "decode_tps": null,
      "ttft_s": null
@@ -3014,6 +3606,7 @@
     {
      "label": "1",
      "prompt_tokens": null,
+     "reused": 22.79,
      "prompt_tps": 38.42,
      "decode_tps": null,
      "ttft_s": null
@@ -3021,6 +3614,7 @@
     {
      "label": "2",
      "prompt_tokens": null,
+     "reused": 1.55,
      "prompt_tps": 17.38,
      "decode_tps": null,
      "ttft_s": null
@@ -3028,12 +3622,12 @@
     {
      "label": "2",
      "prompt_tokens": null,
+     "reused": 23.93,
      "prompt_tps": 39.98,
      "decode_tps": null,
      "ttft_s": null
     }
    ],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-arc-b65",
     "readme_sha256": "24747b3111cabfaa4af71dec38ee5564fd0b142d6b08e5e6c15f98be4c51e265"
@@ -3044,17 +3638,28 @@
    "date": "2026-10-05",
    "headline": "Community benchmark: 2x AMD Radeon RX 6900 XT 16 GB (gfx1030), Ryzen 5 5600X, 128 GB RAM",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Ryzen 5 5600X",
+   "ram": "128 GB RAM",
+   "gpu": "2x AMD Radeon RX 6900 XT (gfx1030)",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ3_S",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 457.0,
+    "16k": null,
+    "32k": 473.6,
+    "128k": 458.6
+   },
+   "decode_tps": 40.2,
+   "humaneval": null,
    "rows": [
     {
      "label": "stock",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": 457.0,
      "decode_tps": 40.2,
      "ttft_s": 9.0
@@ -3062,6 +3667,7 @@
     {
      "label": "stock",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": 473.6,
      "decode_tps": 43.4,
      "ttft_s": 69.37
@@ -3069,6 +3675,7 @@
     {
      "label": "stock",
      "prompt_tokens": 128000.0,
+     "reused": null,
      "prompt_tps": 458.6,
      "decode_tps": 41.4,
      "ttft_s": 279.29
@@ -3076,6 +3683,7 @@
     {
      "label": "PRs",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 42.0,
      "ttft_s": 4.76
@@ -3083,6 +3691,7 @@
     {
      "label": "PRs",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 42.9,
      "ttft_s": 29.88
@@ -3090,6 +3699,7 @@
     {
      "label": "PRs",
      "prompt_tokens": 128000.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 39.6,
      "ttft_s": 125.27
@@ -3097,6 +3707,7 @@
     {
      "label": "stock",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": 445.6,
      "decode_tps": 58.9,
      "ttft_s": 9.23
@@ -3104,6 +3715,7 @@
     {
      "label": "stock",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": 722.7,
      "decode_tps": 60.6,
      "ttft_s": 45.41
@@ -3111,6 +3723,7 @@
     {
      "label": "stock",
      "prompt_tokens": 128000.0,
+     "reused": null,
      "prompt_tps": 820.8,
      "decode_tps": 58.2,
      "ttft_s": 156.14
@@ -3118,6 +3731,7 @@
     {
      "label": "PRs",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 59.3,
      "ttft_s": 4.84
@@ -3125,6 +3739,7 @@
     {
      "label": "PRs",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 59.0,
      "ttft_s": 20.35
@@ -3132,6 +3747,7 @@
     {
      "label": "PRs",
      "prompt_tokens": 128000.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 57.4,
      "ttft_s": 70.4
@@ -3139,6 +3755,7 @@
     {
      "label": "stock, probed share 0.39",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": 457.3,
      "decode_tps": 42.3,
      "ttft_s": 8.99
@@ -3146,18 +3763,12 @@
     {
      "label": "stock, probed share 0.39",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": 473.0,
      "decode_tps": 40.5,
      "ttft_s": 69.35
     }
    ],
-   "headline_row": {
-    "label": "stock",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 457.0,
-    "decode_tps": 40.2,
-    "ttft_s": 9.0
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-2x-rx-6900xt",
     "readme_sha256": "bf192e5a0e6fd18151a8913b8a104c0125380c0b4a3ab202fe9b85f6f790d14f"
@@ -3168,17 +3779,28 @@
    "date": "2026-10-05",
    "headline": "Community benchmark: 2x RTX 4060 Ti 16 GB, Threadripper PRO 3975WX",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "2x RTX 4060 Ti",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "UD-IQ4_XS",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 880.0,
+    "16k": null,
+    "32k": 1917.0,
+    "128k": 2221.0
+   },
+   "decode_tps": 54.4,
+   "humaneval": null,
    "rows": [
     {
      "label": "prod (Italian draft vocab)",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 880.0,
      "decode_tps": 54.4,
      "ttft_s": 4.7
@@ -3186,6 +3808,7 @@
     {
      "label": "prod",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 1917.0,
      "decode_tps": 56.6,
      "ttft_s": 17.2
@@ -3193,6 +3816,7 @@
     {
      "label": "prod",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 2221.0,
      "decode_tps": 54.7,
      "ttft_s": 58.0
@@ -3200,6 +3824,7 @@
     {
      "label": "stock (default draft vocab)",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 906.0,
      "decode_tps": 51.9,
      "ttft_s": 4.6
@@ -3207,6 +3832,7 @@
     {
      "label": "stock",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 1934.0,
      "decode_tps": 55.3,
      "ttft_s": 17.0
@@ -3214,18 +3840,12 @@
     {
      "label": "stock",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 2234.0,
      "decode_tps": 55.7,
      "ttft_s": 57.6
     }
    ],
-   "headline_row": {
-    "label": "prod (Italian draft vocab)",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 880.0,
-    "decode_tps": 54.4,
-    "ttft_s": 4.7
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-2x-rtx-4060ti",
     "readme_sha256": "684f4df08cd73b9cd8edf11a9bfab6181a3d27104262a05f1125b97e7ca1345f"
@@ -3236,17 +3856,28 @@
    "date": "2026-10-05",
    "headline": "Community benchmark: 2x Tesla P40 22 GB (Pascal, sm_61), 2x Xeon E5-2698 v4",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "2x Xeon E5-2698 v4",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "2x Tesla P40 (Pascal, sm_61)",
+   "vram_gb": 22,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ2_XS",
    "context": 32768,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 348.0,
+    "16k": 388.0,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": 16.1,
+   "humaneval": null,
    "rows": [
     {
      "label": "single P40 (GPU1), 34-token prompt, 400 generated",
      "prompt_tokens": 34.0,
+     "reused": 0.0,
      "prompt_tps": 53.0,
      "decode_tps": 19.6,
      "ttft_s": 0.69
@@ -3254,6 +3885,7 @@
     {
      "label": "single P40 (GPU1), 4,000-token prompt, 64 generated",
      "prompt_tokens": 4000.0,
+     "reused": 0.0,
      "prompt_tps": 348.0,
      "decode_tps": 16.1,
      "ttft_s": 11.54
@@ -3261,6 +3893,7 @@
     {
      "label": "single P40 (GPU1), 15,920-token prompt, 64 generated",
      "prompt_tokens": 15920.0,
+     "reused": 0.0,
      "prompt_tps": 388.0,
      "decode_tps": 23.7,
      "ttft_s": 41.11
@@ -3268,6 +3901,7 @@
     {
      "label": "both P40s, 34-token prompt, 400 generated",
      "prompt_tokens": 34.0,
+     "reused": 0.0,
      "prompt_tps": 55.0,
      "decode_tps": 34.8,
      "ttft_s": 0.66
@@ -3275,6 +3909,7 @@
     {
      "label": "both P40s, 4,000-token prompt, 64 generated",
      "prompt_tokens": 4000.0,
+     "reused": 0.0,
      "prompt_tps": 353.0,
      "decode_tps": 37.8,
      "ttft_s": 11.4
@@ -3282,18 +3917,12 @@
     {
      "label": "both P40s, 15,920-token prompt, 64 generated",
      "prompt_tokens": 15920.0,
+     "reused": 0.0,
      "prompt_tps": 501.0,
      "decode_tps": 37.2,
      "ttft_s": 31.93
     }
    ],
-   "headline_row": {
-    "label": "single P40 (GPU1), 4,000-token prompt, 64 generated",
-    "prompt_tokens": 4000.0,
-    "prompt_tps": 348.0,
-    "decode_tps": 16.1,
-    "ttft_s": 11.54
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-2x-p40",
     "readme_sha256": "aa645a17285097459e1303fd6e06417617c956a317d10f81b1418747be1ab572"
@@ -3304,17 +3933,28 @@
    "date": "2026-10-04",
    "headline": "Community benchmark: Tesla V100 32 GB + RTX 4070 12 GB layer split, 16 GB of system RAM",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "Tesla V100",
+   "vram_gb": 32,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ2_XS",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 996.0,
+    "16k": null,
+    "32k": 1602.0,
+    "128k": 1552.0
+   },
+   "decode_tps": 84.9,
+   "humaneval": "154/164",
    "rows": [
     {
      "label": "V100 first, auto (K=39)",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 996.0,
      "decode_tps": 84.9,
      "ttft_s": 4.14
@@ -3322,6 +3962,7 @@
     {
      "label": "V100 first, auto (K=39)",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 1602.0,
      "decode_tps": 81.5,
      "ttft_s": 20.53
@@ -3329,6 +3970,7 @@
     {
      "label": "V100 first, auto (K=39)",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 1552.0,
      "decode_tps": 75.1,
      "ttft_s": 82.61
@@ -3336,6 +3978,7 @@
     {
      "label": "4070 first, auto (K=11)",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 985.0,
      "decode_tps": 79.1,
      "ttft_s": 4.19
@@ -3343,6 +3986,7 @@
     {
      "label": "4070 first, auto (K=11)",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 1535.0,
      "decode_tps": 83.8,
      "ttft_s": 21.45
@@ -3350,18 +3994,12 @@
     {
      "label": "4070 first, auto (K=11)",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 1533.0,
      "decode_tps": 77.1,
      "ttft_s": 83.64
     }
    ],
-   "headline_row": {
-    "label": "V100 first, auto (K=39)",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 996.0,
-    "decode_tps": 84.9,
-    "ttft_s": 4.14
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-v100-rtx4070-split",
     "readme_sha256": "547726efdec539a2c3dd24df91b3f21dc6eff06443d39d3f51c67224dd8c57c1"
@@ -3372,17 +4010,28 @@
    "date": "2026-10-04",
    "headline": "Community benchmark on Tesla V100-PCIE-32GB with 16 GB of system RAM",
    "summary": null,
-   "gpu": "Tesla V100-PCIE-32GB (sm_70), PCIe 3.0 x4 (the 16-lane slot holds an RTX 4070 12 GB that drives the display",
    "cpu": null,
    "ram": null,
-   "os": "Ubuntu 24.04.4 LTS, kernel 7.0.0-30-generic; NVIDIA driver 580.173.02; CUDA 12.9 toolkit.",
-   "engine": null,
+   "gpu": "Tesla V100-PCIE- with of system RAM",
+   "vram_gb": 32,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ1_M",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 1233.0,
+    "16k": null,
+    "32k": 1580.0,
+    "128k": 1394.0
+   },
+   "decode_tps": 69.3,
+   "humaneval": "158/164",
    "rows": [
     {
      "label": "Coder IQ1_M, V100 only",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 1233.0,
      "decode_tps": 69.3,
      "ttft_s": 3.35
@@ -3390,6 +4039,7 @@
     {
      "label": "Coder IQ1_M, V100 only",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 1580.0,
      "decode_tps": 68.6,
      "ttft_s": 20.8
@@ -3397,18 +4047,12 @@
     {
      "label": "Coder IQ1_M, V100 only",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 1394.0,
      "decode_tps": 67.1,
      "ttft_s": 92.01
     }
    ],
-   "headline_row": {
-    "label": "Coder IQ1_M, V100 only",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 1233.0,
-    "decode_tps": 69.3,
-    "ttft_s": 3.35
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-v100-16gb-ram",
     "readme_sha256": "8f839d60757e8398d7c54435c49a3f417e9adb98fea8c57eb83b64d3dc9bbc1d"
@@ -3419,17 +4063,28 @@
    "date": "2026-10-04",
    "headline": "Community benchmark on AMD Radeon RX 7900 XTX 24 GB — follow-up: a gfx1100 hipBLASLt 100500 table, the 128K prefill confound resolved",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "AMD Radeon RX 7900 XTX — follow-up: a gfx1100 hipBLASLt 100500 table",
+   "vram_gb": 24,
+   "board": null,
+   "strata": null,
    "quant": "IQ3_S",
    "context": 139264,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "nightly 10.2 + gfx1100-100500 table",
      "prompt_tokens": 131071.0,
+     "reused": 0.0,
      "prompt_tps": null,
      "decode_tps": 62.26,
      "ttft_s": null
@@ -3437,6 +4092,7 @@
     {
      "label": "nightly 10.2, no table (parent's r10 condition)",
      "prompt_tokens": 131071.0,
+     "reused": 0.0,
      "prompt_tps": null,
      "decode_tps": 60.69,
      "ttft_s": null
@@ -3444,12 +4100,12 @@
     {
      "label": "sanity: nightly 10.2 + table, 1k prompt",
      "prompt_tokens": 1023.0,
+     "reused": 0.0,
      "prompt_tps": null,
      "decode_tps": 69.38,
      "ttft_s": null
     }
    ],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rx7900xtx-hipblaslt-100500",
     "readme_sha256": "9ee75745e4a4aab6cd83bf9bdc6fc71bbb2f05d59f57a1a32b2c780e475af50e"
@@ -3460,17 +4116,28 @@
    "date": "2026-10-04",
    "headline": "Community benchmark: RX 7900 GRE (gfx1100, 16 GB), Ryzen 7 5700X3D",
    "summary": null,
-   "gpu": "AMD Radeon RX 7900 GRE, gfx1100, 16 GB. The amdgpu sysfs counters report",
-   "cpu": "AMD Ryzen 7 5700X3D, 8 cores / 16 threads. The engine reported \"no",
+   "cpu": "Ryzen 7 5700X3D",
    "ram": null,
-   "os": "NixOS with a CachyOS kernel, 7.2.4-cachyos, amdgpu/KFD. ROCm 7.2.3 from",
-   "engine": null,
+   "gpu": "RX 7900 GRE (gfx1100,)",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.38",
    "quant": "IQ1_M",
    "context": 65536,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 1224.1,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": 48.5,
+   "humaneval": null,
    "rows": [
     {
      "label": "Coder IQ1_M",
      "prompt_tokens": 4210.0,
+     "reused": 0.0,
      "prompt_tps": 1224.1,
      "decode_tps": 48.5,
      "ttft_s": null
@@ -3478,6 +4145,7 @@
     {
      "label": "Coder IQ1_M",
      "prompt_tokens": 8830.0,
+     "reused": 0.0,
      "prompt_tps": 1213.2,
      "decode_tps": 54.7,
      "ttft_s": null
@@ -3485,6 +4153,7 @@
     {
      "label": "Flash-Next IQ2_XS",
      "prompt_tokens": 4210.0,
+     "reused": 0.0,
      "prompt_tps": 1145.5,
      "decode_tps": 64.5,
      "ttft_s": null
@@ -3492,6 +4161,7 @@
     {
      "label": "Flash-Next IQ2_XS",
      "prompt_tokens": 8830.0,
+     "reused": 0.0,
      "prompt_tps": 1154.7,
      "decode_tps": 65.3,
      "ttft_s": null
@@ -3499,6 +4169,7 @@
     {
      "label": "Flash-Next IQ3_XXS",
      "prompt_tokens": 4210.0,
+     "reused": 0.0,
      "prompt_tps": 1147.5,
      "decode_tps": 54.2,
      "ttft_s": null
@@ -3506,6 +4177,7 @@
     {
      "label": "Flash-Next IQ3_XXS",
      "prompt_tokens": 8830.0,
+     "reused": 0.0,
      "prompt_tps": 1140.1,
      "decode_tps": 59.1,
      "ttft_s": null
@@ -3513,6 +4185,7 @@
     {
      "label": "Coder IQ1_M",
      "prompt_tokens": 4451.0,
+     "reused": 4337.0,
      "prompt_tps": 114.0,
      "decode_tps": 47.8,
      "ttft_s": null
@@ -3520,6 +4193,7 @@
     {
      "label": "Coder IQ1_M",
      "prompt_tokens": 9071.0,
+     "reused": 8957.0,
      "prompt_tps": 114.0,
      "decode_tps": 47.8,
      "ttft_s": null
@@ -3527,6 +4201,7 @@
     {
      "label": "Flash-Next IQ2_XS",
      "prompt_tokens": 4451.0,
+     "reused": 4203.0,
      "prompt_tps": 113.0,
      "decode_tps": 66.3,
      "ttft_s": null
@@ -3534,6 +4209,7 @@
     {
      "label": "Flash-Next IQ2_XS",
      "prompt_tokens": 9071.0,
+     "reused": 8957.0,
      "prompt_tps": 113.0,
      "decode_tps": 73.0,
      "ttft_s": null
@@ -3541,6 +4217,7 @@
     {
      "label": "Flash-Next IQ3_XXS",
      "prompt_tokens": 4451.0,
+     "reused": 4203.0,
      "prompt_tps": 113.0,
      "decode_tps": 51.9,
      "ttft_s": null
@@ -3548,6 +4225,7 @@
     {
      "label": "Flash-Next IQ3_XXS",
      "prompt_tokens": 9071.0,
+     "reused": 8823.0,
      "prompt_tps": 248.0,
      "decode_tps": 53.0,
      "ttft_s": null
@@ -3555,6 +4233,7 @@
     {
      "label": "Coder IQ1_M",
      "prompt_tokens": null,
+     "reused": 68.2,
      "prompt_tps": 84.0,
      "decode_tps": null,
      "ttft_s": null
@@ -3562,18 +4241,12 @@
     {
      "label": "Flash-Next IQ2_XS",
      "prompt_tokens": null,
+     "reused": 70.6,
      "prompt_tps": 88.9,
      "decode_tps": null,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "Coder IQ1_M",
-    "prompt_tokens": 4210.0,
-    "prompt_tps": 1224.1,
-    "decode_tps": 48.5,
-    "ttft_s": null
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rx-7900-gre",
     "readme_sha256": "d2c32c9539d733d23662751e13b1f2a8bc8f64c825753a38cf917c2b3d0a870f"
@@ -3584,15 +4257,24 @@
    "date": "2026-10-04",
    "headline": "Community benchmark: RX 6800 (Windows), 0.1.39 against 0.1.38",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RX 6800",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ2_XS",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rx-6800-windows",
     "readme_sha256": "a6166e2435718a60e93a38773350d8e2457cc778b829eb851f8fbf392db90530"
@@ -3603,17 +4285,28 @@
    "date": "2026-10-04",
    "headline": "Community benchmark: NVIDIA GeForce RTX 4090",
    "summary": null,
-   "gpu": "NVIDIA GeForce RTX 4090; 23028 MiB reported VRAM; 480.00 W power limit; PCIe bus 00000000:01:00.0; PCIe link speed and width: not measured. GPU clocks were not fixed.",
-   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs).",
-   "ram": "46464 MiB installed; storage layout: see env.json (lsblk output).",
-   "os": null,
-   "engine": null,
+   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs)",
+   "ram": "46464 MiB installed",
+   "gpu": "NVIDIA GeForce RTX 4090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ3_XXS",
    "context": 204800,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 1907.8,
+    "16k": null,
+    "32k": 3128.0,
+    "128k": 3126.4
+   },
+   "decode_tps": 81.1,
+   "humaneval": null,
    "rows": [
     {
      "label": "4096-prompt",
      "prompt_tokens": 4028.0,
+     "reused": 0.0,
      "prompt_tps": 1907.8,
      "decode_tps": 81.1,
      "ttft_s": 2.14
@@ -3621,6 +4314,7 @@
     {
      "label": "32768-prompt",
      "prompt_tokens": 31828.0,
+     "reused": 0.0,
      "prompt_tps": 3128.0,
      "decode_tps": 90.5,
      "ttft_s": 10.31
@@ -3628,6 +4322,7 @@
     {
      "label": "131072-prompt",
      "prompt_tokens": 127228.0,
+     "reused": 0.0,
      "prompt_tps": 3126.4,
      "decode_tps": 87.8,
      "ttft_s": 41.17
@@ -3635,18 +4330,12 @@
     {
      "label": "gen-only",
      "prompt_tokens": 228.0,
+     "reused": 0.0,
      "prompt_tps": 296.2,
      "decode_tps": 93.6,
      "ttft_s": 0.78
     }
    ],
-   "headline_row": {
-    "label": "4096-prompt",
-    "prompt_tokens": 4028.0,
-    "prompt_tps": 1907.8,
-    "decode_tps": 81.1,
-    "ttft_s": 2.14
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rtx4090-iq3xxs-200k-ru",
     "readme_sha256": "1e00daa6b388d4ee9fd2e8090172c931f82fdbf464fc9e783ab50ef55b246f38"
@@ -3657,17 +4346,28 @@
    "date": "2026-10-04",
    "headline": "Community benchmark: NVIDIA GeForce RTX 4090",
    "summary": null,
-   "gpu": "NVIDIA GeForce RTX 4090; 23028 MiB reported VRAM; 480.00 W power limit; PCIe bus 00000000:01:00.0; PCIe link speed and width: not measured. GPU clocks were not fixed.",
-   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs).",
-   "ram": "46464 MiB installed; storage layout: see env.json (lsblk output).",
-   "os": null,
-   "engine": null,
+   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs)",
+   "ram": "46464 MiB installed",
+   "gpu": "NVIDIA GeForce RTX 4090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ3_XXS",
    "context": 204800,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 1966.2,
+    "16k": null,
+    "32k": 2973.7,
+    "128k": 3084.9
+   },
+   "decode_tps": 123.6,
+   "humaneval": null,
    "rows": [
     {
      "label": "4096-prompt",
      "prompt_tokens": 3971.0,
+     "reused": 0.0,
      "prompt_tps": 1966.2,
      "decode_tps": 123.6,
      "ttft_s": 2.04
@@ -3675,6 +4375,7 @@
     {
      "label": "32768-prompt",
      "prompt_tokens": 31307.0,
+     "reused": 0.0,
      "prompt_tps": 2973.7,
      "decode_tps": 134.9,
      "ttft_s": 10.61
@@ -3682,6 +4383,7 @@
     {
      "label": "131072-prompt",
      "prompt_tokens": 125011.0,
+     "reused": 0.0,
      "prompt_tps": 3084.9,
      "decode_tps": 120.3,
      "ttft_s": 40.82
@@ -3689,18 +4391,12 @@
     {
      "label": "gen-only",
      "prompt_tokens": 163.0,
+     "reused": 0.0,
      "prompt_tps": 205.3,
      "decode_tps": 135.8,
      "ttft_s": 0.81
     }
    ],
-   "headline_row": {
-    "label": "4096-prompt",
-    "prompt_tokens": 3971.0,
-    "prompt_tps": 1966.2,
-    "decode_tps": 123.6,
-    "ttft_s": 2.04
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rtx4090-iq3xxs-200k-code",
     "readme_sha256": "fbb1bdd42640d581b7248f74995db50adcfa18d3dafbba7091c7b727ade1e872"
@@ -3711,17 +4407,28 @@
    "date": "2026-10-04",
    "headline": "Community benchmark: RTX 5090, Ryzen 7 9700X",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 7 9700X",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 5090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ3_XXS",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 3775.0,
+    "16k": null,
+    "32k": 6367.0,
+    "128k": 6080.0
+   },
+   "decode_tps": 171.7,
+   "humaneval": null,
    "rows": [
     {
      "label": "4096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 3775.0,
      "decode_tps": 171.7,
      "ttft_s": 1.11
@@ -3729,6 +4436,7 @@
     {
      "label": "32768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 6367.0,
      "decode_tps": 181.2,
      "ttft_s": 5.22
@@ -3736,18 +4444,12 @@
     {
      "label": "128000",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 6080.0,
      "decode_tps": 178.3,
      "ttft_s": 21.24
     }
    ],
-   "headline_row": {
-    "label": "4096",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 3775.0,
-    "decode_tps": 171.7,
-    "ttft_s": 1.11
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rtx-5090-9700x",
     "readme_sha256": "a8c6fcb3dace0a141ce16e4dd5f7348ca7a851b8cbc8000c4b08beb5038aad07"
@@ -3758,15 +4460,24 @@
    "date": "2026-10-04",
    "headline": "Community benchmark: RTX 5070 Ti, Ryzen 7 9800X3D, Windows 11",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 7 9800X3D",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 5070 Ti",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ3_S",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rtx-5070ti-windows",
     "readme_sha256": "73ea66d413cde5c49f16cd8ad8251d9dc529fad24d3c82daaee1506bc0b09325"
@@ -3777,17 +4488,28 @@
    "date": "2026-10-04",
    "headline": "Community benchmark: RTX 4090 Laptop GPU, Core i9-13900HX",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Core i9-13900HX",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 4090 Laptop GPU",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.38",
    "quant": "IQ3_S",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 1345.0,
+    "16k": null,
+    "32k": 2505.5,
+    "128k": 2385.8
+   },
+   "decode_tps": 51.2,
+   "humaneval": null,
    "rows": [
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 1345.0,
      "decode_tps": 51.2,
      "ttft_s": 3.084
@@ -3795,6 +4517,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 2505.5,
      "decode_tps": 49.9,
      "ttft_s": 13.15
@@ -3802,18 +4525,12 @@
     {
      "label": "128,000",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 2385.8,
      "decode_tps": 48.1,
      "ttft_s": 53.818
     }
    ],
-   "headline_row": {
-    "label": "4,096",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 1345.0,
-    "decode_tps": 51.2,
-    "ttft_s": 3.084
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rtx-4090-laptop",
     "readme_sha256": "6d2bf1309d4248dae17248db9458b340ad23e3aab5be22d4b731329201fe2663"
@@ -3824,15 +4541,24 @@
    "date": "2026-10-04",
    "headline": "Community benchmark: RTX 4080 SUPER (32 GB), Core i7-13790F",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Core i7-13790F",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 4080 SUPER ()",
+   "vram_gb": 32,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ3_S",
    "context": 524288,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rtx-4080s-iq3s",
     "readme_sha256": "a9013a0cbbcd5e74b6bbe91b63e728709f4257793f7882834d14af20e0bb7268"
@@ -3843,17 +4569,28 @@
    "date": "2026-10-04",
    "headline": "Community benchmark: AMD MI50 (gfx906), Intel i5-12400F",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Intel i5-12400F",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "AMD MI50 (gfx906)",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.38",
    "quant": "IQ2_XS",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 331.9,
+    "16k": null,
+    "32k": 327.2,
+    "128k": 305.2
+   },
+   "decode_tps": 36.0,
+   "humaneval": null,
    "rows": [
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 331.9,
      "decode_tps": 36.0,
      "ttft_s": 12.4
@@ -3861,6 +4598,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 327.2,
      "decode_tps": 34.0,
      "ttft_s": 100.2
@@ -3868,18 +4606,12 @@
     {
      "label": "128,000",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 305.2,
      "decode_tps": 33.5,
      "ttft_s": 419.6
     }
    ],
-   "headline_row": {
-    "label": "4,096",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 331.9,
-    "decode_tps": 36.0,
-    "ttft_s": 12.4
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-mi50",
     "readme_sha256": "cbd6487e8fc27d6cfca85e95aa6e59f96b10e9f9a70b24d7ffe755d54182701f"
@@ -3890,15 +4622,24 @@
    "date": "2026-10-04",
    "headline": "Community report: Flash-Next IQ2_XS on Strata vs a dense 27B, as coding agents on one RTX 4090 + 32 GB RAM",
    "summary": null,
-   "gpu": null,
    "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "ram": "32 GB RAM",
+   "gpu": "as coding agents on one RTX 4090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ2_XS",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-4090-agents-vs-dense-27b",
     "readme_sha256": "ba84ee34c3c5b2ee69cbe235bcfbf72c1cb95579ae540b8bc49dc414e63d2488"
@@ -3909,15 +4650,24 @@
    "date": "2026-10-04",
    "headline": "Community benchmark: RTX 4090 24 GB with 32 GB of system RAM, 512K context (IQ2_XS)",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 4090 with of system RAM",
+   "vram_gb": 24,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ2_XS",
    "context": 524288,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-4090-32gb-ram-512k",
     "readme_sha256": "d103bfe113b324c1285ed68b11046d584960f39c4740140d2e2b37fb757038a7"
@@ -3928,17 +4678,28 @@
    "date": "2026-10-04",
    "headline": "Community benchmark: 2× RTX 3060 12 GB (Xeon E5-2678 v3), Qwen3.8-Flash-Next IQ3_S",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "2× RTX 3060 (Xeon E5-2678 v3)",
+   "vram_gb": 12,
+   "board": null,
+   "strata": "0.1.37",
    "quant": "IQ3_S",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "IQ3_S, 524,288 ctx, greedy, 256 cap",
      "prompt_tokens": 3197.0,
+     "reused": 0.0,
      "prompt_tps": 603.0,
      "decode_tps": 43.6,
      "ttft_s": 5.4
@@ -3946,6 +4707,7 @@
     {
      "label": "IQ3_S, 524,288 ctx, greedy, 256 cap",
      "prompt_tokens": 24798.0,
+     "reused": 0.0,
      "prompt_tps": 1156.3,
      "decode_tps": 42.5,
      "ttft_s": 21.8
@@ -3953,18 +4715,12 @@
     {
      "label": "IQ3_S, 524,288 ctx, greedy, 256 cap",
      "prompt_tokens": 98599.0,
+     "reused": 0.0,
      "prompt_tps": 1323.3,
      "decode_tps": 40.0,
      "ttft_s": 75.5
     }
    ],
-   "headline_row": {
-    "label": "IQ3_S, 524,288 ctx, greedy, 256 cap",
-    "prompt_tokens": 3197.0,
-    "prompt_tps": 603.0,
-    "decode_tps": 43.6,
-    "ttft_s": 5.4
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-2x-rtx3060",
     "readme_sha256": "37089fccc8460d6ec048983ab5c090d9af999ef62d14651df4ea95e0b5fcbc2e"
@@ -3975,17 +4731,28 @@
    "date": "2026-10-04",
    "headline": "2x Intel Arc Pro B60 24 GB, Ryzen 5 5600, 64 GB RAM",
    "summary": "the SYCL port at 6f32ec0 with two fixes, Coder IQ1_M and Flash-Next IQ2_XS, 8,192-token context, layer split across both cards; short prompts and 2K-token prompts, plus one run on a single B60. Intel's SYCL engine, no 4,096/32,768/128,000-token sweep.",
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Ryzen 5 5600",
+   "ram": "64 GB RAM",
+   "gpu": "2x Intel Arc Pro B60",
+   "vram_gb": 24,
+   "board": null,
+   "strata": "0.1.39",
    "quant": "IQ1_M",
    "context": 8192,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "Coder IQ1_M, short",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 50.4,
      "decode_tps": 52.8,
      "ttft_s": null
@@ -3993,6 +4760,7 @@
     {
      "label": "Coder IQ1_M, 2K code",
      "prompt_tokens": 1922.0,
+     "reused": 0.0,
      "prompt_tps": 425.3,
      "decode_tps": 57.2,
      "ttft_s": null
@@ -4000,6 +4768,7 @@
     {
      "label": "Coder IQ1_M, 2K code, next turn",
      "prompt_tokens": 21.0,
+     "reused": 2178.0,
      "prompt_tps": 61.4,
      "decode_tps": 71.4,
      "ttft_s": null
@@ -4007,6 +4776,7 @@
     {
      "label": "Coder IQ1_M, 2K prose",
      "prompt_tokens": 2129.0,
+     "reused": 0.0,
      "prompt_tps": 427.9,
      "decode_tps": 40.1,
      "ttft_s": null
@@ -4014,6 +4784,7 @@
     {
      "label": "Coder IQ1_M, 2K prose, repeat",
      "prompt_tokens": 7.0,
+     "reused": 2122.0,
      "prompt_tps": 78.1,
      "decode_tps": 41.3,
      "ttft_s": null
@@ -4021,6 +4792,7 @@
     {
      "label": "IQ2_XS, short",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 50.4,
      "decode_tps": 58.6,
      "ttft_s": null
@@ -4028,6 +4800,7 @@
     {
      "label": "IQ2_XS, 2K code",
      "prompt_tokens": 1922.0,
+     "reused": 0.0,
      "prompt_tps": 445.1,
      "decode_tps": 55.5,
      "ttft_s": null
@@ -4035,6 +4808,7 @@
     {
      "label": "IQ2_XS, 2K code, next turn",
      "prompt_tokens": 284.0,
+     "reused": 1915.0,
      "prompt_tps": 177.0,
      "decode_tps": 72.5,
      "ttft_s": null
@@ -4042,6 +4816,7 @@
     {
      "label": "IQ2_XS, 2K prose",
      "prompt_tokens": 2129.0,
+     "reused": 0.0,
      "prompt_tps": 436.4,
      "decode_tps": 38.8,
      "ttft_s": null
@@ -4049,18 +4824,12 @@
     {
      "label": "IQ2_XS, 2K prose, repeat",
      "prompt_tokens": 7.0,
+     "reused": 2122.0,
      "prompt_tps": 79.3,
      "decode_tps": 40.0,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "Coder IQ1_M, 2K prose",
-    "prompt_tokens": 2129.0,
-    "prompt_tps": 427.9,
-    "decode_tps": 40.1,
-    "ttft_s": null
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-2x-arc-pro-b60",
     "readme_sha256": "ca6f0ea9a765553f59e1f57fe2ea3f8ada5a278ef8ab57fb2a43c0d2894a076c"
@@ -4071,17 +4840,28 @@
    "date": "2026-10-03",
    "headline": "Community benchmark on RTX 3090 Ti + dual Xeon E5-2699 v3 (HP Z840)",
    "summary": null,
-   "gpu": "NVIDIA GeForce RTX 3090 Ti 24 GB, PCIe 3.0 x16 (engine probe 12.4 GB/s host-to-device), power",
-   "cpu": "2x Intel Xeon E5-2699 v3 @ 2.30 GHz (Haswell-EP, 18C/36T each, 72 logical). AVX2 + FMA, no",
-   "ram": "384 GB DDR4-2133 ECC (378 GB usable), 4 channels per socket, two NUMA nodes.",
-   "os": "Ubuntu 22.04.5 LTS, kernel 6.8.0-138-generic (HWE). NVIDIA driver 610.57.04 (open kernel",
-   "engine": "v0.1.38, main checkout on 2026-10-03, source build (CMAKE_CUDA_ARCHITECTURES=86).",
+   "cpu": "dual Xeon E5-2699 v3 (HP Z840)",
+   "ram": "384 GB DDR4-2133 ECC (378 GB usable), 4 channels per socket,",
+   "gpu": "RTX 3090 Ti",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.38",
    "quant": "IQ3_S",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "cold start, first request",
      "prompt_tokens": 31.0,
+     "reused": 0.0,
      "prompt_tps": 54.2,
      "decode_tps": 67.1,
      "ttft_s": 0.57
@@ -4089,6 +4869,7 @@
     {
      "label": "warm, requests 2-3 (before calibration)",
      "prompt_tokens": 31.0,
+     "reused": 24.0,
      "prompt_tps": 70.5,
      "decode_tps": 89.0,
      "ttft_s": 0.08
@@ -4096,6 +4877,7 @@
     {
      "label": "warm, A: --cpunodebind=0 --membind=0",
      "prompt_tokens": 31.0,
+     "reused": 24.0,
      "prompt_tps": null,
      "decode_tps": 94.9,
      "ttft_s": null
@@ -4103,6 +4885,7 @@
     {
      "label": "warm, B: --interleave=all (35 workers)",
      "prompt_tokens": 31.0,
+     "reused": 24.0,
      "prompt_tps": null,
      "decode_tps": 98.8,
      "ttft_s": null
@@ -4110,6 +4893,7 @@
     {
      "label": "warm, C: no numactl",
      "prompt_tokens": 31.0,
+     "reused": 24.0,
      "prompt_tps": null,
      "decode_tps": 90.1,
      "ttft_s": null
@@ -4117,6 +4901,7 @@
     {
      "label": "long prompt, A",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": 1304.0,
      "decode_tps": null,
      "ttft_s": null
@@ -4124,6 +4909,7 @@
     {
      "label": "long prompt, B",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": 1239.0,
      "decode_tps": null,
      "ttft_s": null
@@ -4131,18 +4917,12 @@
     {
      "label": "long prompt, C",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": 1268.0,
      "decode_tps": null,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "cold start, first request",
-    "prompt_tokens": 31.0,
-    "prompt_tps": 54.2,
-    "decode_tps": 67.1,
-    "ttft_s": 0.57
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-z840-rtx3090ti",
     "readme_sha256": "5e9ab6977fa8be7c29cc1d36f99c763579e507f639236eebcceb4d64fede6ccd"
@@ -4153,15 +4933,24 @@
    "date": "2026-10-03",
    "headline": "2026-10-03: Tesla V100-PCIE-32GB, dual Xeon E5-2696 v3, 128 GB RAM (Windows)",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "dual Xeon E5-2696 v3",
+   "ram": "128 GB RAM",
+   "gpu": "2026-10-03: Tesla V100-PCIE-",
+   "vram_gb": 32,
+   "board": null,
+   "strata": "0.1.38",
    "quant": "IQ3_XXS",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-v100",
     "readme_sha256": "b6e269cce3b3deed4e490e561566d3ad2a5fe2b03901a2a75ca24cd9b6b6ed34"
@@ -4172,17 +4961,28 @@
    "date": "2026-10-03",
    "headline": "Community benchmark on AMD Radeon RX 7900 XTX 24 GB — ROCm 7.1.1 vs ROCm 10.2 nightly (serve path, Qwen3.8-Flash-Next IQ3_S)",
    "summary": null,
-   "gpu": "AMD Radeon RX 7900 XTX 24 GB (gfx1100, RDNA3); CPU: Ryzen 9 7900X (12C/24T); RAM: 96 GB DDR5; storage: NVMe ext4; PCIe Gen4 x16:",
    "cpu": null,
    "ram": null,
-   "os": "Fedora 44 (kernel 7.2.7); driver: amdgpu (in-tree); ROCm: packaged 7.1.1 vs a ROCm 10.2 nightly SDK (libamdhip64.so.7.17.26392, verified loaded via /proc/PID/maps):",
-   "engine": "HIP source builds of the xyzzing integration line — engine 0.1.38 (99f3dbd base) for both stacks (one binary per ROCm stack):",
+   "gpu": "AMD Radeon RX 7900 XTX — ROCm 7.1.1 vs ROCm 10.2 nightly (serve path, Qwen3.8-Fl",
+   "vram_gb": 24,
+   "board": null,
+   "strata": "0.1.38",
    "quant": "IQ3_S",
    "context": 65536,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "ROCm 7.1.1, warm (requests 4–9)",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 80.4,
      "ttft_s": null
@@ -4190,6 +4990,7 @@
     {
      "label": "ROCm 7.1.1, request 1 (cold-warm-up)",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": null,
      "decode_tps": 59.3,
      "ttft_s": null
@@ -4197,6 +4998,7 @@
     {
      "label": "ROCm 10.2 nightly, warm (requests 6–10)",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 88.4,
      "ttft_s": null
@@ -4204,12 +5006,12 @@
     {
      "label": "ROCm 10.2 nightly, request 1 (cold restart)",
      "prompt_tokens": null,
+     "reused": 0.0,
      "prompt_tps": null,
      "decode_tps": 58.6,
      "ttft_s": null
     }
    ],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-rx7900xtx-rocm102-nightly",
     "readme_sha256": "75fd1e2612000b1fae0f819705e8181bdac498da21b6ce6f7a2352b90eaa51af"
@@ -4220,17 +5022,28 @@
    "date": "2026-10-03",
    "headline": "Community benchmark: NVIDIA GeForce RTX 4090",
    "summary": null,
-   "gpu": "NVIDIA GeForce RTX 4090; 23028 MiB reported VRAM; 480.00 W power limit; PCIe bus 00000000:01:00.0; PCIe link speed and width: not measured. GPU clocks were not fixed.",
-   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs).",
-   "ram": "46464 MiB installed; storage layout: see env.json (lsblk output).",
-   "os": null,
-   "engine": null,
+   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs)",
+   "ram": "46464 MiB installed",
+   "gpu": "NVIDIA GeForce RTX 4090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.38",
    "quant": "IQ3_XXS",
    "context": 204800,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 1823.8,
+    "16k": null,
+    "32k": 2912.0,
+    "128k": 2984.2
+   },
+   "decode_tps": 94.2,
+   "humaneval": null,
    "rows": [
     {
      "label": "4096-prompt",
      "prompt_tokens": 4028.0,
+     "reused": 0.0,
      "prompt_tps": 1823.8,
      "decode_tps": 94.2,
      "ttft_s": 2.24
@@ -4238,6 +5051,7 @@
     {
      "label": "32768-prompt",
      "prompt_tokens": 31828.0,
+     "reused": 0.0,
      "prompt_tps": 2912.0,
      "decode_tps": 85.6,
      "ttft_s": 11.06
@@ -4245,6 +5059,7 @@
     {
      "label": "131072-prompt",
      "prompt_tokens": 127228.0,
+     "reused": 0.0,
      "prompt_tps": 2984.2,
      "decode_tps": 90.3,
      "ttft_s": 43.11
@@ -4252,18 +5067,12 @@
     {
      "label": "gen-only",
      "prompt_tokens": 228.0,
+     "reused": 0.0,
      "prompt_tps": 279.7,
      "decode_tps": 82.9,
      "ttft_s": 0.83
     }
    ],
-   "headline_row": {
-    "label": "4096-prompt",
-    "prompt_tokens": 4028.0,
-    "prompt_tps": 1823.8,
-    "decode_tps": 94.2,
-    "ttft_s": 2.24
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-rtx4090-iq3xxs-200k-ru",
     "readme_sha256": "63211782ba8bb222a717aabae95cf1329ef8ffac9c3878d30e055c0ac7ce8dc2"
@@ -4274,17 +5083,28 @@
    "date": "2026-10-03",
    "headline": "Community benchmark: NVIDIA GeForce RTX 4090",
    "summary": null,
-   "gpu": "NVIDIA GeForce RTX 4090; 23028 MiB reported VRAM; 480.00 W power limit; PCIe bus 00000000:01:00.0; PCIe link speed and width: not measured. GPU clocks were not fixed.",
-   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs).",
-   "ram": "46464 MiB installed; storage layout: see env.json (lsblk output).",
-   "os": null,
-   "engine": null,
+   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs)",
+   "ram": "46464 MiB installed",
+   "gpu": "NVIDIA GeForce RTX 4090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.38",
    "quant": "IQ3_XXS",
    "context": 204800,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 1844.3,
+    "16k": null,
+    "32k": 2976.2,
+    "128k": 2962.3
+   },
+   "decode_tps": 118.0,
+   "humaneval": null,
    "rows": [
     {
      "label": "4096-prompt",
      "prompt_tokens": 3971.0,
+     "reused": 0.0,
      "prompt_tps": 1844.3,
      "decode_tps": 118.0,
      "ttft_s": 2.18
@@ -4292,6 +5112,7 @@
     {
      "label": "32768-prompt",
      "prompt_tokens": 31307.0,
+     "reused": 0.0,
      "prompt_tps": 2976.2,
      "decode_tps": 127.9,
      "ttft_s": 10.6
@@ -4299,6 +5120,7 @@
     {
      "label": "131072-prompt",
      "prompt_tokens": 125011.0,
+     "reused": 0.0,
      "prompt_tps": 2962.3,
      "decode_tps": 108.4,
      "ttft_s": 42.5
@@ -4306,18 +5128,12 @@
     {
      "label": "gen-only",
      "prompt_tokens": 163.0,
+     "reused": 0.0,
      "prompt_tps": 200.0,
      "decode_tps": 133.0,
      "ttft_s": 0.83
     }
    ],
-   "headline_row": {
-    "label": "4096-prompt",
-    "prompt_tokens": 3971.0,
-    "prompt_tps": 1844.3,
-    "decode_tps": 118.0,
-    "ttft_s": 2.18
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-rtx4090-iq3xxs-200k-code",
     "readme_sha256": "b0f1a1dae751cf7a25cccccb5210aadb4eeacfec2df19438b44f0bf6f85790d5"
@@ -4328,17 +5144,28 @@
    "date": "2026-10-03",
    "headline": "Community benchmark: NVIDIA GeForce RTX 4090",
    "summary": null,
-   "gpu": "NVIDIA GeForce RTX 4090; 23028 MiB reported VRAM; 480.00 W power limit; PCIe bus 00000000:01:00.0; PCIe link speed and width: not measured. GPU clocks were not fixed.",
-   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs).",
-   "ram": "46464 MiB installed; storage layout: see env.json (lsblk output).",
-   "os": null,
-   "engine": null,
+   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs)",
+   "ram": "46464 MiB installed",
+   "gpu": "NVIDIA GeForce RTX 4090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.38",
    "quant": "IQ3_S",
    "context": 143360,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 2084.2,
+    "16k": null,
+    "32k": 2991.1,
+    "128k": 3077.9
+   },
+   "decode_tps": 76.1,
+   "humaneval": null,
    "rows": [
     {
      "label": "4096-prompt",
      "prompt_tokens": 4028.0,
+     "reused": 0.0,
      "prompt_tps": 2084.2,
      "decode_tps": 76.1,
      "ttft_s": 1.96
@@ -4346,6 +5173,7 @@
     {
      "label": "32768-prompt",
      "prompt_tokens": 31828.0,
+     "reused": 0.0,
      "prompt_tps": 2991.1,
      "decode_tps": 102.5,
      "ttft_s": 10.78
@@ -4353,6 +5181,7 @@
     {
      "label": "131072-prompt",
      "prompt_tokens": 127228.0,
+     "reused": 0.0,
      "prompt_tps": 3077.9,
      "decode_tps": 102.2,
      "ttft_s": 41.81
@@ -4360,18 +5189,12 @@
     {
      "label": "gen-only",
      "prompt_tokens": 228.0,
+     "reused": 0.0,
      "prompt_tps": 312.6,
      "decode_tps": 65.9,
      "ttft_s": 0.75
     }
    ],
-   "headline_row": {
-    "label": "4096-prompt",
-    "prompt_tokens": 4028.0,
-    "prompt_tps": 2084.2,
-    "decode_tps": 76.1,
-    "ttft_s": 1.96
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-rtx4090-iq3s-140k-ru",
     "readme_sha256": "2018d06f3f8594c58a9c10fc673c2ac4dddc5afac8831d3c407a47aaa6dc084f"
@@ -4382,17 +5205,28 @@
    "date": "2026-10-03",
    "headline": "Community benchmark: NVIDIA GeForce RTX 4090",
    "summary": null,
-   "gpu": "NVIDIA GeForce RTX 4090; 23028 MiB reported VRAM; 480.00 W power limit; PCIe bus 00000000:01:00.0; PCIe link speed and width: not measured. GPU clocks were not fixed.",
-   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs).",
-   "ram": "46464 MiB installed; storage layout: see env.json (lsblk output).",
-   "os": null,
-   "engine": null,
+   "cpu": "AMD Ryzen 9 7950X 16-Core Processor (32 logical CPUs)",
+   "ram": "46464 MiB installed",
+   "gpu": "NVIDIA GeForce RTX 4090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.38",
    "quant": "IQ3_S",
    "context": 143360,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 2058.6,
+    "16k": null,
+    "32k": 2948.0,
+    "128k": 3047.8
+   },
+   "decode_tps": 77.5,
+   "humaneval": null,
    "rows": [
     {
      "label": "4096-prompt",
      "prompt_tokens": 3971.0,
+     "reused": 0.0,
      "prompt_tps": 2058.6,
      "decode_tps": 77.5,
      "ttft_s": 1.95
@@ -4400,6 +5234,7 @@
     {
      "label": "32768-prompt",
      "prompt_tokens": 31307.0,
+     "reused": 0.0,
      "prompt_tps": 2948.0,
      "decode_tps": 97.2,
      "ttft_s": 10.71
@@ -4407,6 +5242,7 @@
     {
      "label": "131072-prompt",
      "prompt_tokens": 125011.0,
+     "reused": 0.0,
      "prompt_tps": 3047.8,
      "decode_tps": 84.4,
      "ttft_s": 41.32
@@ -4414,18 +5250,12 @@
     {
      "label": "gen-only",
      "prompt_tokens": 163.0,
+     "reused": 0.0,
      "prompt_tps": 226.0,
      "decode_tps": 88.7,
      "ttft_s": 0.74
     }
    ],
-   "headline_row": {
-    "label": "4096-prompt",
-    "prompt_tokens": 3971.0,
-    "prompt_tps": 2058.6,
-    "decode_tps": 77.5,
-    "ttft_s": 1.95
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-rtx4090-iq3s-140k-code",
     "readme_sha256": "46204b6c30a98d3424bd037508d5d85702aaba18f1cb3fc0343ed0debbb52151"
@@ -4436,15 +5266,24 @@
    "date": "2026-10-03",
    "headline": "Community benchmark: Radeon AI PRO R9700 (gfx1201), Windows 11, Ryzen 9 9950X",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 9 9950X",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "Radeon AI PRO R9700 (gfx1201)",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.38",
    "quant": "IQ2_XS",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-r9700-windows",
     "readme_sha256": "a59d58b0d54c12c2715091afdb3a6f504d35139d22a102e59a49f81be4aea225"
@@ -4455,17 +5294,28 @@
    "date": "2026-10-03",
    "headline": "2x AMD Instinct MI50 16 GB (gfx906), Xeon E5-2666 v3, 32 GB RAM",
    "summary": "the gfx906 build (#638) with #639 and #640, Coder IQ1_M, 131,072-token context, layer split across both cards; three runs each at 4,096, 32,768, and 128,000 prompt tokens, plus six recall checks.",
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Xeon E5-2666 v3",
+   "ram": "32 GB RAM",
+   "gpu": "2x AMD Instinct MI50 (gfx906)",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.38",
    "quant": "IQ1_M",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 320.9,
+    "16k": null,
+    "32k": 522.8,
+    "128k": 516.8
+   },
+   "decode_tps": 50.1,
+   "humaneval": null,
    "rows": [
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 320.9,
      "decode_tps": 50.1,
      "ttft_s": 12.81
@@ -4473,6 +5323,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 522.8,
      "decode_tps": 47.8,
      "ttft_s": 62.81
@@ -4480,18 +5331,12 @@
     {
      "label": "128,000",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 516.8,
      "decode_tps": 45.7,
      "ttft_s": 248.09
     }
    ],
-   "headline_row": {
-    "label": "4,096",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 320.9,
-    "decode_tps": 50.1,
-    "ttft_s": 12.81
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-2x-mi50",
     "readme_sha256": "1e254864edc915632d6f8f21bbffdd9665ecc3ddd537ab8674aebad43047fd2d"
@@ -4502,15 +5347,24 @@
    "date": "2026-10-02",
    "headline": "Community results: RX 9070 XT 16 GB on Windows 11, the ready-made AMD engine (0.1.35), IQ3_S",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "Community results: RX 9070 XT on Windows 11",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.35",
    "quant": "IQ3_S",
    "context": 65536,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-rx9070xt-windows",
     "readme_sha256": "7d4b05b2425573c5944f10d538f88765a367e9447a69bee010b35c4128ebb769"
@@ -4521,17 +5375,28 @@
    "date": "2026-10-02",
    "headline": "Community benchmark: RTX 5090, Ryzen 9 7950X, 1M-context agent workload",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 9 7950X",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 5090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.31",
    "quant": "IQ3_S",
    "context": 1048576,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "32k",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 10.0,
      "ttft_s": null
@@ -4539,6 +5404,7 @@
     {
      "label": "128k",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 117.0,
      "ttft_s": null
@@ -4546,6 +5412,7 @@
     {
      "label": "256k",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 158.0,
      "ttft_s": null
@@ -4553,6 +5420,7 @@
     {
      "label": "512k",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 262.0,
      "ttft_s": null
@@ -4560,12 +5428,12 @@
     {
      "label": "1024k",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 526.0,
      "ttft_s": null
     }
    ],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-rtx5090-1m-agent",
     "readme_sha256": "df98cbad115460d955a2ad49fd55a2c0e37233479b7d0de60e65fbab855669b4"
@@ -4576,17 +5444,28 @@
    "date": "2026-10-02",
    "headline": "Community benchmark: RTX 4000 Ada 2-GPU vs 3-GPU layer split",
    "summary": null,
-   "gpu": null,
-   "cpu": "AMD EPYC 7313P 16-Core Processor.",
+   "cpu": "AMD EPYC 7313P 16-Core Processor",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 4000 Ada 2-GPU vs 3-GPU layer split",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.35",
    "quant": "IQ3_S",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "2 x 130 W RTX 4000 Ada",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 72.95,
      "ttft_s": null
@@ -4594,12 +5473,12 @@
     {
      "label": "2 x 130 W + 1 x 70 W RTX 4000 SFF Ada",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 73.7,
      "ttft_s": null
     }
    ],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-rtx4000ada-layer-split",
     "readme_sha256": "12d66c3d28da672026169c3e176b125bad9ac2bf864cf160b769577098f2eced"
@@ -4610,17 +5489,28 @@
    "date": "2026-10-02",
    "headline": "Community benchmark on RTX 2080 Ti 11 GB",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 2080 Ti",
+   "vram_gb": 11,
+   "board": null,
+   "strata": "0.1.33",
    "quant": "IQ3_S",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 496.9,
+    "16k": null,
+    "32k": 636.9,
+    "128k": 566.2
+   },
+   "decode_tps": 39.6,
+   "humaneval": null,
    "rows": [
     {
      "label": "Fresh 4K",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 496.9,
      "decode_tps": 39.6,
      "ttft_s": 8.3
@@ -4628,6 +5518,7 @@
     {
      "label": "Fresh 32K",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 636.9,
      "decode_tps": 38.0,
      "ttft_s": 51.61
@@ -4635,6 +5526,7 @@
     {
      "label": "Fresh 128K",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 566.2,
      "decode_tps": 34.1,
      "ttft_s": 226.59
@@ -4642,6 +5534,7 @@
     {
      "label": "Fresh 250K",
      "prompt_tokens": 250000.0,
+     "reused": 0.0,
      "prompt_tps": 466.6,
      "decode_tps": 31.8,
      "ttft_s": 536.8
@@ -4649,6 +5542,7 @@
     {
      "label": "Follow-up at 128K depth",
      "prompt_tokens": 128463.0,
+     "reused": 128400.0,
      "prompt_tps": 63.0,
      "decode_tps": 35.0,
      "ttft_s": 1.85
@@ -4656,6 +5550,7 @@
     {
      "label": "Follow-up at 250K depth",
      "prompt_tokens": 250463.0,
+     "reused": 249993.0,
      "prompt_tps": 470.0,
      "decode_tps": 34.6,
      "ttft_s": 4.55
@@ -4663,6 +5558,7 @@
     {
      "label": "Fresh 4K",
      "prompt_tokens": 18.34,
+     "reused": null,
      "prompt_tps": 54.0,
      "decode_tps": null,
      "ttft_s": null
@@ -4670,6 +5566,7 @@
     {
      "label": "Fresh 32K",
      "prompt_tokens": 62.18,
+     "reused": null,
      "prompt_tps": 295.0,
      "decode_tps": null,
      "ttft_s": null
@@ -4677,6 +5574,7 @@
     {
      "label": "Fresh 128K",
      "prompt_tokens": 238.32,
+     "reused": null,
      "prompt_tps": 596.0,
      "decode_tps": null,
      "ttft_s": null
@@ -4684,6 +5582,7 @@
     {
      "label": "Fresh 250K (1 run)",
      "prompt_tokens": 549.33,
+     "reused": null,
      "prompt_tps": 825.0,
      "decode_tps": null,
      "ttft_s": null
@@ -4691,6 +5590,7 @@
     {
      "label": "Follow-up 128K",
      "prompt_tokens": 13.25,
+     "reused": null,
      "prompt_tps": 1177.0,
      "decode_tps": null,
      "ttft_s": null
@@ -4698,6 +5598,7 @@
     {
      "label": "Follow-up 250K",
      "prompt_tokens": 16.08,
+     "reused": null,
      "prompt_tps": 1498.0,
      "decode_tps": null,
      "ttft_s": null
@@ -4705,6 +5606,7 @@
     {
      "label": "1",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 5.02,
      "decode_tps": 1.58,
      "ttft_s": null
@@ -4712,18 +5614,12 @@
     {
      "label": "2",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 5.08,
      "decode_tps": 1.65,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "Fresh 4K",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 496.9,
-    "decode_tps": 39.6,
-    "ttft_s": 8.3
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-rtx2080ti-11gb",
     "readme_sha256": "cc05ab4efe7f5dd9d22b5c860e58bac62be44f49eceeba6737c056de0666b618"
@@ -4734,17 +5630,28 @@
    "date": "2026-10-02",
    "headline": "Community-format benchmark: RTX 5090, Ryzen 9 9950X3D, IQ3_S at 262K",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 9 9950X3D",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "Community-format benchmark: RTX 5090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.26",
    "quant": "IQ3_S",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "1,024",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 961.0,
      "decode_tps": 136.2,
      "ttft_s": 4.19
@@ -4752,6 +5659,7 @@
     {
      "label": "4,096",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 2473.0,
      "decode_tps": 141.8,
      "ttft_s": 1.6
@@ -4759,6 +5667,7 @@
     {
      "label": "32,768",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 4168.0,
      "decode_tps": 142.2,
      "ttft_s": 12.67
@@ -4766,12 +5675,12 @@
     {
      "label": "131,072",
      "prompt_tokens": null,
+     "reused": null,
      "prompt_tps": 4450.0,
      "decode_tps": 127.2,
      "ttft_s": 42.31
     }
    ],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-rtx-5090-iq3s",
     "readme_sha256": "b1c871ed428268e6b70fa18b3b63da254c0c2c528d67db882bbf23d3c33039c5"
@@ -4782,17 +5691,28 @@
    "date": "2026-10-02",
    "headline": "Community benchmark: 2x RTX 5060 Ti (16 GB), Xeon E5-2690 v4",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Xeon E5-2690 v4",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "2x RTX 5060 Ti ()",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.35",
    "quant": "IQ3_XXS",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 808.0,
+    "16k": null,
+    "32k": 1931.0,
+    "128k": 2199.0
+   },
+   "decode_tps": 77.5,
+   "humaneval": null,
    "rows": [
     {
      "label": "IQ3_XXS, 2 GPUs, 4,096-token prompt",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 808.0,
      "decode_tps": 77.5,
      "ttft_s": 5.11
@@ -4800,6 +5720,7 @@
     {
      "label": "IQ3_XXS, 2 GPUs, 32,768-token prompt",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 1931.0,
      "decode_tps": 72.7,
      "ttft_s": 17.09
@@ -4807,18 +5728,12 @@
     {
      "label": "IQ3_XXS, 2 GPUs, 128,000-token prompt",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 2199.0,
      "decode_tps": 72.4,
      "ttft_s": 58.67
     }
    ],
-   "headline_row": {
-    "label": "IQ3_XXS, 2 GPUs, 4,096-token prompt",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 808.0,
-    "decode_tps": 77.5,
-    "ttft_s": 5.11
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-rtx-5060-ti-x2",
     "readme_sha256": "40dfe121475f4285a46888d25ef6decd7327694cc4dc9b3b40a3d860995e113c"
@@ -4829,17 +5744,28 @@
    "date": "2026-10-02",
    "headline": "Community benchmark on 2× RTX 5060 Ti 16 GB (PCIe gen3)",
    "summary": null,
-   "gpu": null,
-   "cpu": "Intel i9-9900KF (8 cores / 16 threads, AVX2, no AVX-512). Strata started",
-   "ram": "128 GB DDR4-3200.",
-   "os": "Windows 10 Pro 22H2 (19045). Driver 616.56, CUDA 13.4 (runtime from the venv's nvidia/cu13).",
-   "engine": "tag v0.1.34 (1678de3), engine 0.1.34, release binaries set up with",
+   "cpu": "Intel i9-9900KF (8 cores / 16 threads, AVX2, no AVX-512)",
+   "ram": "128 GB DDR4-3200",
+   "gpu": "2× RTX 5060 Ti (PCIe gen3)",
+   "vram_gb": 16,
+   "board": null,
+   "strata": "0.1.34",
    "quant": "IQ3_S",
    "context": 154624,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "short",
      "prompt_tokens": 104.0,
+     "reused": 0.0,
      "prompt_tps": 55.6,
      "decode_tps": 62.9,
      "ttft_s": 1.89
@@ -4847,6 +5773,7 @@
     {
      "label": "long-cold",
      "prompt_tokens": 20905.0,
+     "reused": 0.0,
      "prompt_tps": 1108.0,
      "decode_tps": 56.4,
      "ttft_s": 19.1
@@ -4854,6 +5781,7 @@
     {
      "label": "long-reuse",
      "prompt_tokens": 20891.0,
+     "reused": 16384.0,
      "prompt_tps": 574.0,
      "decode_tps": 56.8,
      "ttft_s": 8.05
@@ -4861,6 +5789,7 @@
     {
      "label": "short",
      "prompt_tokens": 55.0,
+     "reused": 68.2,
      "prompt_tps": 71.0,
      "decode_tps": null,
      "ttft_s": null
@@ -4868,6 +5797,7 @@
     {
      "label": "long-cold",
      "prompt_tokens": 1125.0,
+     "reused": 61.8,
      "prompt_tps": 74.0,
      "decode_tps": null,
      "ttft_s": null
@@ -4875,18 +5805,12 @@
     {
      "label": "long-reuse",
      "prompt_tokens": 581.0,
+     "reused": 61.1,
      "prompt_tps": 80.0,
      "decode_tps": null,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "long-cold",
-    "prompt_tokens": 1125.0,
-    "prompt_tps": 74.0,
-    "decode_tps": null,
-    "ttft_s": null
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-2x5060ti",
     "readme_sha256": "087b8b15eb5549bc33097de450c74eb08f44032f500dfa1cde68c2f7fb6b2f59"
@@ -4897,15 +5821,24 @@
    "date": "2026-10-02",
    "headline": "Community benchmark on 2x RTX PRO 4500 Blackwell, Swift IQ3_XXS, engine 0.1.36",
    "summary": null,
-   "gpu": "2x NVIDIA RTX PRO 4500 Blackwell, 32 GB GDDR7 each (GB203, SM 12.0, 200 W limit), no NVLink, PCIe Gen 5 x16 to each",
-   "cpu": "AMD Ryzen Threadripper 7960X, 24 cores / 48 threads. RAM: 64 GB DDR5 (61 GiB usable)",
+   "cpu": "AMD Ryzen Threadripper 7960X, 24 cores / 48 threads",
    "ram": null,
-   "os": "Ubuntu 26.04.1 LTS, kernel 7.0.0-38-generic. Driver 595.91.07. CUDA 13.4 toolkit (/usr/local/cuda-13.4)",
-   "engine": "tag v0.1.36, commit 36fa455e579b23a9c909c2c6fe1bddd9e51cb8ca, source build (setup found no ready-made engine for v0.1.36 and compiled for SM 120; engine/BUILD.json in this folder)",
+   "gpu": "2x RTX PRO 4500 Blackwell",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.36",
    "quant": "IQ3_XXS",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-2x-rtx-pro-4500-engine-0.1.36",
     "readme_sha256": "29a3513d1f839864f7b5e0e2038e6f7f2e290b46deaa14f3b372c8d53aa4f2bb"
@@ -4916,17 +5849,28 @@
    "date": "2026-10-01",
    "headline": "Community benchmark: RTX PRO 4500 Blackwell, Threadripper PRO 3975WX",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX PRO 4500 Blackwell",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.31",
    "quant": "UD-Q4_K_XL",
    "context": null,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "short",
      "prompt_tokens": 2700.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 61.5,
      "ttft_s": 2.35
@@ -4934,6 +5878,7 @@
     {
      "label": "codegen",
      "prompt_tokens": 370.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 72.43,
      "ttft_s": 1.12
@@ -4941,6 +5886,7 @@
     {
      "label": "long64k",
      "prompt_tokens": 63997.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 72.11,
      "ttft_s": 26.08
@@ -4948,6 +5894,7 @@
     {
      "label": "long128k",
      "prompt_tokens": 127999.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 70.15,
      "ttft_s": 54.44
@@ -4955,6 +5902,7 @@
     {
      "label": "short",
      "prompt_tokens": 2700.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 82.02,
      "ttft_s": 1.76
@@ -4962,6 +5910,7 @@
     {
      "label": "codegen",
      "prompt_tokens": 370.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 98.04,
      "ttft_s": 0.76
@@ -4969,6 +5918,7 @@
     {
      "label": "long64k",
      "prompt_tokens": 63997.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 95.78,
      "ttft_s": 20.97
@@ -4976,6 +5926,7 @@
     {
      "label": "long128k",
      "prompt_tokens": 127999.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 91.36,
      "ttft_s": 44.24
@@ -4983,6 +5934,7 @@
     {
      "label": "short",
      "prompt_tokens": 2700.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 106.29,
      "ttft_s": 1.46
@@ -4990,6 +5942,7 @@
     {
      "label": "codegen",
      "prompt_tokens": 370.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 123.81,
      "ttft_s": 0.55
@@ -4997,6 +5950,7 @@
     {
      "label": "long64k",
      "prompt_tokens": 63997.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 120.31,
      "ttft_s": 19.5
@@ -5004,6 +5958,7 @@
     {
      "label": "long128k",
      "prompt_tokens": 127999.0,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 116.5,
      "ttft_s": 41.27
@@ -5011,6 +5966,7 @@
     {
      "label": "short",
      "prompt_tokens": 61.5,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 1146.3,
      "ttft_s": null
@@ -5018,12 +5974,12 @@
     {
      "label": "codegen",
      "prompt_tokens": 72.43,
+     "reused": null,
      "prompt_tps": null,
      "decode_tps": 329.8,
      "ttft_s": null
     }
    ],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-01-community-rtx-pro-4500",
     "readme_sha256": "07de179c54a86166c35f035754a045a0df2561d3f5296bc34526a62caab0816f"
@@ -5034,17 +5990,28 @@
    "date": "2026-10-01",
    "headline": "Community benchmark on RTX 5090 + Ryzen 9 5950X (AVX2): UD-Q4_K_XL, IQ3_S and Swift IQ3_XXS, engines 0.1.31 to 0.1.39",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Ryzen 9 5950X (AVX2): UD-Q4_K_XL",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "RTX 5090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.31",
    "quant": "UD-Q4_K_XL",
    "context": 32768,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": 2161.0,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [
     {
      "label": "0.1.31, 72 GiB",
      "prompt_tokens": 103.0,
+     "reused": 0.0,
      "prompt_tps": 88.0,
      "decode_tps": 71.0,
      "ttft_s": null
@@ -5052,6 +6019,7 @@
     {
      "label": "0.1.31, 72 GiB",
      "prompt_tokens": 2684.0,
+     "reused": 0.0,
      "prompt_tps": 961.0,
      "decode_tps": 75.2,
      "ttft_s": null
@@ -5059,6 +6027,7 @@
     {
      "label": "0.1.31, 72 GiB",
      "prompt_tokens": 14689.0,
+     "reused": 0.0,
      "prompt_tps": 2161.0,
      "decode_tps": 88.3,
      "ttft_s": null
@@ -5066,6 +6035,7 @@
     {
      "label": "0.1.32, 72 GiB",
      "prompt_tokens": 103.0,
+     "reused": 0.0,
      "prompt_tps": 103.3,
      "decode_tps": 68.9,
      "ttft_s": null
@@ -5073,6 +6043,7 @@
     {
      "label": "0.1.32, 72 GiB",
      "prompt_tokens": 2684.0,
+     "reused": 0.0,
      "prompt_tps": 902.0,
      "decode_tps": 64.8,
      "ttft_s": null
@@ -5080,6 +6051,7 @@
     {
      "label": "0.1.32, 72 GiB",
      "prompt_tokens": 14689.0,
+     "reused": 0.0,
      "prompt_tps": 1992.0,
      "decode_tps": 91.6,
      "ttft_s": null
@@ -5087,6 +6059,7 @@
     {
      "label": "0.1.32, 72 GiB, second server run",
      "prompt_tokens": 105.0,
+     "reused": 0.0,
      "prompt_tps": 86.6,
      "decode_tps": 61.3,
      "ttft_s": null
@@ -5094,6 +6067,7 @@
     {
      "label": "0.1.32, 72 GiB, second server run",
      "prompt_tokens": 2686.0,
+     "reused": 0.0,
      "prompt_tps": 884.0,
      "decode_tps": 72.9,
      "ttft_s": null
@@ -5101,6 +6075,7 @@
     {
      "label": "0.1.32, 72 GiB, second server run",
      "prompt_tokens": 14691.0,
+     "reused": 0.0,
      "prompt_tps": 1997.0,
      "decode_tps": 87.3,
      "ttft_s": null
@@ -5108,6 +6083,7 @@
     {
      "label": "0.1.33, 72 GiB",
      "prompt_tokens": 103.0,
+     "reused": 0.0,
      "prompt_tps": 92.3,
      "decode_tps": 66.0,
      "ttft_s": null
@@ -5115,6 +6091,7 @@
     {
      "label": "0.1.33, 72 GiB",
      "prompt_tokens": 2684.0,
+     "reused": 0.0,
      "prompt_tps": 923.0,
      "decode_tps": 74.8,
      "ttft_s": null
@@ -5122,6 +6099,7 @@
     {
      "label": "0.1.33, 72 GiB",
      "prompt_tokens": 14689.0,
+     "reused": 0.0,
      "prompt_tps": 2021.0,
      "decode_tps": 89.2,
      "ttft_s": null
@@ -5129,6 +6107,7 @@
     {
      "label": "0.1.34, 72 GiB",
      "prompt_tokens": 99.0,
+     "reused": 0.0,
      "prompt_tps": 86.2,
      "decode_tps": 68.2,
      "ttft_s": null
@@ -5136,18 +6115,12 @@
     {
      "label": "0.1.34, 72 GiB",
      "prompt_tokens": 2680.0,
+     "reused": 0.0,
      "prompt_tps": 890.0,
      "decode_tps": 73.7,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "0.1.32, 72 GiB, second server run",
-    "prompt_tokens": 2686.0,
-    "prompt_tps": 884.0,
-    "decode_tps": 72.9,
-    "ttft_s": null
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-01-community-rtx-5090-5950x",
     "readme_sha256": "f2f263cbddc8422d34a093ae3ec04125516547d8f5d9ab97c453e834af0d7f96"
@@ -5158,17 +6131,28 @@
    "date": "2026-10-01",
    "headline": "Community benchmark: 2x TITAN RTX (sm_75, NVLink), Xeon E5-2696 v4",
    "summary": null,
-   "gpu": null,
-   "cpu": null,
+   "cpu": "Xeon E5-2696 v4",
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "2x TITAN RTX (sm_75, NVLink)",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.31",
    "quant": "IQ3_S",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 864.7,
+    "16k": null,
+    "32k": 1611.8,
+    "128k": 1784.6
+   },
+   "decode_tps": 68.1,
+   "humaneval": null,
    "rows": [
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": null,
      "prompt_tps": 864.7,
      "decode_tps": 68.1,
      "ttft_s": null
@@ -5176,6 +6160,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": null,
      "prompt_tps": 1611.8,
      "decode_tps": 59.5,
      "ttft_s": null
@@ -5183,18 +6168,12 @@
     {
      "label": "128,000",
      "prompt_tokens": 128000.0,
+     "reused": null,
      "prompt_tps": 1784.6,
      "decode_tps": 61.6,
      "ttft_s": null
     }
    ],
-   "headline_row": {
-    "label": "4,096",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 864.7,
-    "decode_tps": 68.1,
-    "ttft_s": null
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-01-community-2x-titan-rtx",
     "readme_sha256": "65ababbcd050d697271d31587324311edb2b38d6798ca48a415c25d8328f3bc8"
@@ -5205,15 +6184,24 @@
    "date": "2026-10-01",
    "headline": "Community benchmark: 2x RTX PRO 4500 Blackwell, Swift IQ3_XXS",
    "summary": null,
-   "gpu": null,
    "cpu": null,
    "ram": null,
-   "os": null,
-   "engine": null,
+   "gpu": "2x RTX PRO 4500 Blackwell",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.30",
    "quant": "IQ3_XXS",
    "context": 262144,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": null,
+    "16k": null,
+    "32k": null,
+    "128k": null
+   },
+   "decode_tps": null,
+   "humaneval": null,
    "rows": [],
-   "headline_row": null,
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-01-community-2x-rtx-pro-4500",
     "readme_sha256": "475b6149b519b4af8721f9bc4aa0838a5643c22fb22483be2621777b62b72fdd"
@@ -5224,17 +6212,28 @@
    "date": "2026-09-30",
    "headline": "RTX 5090, Core Ultra 9 285K, 64 GB RAM",
    "summary": "Strata 0.1.29, original Flash-Next IQ2_XS, 131,072-token context; three runs each at 4,096, 32,768, and 128,000 prompt tokens, plus six recall checks.",
-   "gpu": null,
-   "cpu": null,
-   "ram": null,
-   "os": null,
-   "engine": null,
+   "cpu": "Core Ultra 9 285K",
+   "ram": "64 GB RAM",
+   "gpu": "RTX 5090",
+   "vram_gb": null,
+   "board": null,
+   "strata": "0.1.29",
    "quant": "IQ2_XS",
    "context": 131072,
+   "chat_decode_tps": null,
+   "prompt_tps": {
+    "4k": 4269.8,
+    "16k": null,
+    "32k": 5543.2,
+    "128k": 5778.7
+   },
+   "decode_tps": 179.4,
+   "humaneval": null,
    "rows": [
     {
      "label": "4,096",
      "prompt_tokens": 4096.0,
+     "reused": 0.0,
      "prompt_tps": 4269.8,
      "decode_tps": 179.4,
      "ttft_s": 0.974
@@ -5242,6 +6241,7 @@
     {
      "label": "32,768",
      "prompt_tokens": 32768.0,
+     "reused": 0.0,
      "prompt_tps": 5543.2,
      "decode_tps": 175.7,
      "ttft_s": 5.95
@@ -5249,18 +6249,12 @@
     {
      "label": "128,000",
      "prompt_tokens": 128000.0,
+     "reused": 0.0,
      "prompt_tps": 5778.7,
      "decode_tps": 165.0,
      "ttft_s": 22.262
     }
    ],
-   "headline_row": {
-    "label": "4,096",
-    "prompt_tokens": 4096.0,
-    "prompt_tps": 4269.8,
-    "decode_tps": 179.4,
-    "ttft_s": 0.974
-   },
    "source": {
     "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-09-30-community-rtx-5090",
     "readme_sha256": "f14bb2b27f968b264f0dcca8a080ecbc2c88464b35e62cdc744d7fb24ce34310"

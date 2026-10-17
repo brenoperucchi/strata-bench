@@ -44,7 +44,12 @@
     <p class="hint">Click a row for the full details: configuration, every request, charts and the raw file. Speeds are the engine's own timings, median of the measured runs (tokens per second, higher is better). The Medium, Long and XLong columns are prompt speeds for those prompts; decode speed is the medium prompt's. Results with a different configuration or engine are different measurements: compare rows that share the same model and configuration (the details page shows it). The first-token and agent-cache columns exist only for <code>standard-v2</code> results and stay empty for <code>standard-v1</code> ones; the two protocols are never ranked against each other on those columns. A badge such as <i>lan</i> means the client ran on another machine, so first-token times include the network.</p>
   </section>
   <section id="view-reports" role="tabpanel" aria-labelledby="tab-reports" hidden>
-    <div class="filters"><label>Filter<input type="search" id="reports-filter" placeholder="GPU, CPU, quantisation..." autocomplete="off"></label></div>
+    <div class="filters">
+      <label>Search<input type="search" id="reports-filter" placeholder="GPU, CPU, RAM, board..." autocomplete="off"></label>
+      <label>Strata version<select id="reports-strata"><option value="">All</option></select></label>
+      <label>Quantisation<select id="reports-quant"><option value="">All</option></select></label>
+      <label class="check"><input type="checkbox" id="reports-speeds"> Only with speeds</label>
+    </div>
     <div id="reports"><p class="hint">Loading the reports...</p></div>
   </section>
   <section id="view-health" role="tabpanel" aria-labelledby="tab-health" hidden>
