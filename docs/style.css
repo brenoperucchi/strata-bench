@@ -202,7 +202,7 @@ svg.viz .sel { fill: var(--accent); fill-opacity: .12; stroke: var(--accent); st
 
 /* the results table: tight enough to fit a laptop screen without sideways scrolling */
 #perf th, #perf td { padding: 8px 6px; }
-#perf td.by a { display: inline-block; max-width: 9.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+#perf td.by a { display: inline-block; max-width: 8em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 
 /* Strata reports */
 .notice { border: 1px solid var(--warn); border-left-width: 4px; border-radius: 8px; background: var(--card); padding: 10px 14px; margin: 6px 0 10px; }
@@ -215,3 +215,6 @@ table.reports { font-size: .84rem; }
 table.reports th { cursor: pointer; white-space: nowrap; }
 table.reports td.strata { font-weight: 700; white-space: nowrap; }
 table.reports th, table.reports td { padding: 7px 6px; }
+#perf { font-size: .84rem; }
+#perf td.strata { font-weight: 700; white-space: nowrap; }
+#perf .cpu { display: inline-block; max-width: 10.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }

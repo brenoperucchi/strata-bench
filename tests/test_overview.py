@@ -337,6 +337,16 @@ class OverviewHtml(unittest.TestCase):
         self.assertEqual(table.count(">legacy</span>"), 1)
         self.assertIn("Published before the fixed profiles", table)
 
+    def test_the_results_columns_follow_the_strata_reports_order_with_the_context_and_without_ttft_and_agent(self):
+        table = self.render([row("a", cpu="AMD Ryzen 9 5950X", ram_gb=96, n_ctx=32768, vram_gb=32)])["perf"]
+        heads = [h for h in ("Date", "Strata", "CPU", "RAM", "GPU · VRAM", "Quant", "Context", "Medium", "Long", "XLong", "Decode") if f">{h}" in table]
+        self.assertEqual(heads, ["Date", "Strata", "CPU", "RAM", "GPU · VRAM", "Quant", "Context", "Medium", "Long", "XLong", "Decode"])
+        order = [table.index(f'data-key="{k}"') for k in ("date", "engine", "cpu", "ram_gb", "gpu", "quant", "n_ctx", "prompt_medium", "decode")]
+        self.assertEqual(order, sorted(order))
+        self.assertIn("32,768", table)
+        self.assertNotIn("TTFT", table)
+        self.assertNotIn(">Agent", table)
+
     def test_the_page_loads_the_insight_modules_before_the_app(self):
         html = (ROOT / "docs" / "index.html").read_text()
         self.assertLess(html.index("insights.js"), html.index("overview.js"))

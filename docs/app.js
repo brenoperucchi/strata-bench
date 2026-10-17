@@ -134,6 +134,8 @@
 
   function sortVal(r, key) {
     if (key === "date") return r.date || "";
+    if (key === "engine") return String(r.engine || "").split(".").reduce(function (n, p) { return n * 1000 + (parseInt(p, 10) || 0); }, 0);   // by version number, not by text
+    if (key === "ram_gb" || key === "n_ctx") return r[key] || 0;
     if (key === "decode") return size(r, "medium", "decode_tps") || 0;
     if (key === "ttft") return size(r, "medium", "ttft_ms") || 0;
     if (key === "agent") return (r.agent && r.agent.hit_pct) || 0;
@@ -152,18 +154,23 @@
     rows.sort(function (a, b) { var x = sortVal(a, state.sort.key), y = sortVal(b, state.sort.key); return (x < y ? -1 : x > y ? 1 : 0) * state.sort.dir; });
     var maxDecode = Math.max.apply(null, rows.map(function (r) { return size(r, "medium", "decode_tps") || 0; }).concat([1]));
     var hasBy = state.rows.some(function (r) { return r.by; });
-    var hasV2 = state.rows.some(function (r) { return r.protocol === "standard-v2"; });
-    var head = [["select", ""], ["gpu", "GPU"], ["quant", "Quant", 0, "The quantisation; hover a cell for the model it belongs to"], ["engine", "Engine"]].concat(hasBy ? [["by", "By"]] : []).concat([["prompt_medium", "Medium", 1, "Prompt speed for the medium prompt (tokens per second)"], ["prompt_long", "Long", 1, "Prompt speed for the long prompt, in tokens per second"], ["prompt_xlong", "XLong", 1, "Prompt speed for the xlong prompt, in tokens per second"], ["decode", "Decode", 1, "Decode speed for the medium prompt, in tokens per second"]]).concat(hasV2 ? [["ttft", "TTFT ms", 1, "Time to first token for the medium prompt, in milliseconds"], ["agent", "Agent", 1, "Agent cache: percent of the earlier conversation the cache served in the agent session"]] : []).concat([["date", "Date"]]);
+    // The same columns, in the same order, as the Strata reports tab: the date, the Strata version, the hardware, the quantisation and context, then the speeds.
+    var head = [["select", ""], ["date", "Date"], ["engine", "Strata", 0, "The Strata version"], ["cpu", "CPU"], ["ram_gb", "RAM", 1], ["gpu", "GPU · VRAM"], ["quant", "Quant", 0, "The quantisation; hover a cell for the model it belongs to"], ["n_ctx", "Context", 1, "The context size the server ran with"],
+      ["prompt_medium", "Medium", 1, "Prompt speed for the medium prompt (tokens per second)"], ["prompt_long", "Long", 1, "Prompt speed for the long prompt, in tokens per second"], ["prompt_xlong", "XLong", 1, "Prompt speed for the xlong prompt, in tokens per second"], ["decode", "Decode", 1, "Decode speed for the medium prompt, in tokens per second"]].concat(hasBy ? [["by", "By"]] : []);
     var h = "<thead><tr>" + head.map(function (c) { return '<th data-key="' + c[0] + '"' + (c[2] ? ' class="num"' : "") + (c[3] ? ' title="' + esc(c[3]) + '"' : "") + ">" + c[1] + (state.sort.key === c[0] ? (state.sort.dir > 0 ? " ▲" : " ▼") : "") + "</th>"; }).join("") + "</tr></thead>";
     var b = rows.map(function (r) {
       var dec = size(r, "medium", "decode_tps"); if (typeof dec !== "number") dec = null;
-      var args = (Array.isArray(r.args) ? r.args : []).join(" ");
-      return "<tr class='openable' title='Click for more details' data-id='" + esc(r.id) + "'><td class='pick-cell'><input type='checkbox' class='pick' data-id='" + esc(r.id) + "' aria-label='Select for comparison'" + (state.selected.indexOf(r.id) >= 0 ? " checked" : "") + "></td><td" + (r.gpu_full ? " title='" + esc(r.gpu_full) + "'" : "") + ">" + esc(r.gpu) + (r.vram_gb ? " <span class='hint'>" + esc(r.vram_gb) + " GB</span>" : "") + (r.gpu_other > 0 ? " <span class='hint'>+" + esc(r.gpu_other) + "</span>" : r.gpu_count > 1 ? " <span class='hint'>×" + esc(r.gpu_count) + "</span>" : "") +
+      return "<tr class='openable' title='Click for more details' data-id='" + esc(r.id) + "'><td class='pick-cell'><input type='checkbox' class='pick' data-id='" + esc(r.id) + "' aria-label='Select for comparison'" + (state.selected.indexOf(r.id) >= 0 ? " checked" : "") + "></td>" +
+        "<td class='nowrap'>" + esc((r.date || "").slice(0, 10)) + "</td>" +
+        "<td class='strata'>" + esc(r.engine) + (r.engine_source && !/^official/i.test(r.engine_source) ? "<br><span class='pill warnings' title='" + esc(r.engine_source) + "'>custom build</span>" : "") + "</td>" +
+        "<td>" + (r.cpu ? "<span class='cpu' title='" + esc(r.cpu) + "'>" + esc(String(r.cpu).replace(/\s*\(.*\)\s*$/, "")) + "</span>" : "–") + "</td><td class='num'>" + (r.ram_gb ? esc(fmt(r.ram_gb, 0)) + " GB" : "–") + "</td>" +
+        "<td" + (r.gpu_full ? " title='" + esc(r.gpu_full) + "'" : "") + ">" + esc(r.gpu) + (r.vram_gb ? " <span class='hint'>" + esc(r.vram_gb) + " GB</span>" : "") + (r.gpu_other > 0 ? " <span class='hint'>+" + esc(r.gpu_other) + "</span>" : r.gpu_count > 1 ? " <span class='hint'>×" + esc(r.gpu_count) + "</span>" : "") +
         (r.protocol === "standard-v2" ? "<br><span class='hint'>v2 " + esc(r.suite) + "</span>" + (r.host_relation && r.host_relation !== "same-host" ? " <span class='pill warnings' title='The client ran on another machine, so first-token times include the network'>" + esc(r.host_relation) + "</span>" : "") : "") +
-        "</td><td title='" + esc(r.model_full || r.model || "") + "'>" + (r.quant ? "<b>" + esc(r.quant) + "</b>" : esc(r.model)) + (r.legacy ? "<br><span class='pill muted' title='Published before the fixed profiles: this result measured sizes its contributor picked, so it may not be comparable with the others'>legacy</span>" : "") + "</td><td>" + esc(r.engine) + (r.engine_source && !/^official/i.test(r.engine_source) ? "<br><span class='pill warnings' title='" + esc(r.engine_source) + "'>custom build</span>" : "") + "</td>" +
-        (hasBy ? "<td class='by'>" + (r.by ? "<a href='?by=" + encodeURIComponent(r.by) + "' title='" + esc(r.by) + "'>" + esc(r.by) + "</a>" : "–") + "</td>" : "") +
+        "</td><td title='" + esc(r.model_full || r.model || "") + "'>" + (r.quant ? "<b>" + esc(r.quant) + "</b>" : esc(r.model)) + (r.legacy ? "<br><span class='pill muted' title='Published before the fixed profiles: this result measured sizes its contributor picked, so it may not be comparable with the others'>legacy</span>" : "") + "</td>" +
+        "<td class='num'>" + fmt(r.n_ctx, 0) + "</td>" +
         ["medium", "long", "xlong"].map(function (n) { return "<td class='num'>" + fmt(size(r, n, "prompt_tps"), 0) + "</td>"; }).join("") +
-        "<td class='num'>" + (dec ? "<span class='bar' style='width:" + Math.round(40 * dec / maxDecode) + "px'></span>" : "") + fmt(dec) + "</td>" + (hasV2 ? "<td class='num'>" + fmt(size(r, "medium", "ttft_ms"), 0) + "</td><td class='num'>" + fmt(r.agent && r.agent.hit_pct, 1) + "</td>" : "") + "<td class='nowrap'>" + esc((r.date || "").slice(0, 10)) + "</td></tr>";
+        "<td class='num'>" + (dec ? "<span class='bar' style='width:" + Math.round(40 * dec / maxDecode) + "px'></span>" : "") + fmt(dec) + "</td>" +
+        (hasBy ? "<td class='by'>" + (r.by ? "<a href='?by=" + encodeURIComponent(r.by) + "' title='" + esc(r.by) + "'>" + esc(r.by) + "</a>" : "–") + "</td>" : "") + "</tr>";
     }).join("");
     $("perf").innerHTML = h + "<tbody>" + (b || "<tr><td colspan='" + head.length + "'>No result matches the filters.</td></tr>") + "</tbody>";
     wirePicks();
@@ -221,11 +228,17 @@
     reportsLoaded = true;
     fetch("community.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (data) {
       var C = StrataCommunity, sort = { key: "date", dir: -1 };
-      var fill = function (id, values) { $(id).innerHTML = '<option value="">All</option>' + values.map(function (v) { return "<option value='" + esc(v) + "'>" + esc(v) + "</option>"; }).join(""); };
+      // a control that is not in the page (an older copy of the page cached next to a newer script, or the other way round) reads as empty instead of stopping the tab
+      var ctl = function (id) { return document.getElementById(id); };
+      var val = function (id) { var e = ctl(id); return e ? e.value : ""; };
+      var fill = function (id, values) { var e = ctl(id); if (e) e.innerHTML = '<option value="">All</option>' + values.map(function (v) { return "<option value='" + esc(v) + "'>" + esc(v) + "</option>"; }).join(""); };
       var o = C.options(data.reports || []); fill("reports-strata", o.strata); fill("reports-quant", o.quant);
-      var draw = function () { $("reports").innerHTML = C.render(data, { query: $("reports-filter").value, strata: $("reports-strata").value, quant: $("reports-quant").value, show: $("reports-show").value, context: $("reports-context").value, sort: sort }); };
+      var draw = function () {
+        try { $("reports").innerHTML = C.render(data, { query: val("reports-filter"), strata: val("reports-strata"), quant: val("reports-quant"), show: val("reports-show") || "full", context: val("reports-context"), sort: sort }); }
+        catch (e) { $("reports").innerHTML = "<p class='hint'>The reports could not be shown. Reload the page (Ctrl+Shift+R): the browser may be holding an older copy of it.</p>"; }
+      };
       draw();
-      ["reports-filter", "reports-strata", "reports-quant", "reports-show", "reports-context"].forEach(function (id) { $(id).addEventListener(id === "reports-filter" ? "input" : "change", draw); });
+      ["reports-filter", "reports-strata", "reports-quant", "reports-show", "reports-context"].forEach(function (id) { var e = ctl(id); if (e) e.addEventListener(id === "reports-filter" ? "input" : "change", draw); });
       $("reports").addEventListener("click", function (e) {            // a column header sorts; the same one again reverses it
         var th = e.target && e.target.closest && e.target.closest("th[data-sort]"); if (!th) return;
         var k = th.getAttribute("data-sort"); sort = { key: k, dir: sort.key === k ? -sort.dir : -1 }; draw();
