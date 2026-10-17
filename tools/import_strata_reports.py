@@ -225,6 +225,7 @@ def build(source: Path):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--source", required=True, help="a checkout of the Strata repository (bench/results and docs/COMMUNITY_BENCHMARKS.md)")
+    ap.add_argument("--min-ratio", type=float, default=0.0, help="refuse to overwrite --out when the new catalogue has fewer than this fraction of the reports the old one had (a changed layout upstream); exit code 3")
     ap.add_argument("--out", default=str(Path(__file__).resolve().parent.parent / "docs" / "community.json"))
     a = ap.parse_args(argv)
     src = Path(a.source)
@@ -232,7 +233,16 @@ def main(argv=None):
         print(f"{src}: no bench/results folder", file=sys.stderr)
         return 2
     data = build(src)
-    Path(a.out).write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    out = Path(a.out)
+    if a.min_ratio and out.exists():
+        try:
+            before = json.loads(out.read_text(encoding="utf-8")).get("count", 0)
+        except (ValueError, OSError):
+            before = 0
+        if before and data["count"] < a.min_ratio * before:
+            print(f"refused: {data['count']} reports read, {before} before (below {a.min_ratio:.0%}); {out} left as it was", file=sys.stderr)
+            return 3
+    out.write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     got = lambda f: sum(1 for e in data["reports"] if f(e))
     print(f"wrote {a.out}: {data['count']} reports, {data['full']} full, {data['with_speed']} with a speed; with a 4K / 16K / 32K prompt speed: {got(lambda e: e['prompt_tps']['4k'] is not None)} / {got(lambda e: e['prompt_tps']['16k'] is not None)} / {got(lambda e: e['prompt_tps']['32k'] is not None)}; chat decode {got(lambda e: e['chat_decode_tps'] is not None)}; HumanEval {got(lambda e: e['humaneval'])}; board {got(lambda e: e['board'])}")
     return 0

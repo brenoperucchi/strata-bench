@@ -1,0 +1,47 @@
+name: strata-reports
+# Refreshes docs/community.json (the "Strata reports" tab) from the community reports of the Strata repository.
+# It runs once a day and by hand. A change is proposed as a pull request, never pushed to main, so someone looks at text that comes from other people.
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: fetch the reports (no history, only the folders the importer reads)
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse https://github.com/Niko1221/Strata.git "$RUNNER_TEMP/strata"
+          git -C "$RUNNER_TEMP/strata" sparse-checkout set --skip-checks bench/results docs
+      - name: read them (refuses to replace the catalogue when it shrinks to under half)
+        run: python tools/import_strata_reports.py --source "$RUNNER_TEMP/strata" --min-ratio 0.5
+      - name: propose the change
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git add docs/community.json
+          if git diff --cached --quiet; then
+            echo "docs/community.json is up to date" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          commit=$(python -c "import json; print(json.load(open('docs/community.json'))['source']['commit'][:8])")
+          count=$(python -c "import json; d=json.load(open('docs/community.json')); print(d['count'], d['full'])")
+          git config user.name "strata-bench site"
+          git config user.email "noreply@users.noreply.github.com"
+          git switch -c strata-reports/update
+          git commit -m "Strata reports: read the community reports at Strata commit $commit"
+          git push --force origin strata-reports/update
+          repo="${GITHUB_REPOSITORY}"
+          if gh pr list --head strata-reports/update --state open --json number --jq 'length' | grep -qx 0; then
+            gh pr create --head strata-reports/update --base main \
+              --title "Strata reports: read the community reports at Strata commit $commit" \
+              --body "Refreshes docs/community.json from the community reports of the Strata repository (commit $commit): $count (reports and full reports). The text comes from other people's READMEs, so check the diff before merging." \
+              || echo "The branch strata-reports/update is pushed. Open the pull request: https://github.com/$repo/compare/main...strata-reports/update" >> "$GITHUB_STEP_SUMMARY"
+          fi

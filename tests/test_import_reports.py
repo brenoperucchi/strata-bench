@@ -148,6 +148,14 @@ class Importer(unittest.TestCase):
         self.assertTrue(out.exists())
         self.assertEqual(sorted(p.name for p in (ROOT / "results").glob("*.json")), before)
 
+    def test_a_catalogue_that_shrinks_a_lot_is_not_written_over_the_old_one(self):
+        out = self.tmp / "community.json"
+        out.write_text(json.dumps({"count": 10}))                                   # the old one had ten reports; this source has three
+        self.assertEqual(imp.main(["--source", str(self.tmp), "--out", str(out), "--min-ratio", "0.5"]), 3)
+        self.assertEqual(json.loads(out.read_text()), {"count": 10})               # left as it was
+        self.assertEqual(imp.main(["--source", str(self.tmp), "--out", str(out), "--min-ratio", "0.2"]), 0)
+        self.assertEqual(json.loads(out.read_text())["count"], 3)
+
     def test_a_source_without_results_is_refused(self):
         self.assertEqual(imp.main(["--source", str(self.tmp / "docs"), "--out", str(self.tmp / "x.json")]), 2)
 
@@ -220,6 +228,20 @@ class Page(unittest.TestCase):
 
     def test_an_empty_file_says_so(self):
         self.assertIn("No report could be read", self.render({"reports": []}))
+
+
+class Workflow(unittest.TestCase):
+    def test_the_daily_refresh_proposes_a_pull_request_and_never_pushes_to_main(self):
+        wf = (ROOT / ".github" / "workflows" / "strata-reports.yml").read_text()
+        self.assertIn("schedule:", wf)
+        self.assertIn("workflow_dispatch:", wf)
+        self.assertIn("--min-ratio 0.5", wf)
+        self.assertIn("git push --force origin strata-reports/update", wf)
+        self.assertNotIn("git push\n", wf)                                          # a bare push would go to the checked-out main
+        self.assertNotIn("origin main", wf)
+        self.assertIn("--depth 1", wf)
+        for bad in ("claude", "anthropic", "session"):
+            self.assertNotIn(bad, wf.lower())
 
 
 class Committed(unittest.TestCase):
