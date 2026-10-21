@@ -1,10 +1,318 @@
 {
- "count": 29,
+ "count": 31,
  "protocols": [
   "standard-v1",
   "standard-v2"
  ],
  "results": [
+  {
+   "agent": {
+    "hit_pct": 100.0,
+    "reread_tokens": 0,
+    "ttft_last_turn_ms": 4452.9,
+    "ttft_turn1_ms": 4191.5
+   },
+   "args": [
+    "--pack",
+    "<pack>",
+    "--native",
+    "<native>",
+    "--expert-profile",
+    "<expert-profile>",
+    "--expert-cache",
+    "auto",
+    "--prefill",
+    "auto",
+    "--spec",
+    "4",
+    "--spec-min-p",
+    "0.5",
+    "--mtp",
+    "<mtp>",
+    "--max-context",
+    "262144",
+    "--kv",
+    "int8",
+    "--kv-resident",
+    "32768",
+    "--resident-budget-gib",
+    "90",
+    "--vision",
+    "--vram-reserve-mib",
+    "700",
+    "--vram-reserve-later-mib",
+    "1326"
+   ],
+   "backend": "cuda",
+   "binary": null,
+   "by": "noahark",
+   "clients": [
+    {
+     "errors": 0,
+     "n": 2,
+     "total_tps": 20.3,
+     "ttft_p95_ms": 9283.8
+    },
+    {
+     "errors": 0,
+     "n": 4,
+     "total_tps": 20.5,
+     "ttft_p95_ms": 21824.8
+    },
+    {
+     "errors": 0,
+     "n": 8,
+     "total_tps": 20.5,
+     "ttft_p95_ms": 46907.2
+    }
+   ],
+   "commit": null,
+   "config_id": "d1c7cc12f92ee572",
+   "config_origin": "custom-2",
+   "cpu": "2x Intel Xeon E5-2696 v3 (Haswell-EP, dual socket)",
+   "date": "2026-10-21T23:05:45+08:00",
+   "driver": "581.80",
+   "engine": "0.1.45.3",
+   "engine_source": "official prebuilt zip strata-windows-x64-cuda12 (manually updated; UPDATE.bat channel gate still 0.1.45)",
+   "failure": null,
+   "gpu": "Tesla PG500-216",
+   "gpu_count": 3,
+   "gpu_full": "Tesla PG500-216 (V100S, 72/80 SM cut-down) 32 GB, Tesla PG500-216 (V100S, 72/80 SM cut-down) 32 GB, Tesla V100-PCIE-32GB (80 SM) 32 GB",
+   "gpu_other": 1,
+   "host_relation": "same-host",
+   "id": "results/2026-10-21-3xv100-q6-kxl-p2-01453.result.json",
+   "label": "3xv100-q6-kxl-p2-01453",
+   "machine_id": "haswell-ddr3l-3xv100",
+   "model": "Swift",
+   "model_full": "Swift (Qwen3.8-Flash-Next 125B MoE)",
+   "n_ctx": 262144,
+   "os": "Windows 10 Enterprise LTSC 2021 (21H2)",
+   "protocol": "standard-v2",
+   "quant": "UD-Q6_K_XL",
+   "ram_gb": 128,
+   "sizes": {
+    "chat": {
+     "decode_tps": 56.6,
+     "prompt_ms": 504.2,
+     "prompt_tps": 65.5,
+     "read_median": null,
+     "reused_median": null,
+     "ttft_ms": 537.4,
+     "wall_ms": null
+    },
+    "gprobe150": {
+     "decode_tps": null,
+     "prompt_ms": 1438.45,
+     "prompt_tps": null,
+     "read_median": 227.0,
+     "reused_median": 0.0,
+     "ttft_ms": null,
+     "wall_ms": 1470.4
+    },
+    "gprobe300": {
+     "decode_tps": null,
+     "prompt_ms": 1826.4,
+     "prompt_tps": null,
+     "read_median": 384.0,
+     "reused_median": 0.0,
+     "ttft_ms": null,
+     "wall_ms": 1865.15
+    },
+    "gprobe450": {
+     "decode_tps": null,
+     "prompt_ms": 2123.45,
+     "prompt_tps": null,
+     "read_median": 521.0,
+     "reused_median": 0.0,
+     "ttft_ms": null,
+     "wall_ms": 2165.2
+    },
+    "long": {
+     "decode_tps": 59.3,
+     "prompt_ms": 10311.2,
+     "prompt_tps": 1417.8,
+     "read_median": null,
+     "reused_median": null,
+     "ttft_ms": 10374.1,
+     "wall_ms": null
+    },
+    "medium": {
+     "decode_tps": 63.8,
+     "prompt_ms": 4406.0,
+     "prompt_tps": 593.3,
+     "read_median": null,
+     "reused_median": null,
+     "ttft_ms": 4446.1,
+     "wall_ms": null
+    },
+    "xlong": {
+     "decode_tps": 57.1,
+     "prompt_ms": 17495.8,
+     "prompt_tps": 1647.9,
+     "read_median": null,
+     "reused_median": null,
+     "ttft_ms": 17602.1,
+     "wall_ms": null
+    }
+   },
+   "status": "ok",
+   "suite": "full",
+   "vram_gb": 32,
+   "warnings": 0
+  },
+  {
+   "agent": {
+    "hit_pct": 100.0,
+    "reread_tokens": 1,
+    "ttft_last_turn_ms": 2534.4,
+    "ttft_turn1_ms": 2365.6
+   },
+   "args": [
+    "--pack",
+    "<pack>",
+    "--native",
+    "<native>",
+    "--expert-profile",
+    "<expert-profile>",
+    "--expert-cache",
+    "auto",
+    "--prefill",
+    "auto",
+    "--spec",
+    "4",
+    "--mtp",
+    "<mtp>",
+    "--max-context",
+    "131072",
+    "--kv",
+    "int8",
+    "--kv-resident",
+    "32768",
+    "--resident-budget-gib",
+    "55",
+    "--vision",
+    "--vram-reserve-mib",
+    "700",
+    "--spec-min-p",
+    "0.5"
+   ],
+   "backend": "cuda",
+   "binary": null,
+   "by": "noahark",
+   "clients": [
+    {
+     "errors": 0,
+     "n": 2,
+     "total_tps": 31.2,
+     "ttft_p95_ms": 5594.8
+    },
+    {
+     "errors": 0,
+     "n": 4,
+     "total_tps": 34.5,
+     "ttft_p95_ms": 11405.8
+    },
+    {
+     "errors": 0,
+     "n": 8,
+     "total_tps": 36.8,
+     "ttft_p95_ms": 23047.6
+    }
+   ],
+   "commit": null,
+   "config_id": "0161c875ae89ad15",
+   "config_origin": "custom-2",
+   "cpu": "2x Intel Xeon E5-2696 v3 (Haswell-EP, dual socket)",
+   "date": "2026-10-21T22:53:39+08:00",
+   "driver": "581.80",
+   "engine": "0.1.45.3",
+   "engine_source": "official prebuilt zip strata-windows-x64-cuda12 (manually updated; UPDATE.bat channel gate still 0.1.45)",
+   "failure": null,
+   "gpu": "Tesla PG500-216",
+   "gpu_count": 3,
+   "gpu_full": "Tesla PG500-216 (V100S, 72/80 SM cut-down) 32 GB, Tesla PG500-216 (V100S, 72/80 SM cut-down) 32 GB, Tesla V100-PCIE-32GB (80 SM) 32 GB",
+   "gpu_other": 1,
+   "host_relation": "same-host",
+   "id": "results/2026-10-21-3xv100-ud-iq4xs-p8-01453.result.json",
+   "label": "3xv100-ud-iq4xs-p8-01453",
+   "machine_id": "haswell-ddr3l-3xv100",
+   "model": "Swift",
+   "model_full": "Swift (Qwen3.8-Flash-Next 125B MoE)",
+   "n_ctx": 131072,
+   "os": "Windows 10 Enterprise LTSC 2021 (21H2)",
+   "protocol": "standard-v2",
+   "quant": "UD-IQ4_XS",
+   "ram_gb": 128,
+   "sizes": {
+    "chat": {
+     "decode_tps": 70.2,
+     "prompt_ms": 299.4,
+     "prompt_tps": 110.2,
+     "read_median": null,
+     "reused_median": null,
+     "ttft_ms": 323.6,
+     "wall_ms": null
+    },
+    "gprobe150": {
+     "decode_tps": null,
+     "prompt_ms": 661.4000000000001,
+     "prompt_tps": null,
+     "read_median": 227.0,
+     "reused_median": 0.0,
+     "ttft_ms": null,
+     "wall_ms": 701.35
+    },
+    "gprobe300": {
+     "decode_tps": null,
+     "prompt_ms": 868.55,
+     "prompt_tps": null,
+     "read_median": 384.0,
+     "reused_median": 0.0,
+     "ttft_ms": null,
+     "wall_ms": 902.05
+    },
+    "gprobe450": {
+     "decode_tps": null,
+     "prompt_ms": 1031.6999999999998,
+     "prompt_tps": null,
+     "read_median": 521.0,
+     "reused_median": 0.0,
+     "ttft_ms": null,
+     "wall_ms": 1071.6999999999998
+    },
+    "long": {
+     "decode_tps": 66.7,
+     "prompt_ms": 8256.2,
+     "prompt_tps": 1770.7,
+     "read_median": null,
+     "reused_median": null,
+     "ttft_ms": 8313.8,
+     "wall_ms": null
+    },
+    "medium": {
+     "decode_tps": 73.2,
+     "prompt_ms": 2675.0,
+     "prompt_tps": 977.2,
+     "read_median": null,
+     "reused_median": null,
+     "ttft_ms": 2704.6,
+     "wall_ms": null
+    },
+    "xlong": {
+     "decode_tps": 68.1,
+     "prompt_ms": 13044.4,
+     "prompt_tps": 2210.2,
+     "read_median": null,
+     "reused_median": null,
+     "ttft_ms": 13153.9,
+     "wall_ms": null
+    }
+   },
+   "status": "ok",
+   "suite": "full",
+   "vram_gb": 32,
+   "warnings": 0
+  },
   {
    "agent": {
     "hit_pct": 100,
