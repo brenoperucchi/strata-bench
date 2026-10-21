@@ -347,6 +347,16 @@ class OverviewHtml(unittest.TestCase):
         self.assertNotIn("TTFT", table)
         self.assertNotIn(">Agent", table)
 
+    def test_a_rig_of_equal_cards_reads_as_the_count_and_the_total_vram_and_a_display_card_keeps_the_plus(self):
+        triple = self.render([row("a", gpu="Tesla PG500-216", vram_gb=32, gpu_count=3, gpu_other=1, vram_total_gb=96)])["perf"]
+        self.assertIn("×3", triple)
+        self.assertIn("96 GB", triple)
+        self.assertNotIn("+1", triple)
+        display = self.render([row("a", gpu="Tesla V100S", vram_gb=32, gpu_count=2, gpu_other=1)])["perf"]
+        self.assertIn("32 GB", display)
+        self.assertIn("+1", display)
+        self.assertNotIn("×2", display)
+
     def test_the_top_numbers_are_one_quiet_line_and_the_contributors_are_a_count_that_links_to_the_thanks_page(self):
         rows = [row(f"r{i}", by=f"person{i}") for i in range(12)]                    # twelve people: the line must not grow with them
         cards = self.render(rows)["cards"]

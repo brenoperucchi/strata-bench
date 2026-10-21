@@ -90,6 +90,19 @@ class Site(unittest.TestCase):
         self.assertEqual(r["gpu_full"], "Tesla V100S-PCIE-32GB (reports as Tesla PG500-216) 32 GB, GeForce GTX 1060 6GB 6 GB")
         self.assertEqual(r["model_full"], "Swift (Qwen3.8-Flash-Next 125B MoE)")
 
+    def test_a_rig_of_equal_sized_cards_publishes_the_total_vram_and_a_display_card_does_not_count(self):
+        ident = json.loads(json.dumps(self.IDENT))
+        ident["machine"]["gpus"] = [{"name": "Tesla PG500-216", "vram_gb": 32}, {"name": "Tesla PG500-216", "vram_gb": 32}, {"name": "Tesla V100-PCIE-32GB", "vram_gb": 32}]
+        self.make("triple", identity=ident)
+        ident["machine"]["gpus"] = [{"name": "Tesla V100S-PCIE-32GB", "vram_gb": 32}, {"name": "GeForce GTX 1060 6GB", "vram_gb": 6}]
+        self.make("display", identity=ident)
+        ident["machine"]["gpus"] = [{"name": "RTX 5090", "vram_gb": 32}]
+        self.make("single", identity=ident)
+        rows = {r["label"]: r for r in build_site.build(self.tmp / "results")["results"]}
+        self.assertEqual((rows["triple"]["gpu_count"], rows["triple"]["vram_total_gb"]), (3, 96))
+        self.assertIsNone(rows["display"]["vram_total_gb"])
+        self.assertIsNone(rows["single"]["vram_total_gb"])
+
     def test_a_failed_result_is_published_for_the_health_view(self):
         self.make("boom", mode="crash", identity=self.IDENT)
         r = build_site.build(self.tmp / "results")["results"][0]

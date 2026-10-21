@@ -68,6 +68,7 @@ def row(rel: str, doc: dict) -> dict:
         "failure": val.get("failure"),
         "gpu": gpu_name(g0.get("name")), "vram_gb": g0.get("vram_gb"), "gpu_count": len(m.get("gpus") or []) or None,
         "gpu_other": sum(1 for g in gpus[1:] if gpu_name(g.get("name")) != gpu_name(g0.get("name"))),      # cards of another kind beside the first (a display card, say)
+        "vram_total_gb": vram_total(gpus),
         "gpu_full": ", ".join(str(g.get("name")) + (" " + str(g["vram_gb"]) + " GB" if g.get("vram_gb") else "") for g in gpus if g.get("name")) or None,
         "model_full": mo.get("family") or doc.get("model_path"),
         "cpu": m.get("cpu"), "ram_gb": m.get("ram_gb"), "os": m.get("os"), "driver": m.get("driver"),
@@ -78,6 +79,16 @@ def row(rel: str, doc: dict) -> dict:
         "args": cfg.get("args"),
         "sizes": sizes,
     }
+
+
+def vram_total(gpus: list):
+    """The memory of a rig whose cards are all the same size (a few cards of one size are one pool of memory); None for one card,
+    and for a rig with a small display card beside the compute card, where the total would claim memory the model never uses."""
+    sizes = [g.get("vram_gb") for g in gpus]
+    if len(sizes) < 2 or any(isinstance(v, bool) or not isinstance(v, (int, float)) for v in sizes) or len(set(sizes)) != 1:
+        return None
+    total = sum(sizes)
+    return int(total) if total == int(total) else total
 
 
 def build(results_dir: Path = ROOT / "results", copies: dict = None) -> dict:

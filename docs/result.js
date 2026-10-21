@@ -98,7 +98,8 @@
     var pill = el("span", val.status || "", "pill " + (val.status || ""));
     var gl = (m.gpus || []).filter(function (g) { return g && g.name; }), g0 = gl[0] || null;
     var gOther = g0 ? gl.slice(1).filter(function (g) { return shortGpu(g.name) !== shortGpu(g0.name); }).length : 0;
-    var gpuCard = g0 ? shortGpu(g0.name) + (g0.vram_gb ? " " + g0.vram_gb + " GB" : "") + (gOther > 0 ? " +" + gOther : gl.length > 1 ? " ×" + gl.length : "") : "–";
+    var same = gl.length > 1 && gl.every(function (g) { return typeof g.vram_gb === "number" && g.vram_gb === g0.vram_gb; });      // equal cards: one pool of memory
+    var gpuCard = g0 ? shortGpu(g0.name) + (same ? " ×" + gl.length + " " + g0.vram_gb * gl.length + " GB" : (g0.vram_gb ? " " + g0.vram_gb + " GB" : "") + (gOther > 0 ? " +" + gOther : gl.length > 1 ? " ×" + gl.length : "")) : "–";
     var modelFull = (mo.family || doc.model_path || "–") + (mo.quant ? " " + mo.quant : "");
     var cards = [[gpuCard, "GPU", gpus], [(mo.family ? shortModel(mo.family) : (doc.model_path || "–")) + (mo.quant ? " " + mo.quant : ""), "model", modelFull], [e.version || doc.build_info || "–", "engine"], [num(doc.n_ctx, 0), "context tokens"], [(cfg.config_origin || "–") + (cfg.config_origin_verified ? " (verified)" : ""), "config origin"]];
     cards.forEach(function (c) { var d = el("div", null, "card"); var b = el("b", c[0]); if (String(c[0]).length > 18) b.className = "long"; if (c[2] && c[2] !== c[0]) d.title = c[2]; put(d, b, el("span", c[1])); $("cards").append(d); });

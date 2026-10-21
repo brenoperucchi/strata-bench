@@ -158,6 +158,7 @@
    "status": "ok",
    "suite": "full",
    "vram_gb": 32,
+   "vram_total_gb": 96,
    "warnings": 0
   },
   {
@@ -311,6 +312,7 @@
    "status": "ok",
    "suite": "full",
    "vram_gb": 32,
+   "vram_total_gb": 96,
    "warnings": 0
   },
   {
@@ -417,6 +419,7 @@
    "status": "ok",
    "suite": "standard",
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -523,6 +526,7 @@
    "status": "ok",
    "suite": "standard",
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -629,6 +633,7 @@
    "status": "ok",
    "suite": "standard",
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -750,6 +755,7 @@
    "status": "warnings",
    "suite": null,
    "vram_gb": 16,
+   "vram_total_gb": null,
    "warnings": 2
   },
   {
@@ -867,6 +873,7 @@
    "status": "warnings",
    "suite": null,
    "vram_gb": 16,
+   "vram_total_gb": null,
    "warnings": 2
   },
   {
@@ -996,6 +1003,7 @@
    "status": "ok",
    "suite": null,
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -1125,6 +1133,7 @@
    "status": "ok",
    "suite": null,
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -1223,6 +1232,7 @@
    "status": "ok",
    "suite": null,
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -1352,6 +1362,7 @@
    "status": "ok",
    "suite": null,
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -1467,6 +1478,7 @@
    "status": "ok",
    "suite": null,
    "vram_gb": 24,
+   "vram_total_gb": 48,
    "warnings": 0
   },
   {
@@ -1581,6 +1593,7 @@
    "status": "ok",
    "suite": null,
    "vram_gb": 24,
+   "vram_total_gb": 48,
    "warnings": 0
   },
   {
@@ -1693,6 +1706,7 @@
    "status": "ok",
    "suite": null,
    "vram_gb": 24,
+   "vram_total_gb": 48,
    "warnings": 0
   },
   {
@@ -1791,6 +1805,7 @@
    "status": "ok",
    "suite": null,
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -1908,6 +1923,7 @@
    "status": "warnings",
    "suite": null,
    "vram_gb": 16,
+   "vram_total_gb": null,
    "warnings": 2
   },
   {
@@ -2051,6 +2067,7 @@
    "status": "ok",
    "suite": "custom",
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -2194,6 +2211,7 @@
    "status": "ok",
    "suite": "custom",
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -2337,6 +2355,7 @@
    "status": "ok",
    "suite": "custom",
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -2480,6 +2499,7 @@
    "status": "ok",
    "suite": "custom",
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -2578,6 +2598,7 @@
    "status": "ok",
    "suite": null,
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -2703,6 +2724,7 @@
    "status": "ok",
    "suite": null,
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -2822,6 +2844,7 @@
    "status": "ok",
    "suite": null,
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -2928,6 +2951,7 @@
    "status": "ok",
    "suite": "standard",
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -3029,6 +3053,7 @@
    "status": "ok",
    "suite": null,
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -3172,6 +3197,7 @@
    "status": "ok",
    "suite": "custom",
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -3278,6 +3304,7 @@
    "status": "ok",
    "suite": "standard",
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -3366,6 +3393,7 @@
    "status": "ok",
    "suite": "quick",
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -3482,6 +3510,7 @@
    "status": "ok",
    "suite": null,
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   },
   {
@@ -3599,6 +3628,7 @@
    "status": "warnings",
    "suite": null,
    "vram_gb": 16,
+   "vram_total_gb": null,
    "warnings": 2
   },
   {
@@ -3715,6 +3745,7 @@
    "status": "ok",
    "suite": null,
    "vram_gb": 32,
+   "vram_total_gb": null,
    "warnings": 0
   }
  ]
