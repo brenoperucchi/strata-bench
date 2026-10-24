@@ -2,7 +2,7 @@
  "note": "Reports from the Strata repository, measured with other prompts than strata-bench's. Not comparable with the results.",
  "source": {
   "repository": "https://github.com/Niko1221/Strata",
-  "commit": "477ac13cbe8e582c20484871ce459d20d82df09d",
+  "commit": "7dd5cf18e68c639a8773e096c5c79f971ea2a9f5",
   "license": "MIT"
  },
  "full_means": "states the prompt speed at 4K, 32K and 128K and the decode speed",
@@ -34,7 +34,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-12-community-gfx1103",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-12-community-gfx1103",
     "readme_sha256": "f5779ff8e7415ff79f658292f9869113340f809e6ff935cae8de3c4b62bfe4ef"
    },
    "full": false
@@ -63,7 +63,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-11-community-rtx3090-5600x-arena-pin-by-need",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-11-community-rtx3090-5600x-arena-pin-by-need",
     "readme_sha256": "ca81498067a02ee62bd48156bb54411bd599e42d81d973c876d997ad9cb3c7a2"
    },
    "full": false
@@ -92,7 +92,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-11-community-rtx3090-5600x-arena-async",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-11-community-rtx3090-5600x-arena-async",
     "readme_sha256": "d547650735cd8e1574200a8a510aac24192a12966c2901cba9ecaa81dd82e550"
    },
    "full": false
@@ -121,7 +121,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-10-community-rx-9070",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-10-community-rx-9070",
     "readme_sha256": "b9560111ff09b02aaee4fc6d186ec9a1358441a585a03015ee0ad146f8bdd116"
    },
    "full": false
@@ -263,7 +263,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-10-community-rx-9060-xt",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-10-community-rx-9060-xt",
     "readme_sha256": "91af52d7894ced09bd76273e21e8f65bf4203b496cb5ed42f8bbe7d2942564d3"
    },
    "full": false
@@ -292,7 +292,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-10-community-2x-p40-iq3_s",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-10-community-2x-p40-iq3_s",
     "readme_sha256": "9440fb1c2c7d08354ecfa92faa27457db49bfa85ae6f46769a3dc582d30876e0"
    },
    "full": false
@@ -346,7 +346,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-strix-halo-laptop-70w",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-09-community-strix-halo-laptop-70w",
     "readme_sha256": "63997c38c9dbf4ef69e0f19ea6c898915884fc4f406879bb513e20ef8ea8b16e"
    },
    "full": false
@@ -375,7 +375,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-rtx5090-9800x3d-swift-1m",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-09-community-rtx5090-9800x3d-swift-1m",
     "readme_sha256": "93cfc8e66db3da118fc472983c5a1947d8f51d2cebaab0e50b8558894cc0ee67"
    },
    "full": false
@@ -461,7 +461,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-rtx-5080-w7-2475x-ud-iq4xs-786k",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-09-community-rtx-5080-w7-2475x-ud-iq4xs-786k",
     "readme_sha256": "a6813c5d1b0ab2ad25f0658e1ad9d6c48e78b55f3a69249c065d364257f5c90a"
    },
    "full": true
@@ -490,7 +490,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-rtx-5080-4060ti-0.1.41",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-09-community-rtx-5080-4060ti-0.1.41",
     "readme_sha256": "c9bed025e9c962048a4bf2e280f785f9546489cd85da2a14fb29c77a7b886fff"
    },
    "full": false
@@ -552,7 +552,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-rtx-5060ti-wsl2-iq3_s-0141",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-09-community-rtx-5060ti-wsl2-iq3_s-0141",
     "readme_sha256": "2dfba8d777b6ea1607e5a86e3e46552248ec3d27d93263c023b2294ed3c647c7"
    },
    "full": false
@@ -581,7 +581,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-rtx-5060-ti-e5-2680-v4",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-09-community-rtx-5060-ti-e5-2680-v4",
     "readme_sha256": "e3378b653424115bc9f1aa543bb4f22ae48e6dc48529b3a964804ede74f01d57"
    },
    "full": false
@@ -610,7 +610,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-rtx-3060-0141",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-09-community-rtx-3060-0141",
     "readme_sha256": "24ffbaf55bd1cb31ff16226e99368167716789cc61c3246b0fb728fdd56da169"
    },
    "full": false
@@ -736,7 +736,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-radeon-pro-vii-16gb",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-09-community-radeon-pro-vii-16gb",
     "readme_sha256": "eeed98ab872aa7f4c6c827667054a21614fa4766cd6883abc02b0889faf62361"
    },
    "full": true
@@ -765,7 +765,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-p4-prefill-roofline",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-09-community-p4-prefill-roofline",
     "readme_sha256": "843e424b7eb996a07204105047a6d8dcd252c230f741743c3127515b62e2fe60"
    },
    "full": false
@@ -794,7 +794,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-gfx1151-ud-iq4xs-0.1.41",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-09-community-gfx1151-ud-iq4xs-0.1.41",
     "readme_sha256": "8fe211db162e733c8f5c0dfa0e9b6e134fc3257b223a02d4e11a14c22bbf53ab"
    },
    "full": false
@@ -904,7 +904,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-4x-rx-7900-xt",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-09-community-4x-rx-7900-xt",
     "readme_sha256": "2c6f3e01f7b22a206e27c1473efb247f1b3f82845e8f0af1dbe82cdb3d023698"
    },
    "full": true
@@ -1046,7 +1046,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-09-community-2x-rx-6900xt-0.1.41",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-09-community-2x-rx-6900xt-0.1.41",
     "readme_sha256": "1b7840a147ee9ade44bc71744b96b955938a0d252bd86474cb278636bb14a89b"
    },
    "full": true
@@ -1116,7 +1116,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-v100-sm70-table",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-08-community-v100-sm70-table",
     "readme_sha256": "a4c29536905ce802b3ac0e8fcf32a3f09c23d3ea3f03d7fd0fe3d8cc0d9a400d"
    },
    "full": false
@@ -1178,7 +1178,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-rtx4090-iq3xxs-200k-ru",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-08-community-rtx4090-iq3xxs-200k-ru",
     "readme_sha256": "f639fc0ea7b467e63ca68b8926850c25c6c03e94b2699cfbf9c9bdd92168e7fa"
    },
    "full": true
@@ -1240,7 +1240,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-rtx4090-iq3xxs-200k-code",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-08-community-rtx4090-iq3xxs-200k-code",
     "readme_sha256": "b739f44b5ad9a68371a7d6aeb6a99b478676fec09bfd699890785fb711d22fef"
    },
    "full": true
@@ -1269,7 +1269,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-rtx4070-iq2-xs",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-08-community-rtx4070-iq2-xs",
     "readme_sha256": "d43346897e6ad41cdbaec48ff22263cdf7d8006b01cdd1f87cb8a65b73b980ee"
    },
    "full": false
@@ -1298,7 +1298,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-rtx-5090-laptop-engine-0.1.40.3",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-08-community-rtx-5090-laptop-engine-0.1.40.3",
     "readme_sha256": "0e39382a94fa60c5a837b2c7810c03ba89bfcfad690652e44b2c082e71589b78"
    },
    "full": false
@@ -1327,7 +1327,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-r9700-linux",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-08-community-r9700-linux",
     "readme_sha256": "73fe64144390faf3a64e543ad0e5836989a22eec8a6fdd72df939679f15451d6"
    },
    "full": false
@@ -1381,7 +1381,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-2x-titan-rtx-0.1.40.3",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-08-community-2x-titan-rtx-0.1.40.3",
     "readme_sha256": "ceb36b0a508ff292528620371ccbdac15e60ba47df2d0979f8d0ffef41fd686d"
    },
    "full": true
@@ -1467,7 +1467,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-08-community-2x-rtx3080-20gb-ud-q4-k-xl-512k-pool",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-08-community-2x-rtx3080-20gb-ud-q4-k-xl-512k-pool",
     "readme_sha256": "f820313f0ae906887a42c7d33edb816c654f14fa25adbfad485042f299ab03aa"
    },
    "full": false
@@ -1496,7 +1496,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-xtx-6800xt-1m-helper",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-07-community-xtx-6800xt-1m-helper",
     "readme_sha256": "1e5ba600c7be203e376652482211be7d448599dcd206bd9521c77b813fe41f48"
    },
    "full": false
@@ -1558,7 +1558,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-v100-p100-helper",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-07-community-v100-p100-helper",
     "readme_sha256": "18940715844cd913372629d53115fc26f855ae661ab907705fcd9590c40d7ff6"
    },
    "full": false
@@ -1612,7 +1612,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-rtx5090-pro4000-helper",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-07-community-rtx5090-pro4000-helper",
     "readme_sha256": "50596034eabb78f8bc652d351370dc95b45829c3cdb77aea73d6a1031019885c"
    },
    "full": false
@@ -1714,7 +1714,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-rtx-5090-laptop-ud-iq4xs",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-07-community-rtx-5090-laptop-ud-iq4xs",
     "readme_sha256": "74f2a8dde87ff3bfbe9d5a6708b56a78553ef7538a3a5371496833207eb11473"
    },
    "full": false
@@ -1856,7 +1856,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-rtx-5080-docker-wsl2",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-07-community-rtx-5080-docker-wsl2",
     "readme_sha256": "81a761be58373f97bf9a99f4033d90377fd3b3b61f8cc9d0683e7cddefaf1f27"
    },
    "full": true
@@ -1885,7 +1885,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-gfx1150",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-07-community-gfx1150",
     "readme_sha256": "f908366bc219bcdc64be636baf931e37b03e9ed55a285779a2988552c71f1d79"
    },
    "full": false
@@ -1914,7 +1914,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-arc-b65-v01402",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-07-community-arc-b65-v01402",
     "readme_sha256": "0520362fedfd22c7dab170dbd11ab8d059a53b6ac0509592540b4d8b3c262278"
    },
    "full": false
@@ -1943,7 +1943,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-07-community-2x-rtx-4000",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-07-community-2x-rtx-4000",
     "readme_sha256": "4f3d8b94ddaec897703ba4878163786724316fa9993f0dd71848d74bb6a394b2"
    },
    "full": false
@@ -2037,7 +2037,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rx-7900-xtx",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-rx-7900-xtx",
     "readme_sha256": "ebd9a939aec77fcbd96f2ddf9f9050fdd1f9be51b05ba86b8735df367ee463ef"
    },
    "full": false
@@ -2115,7 +2115,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rx-6800m",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-rx-6800m",
     "readme_sha256": "05285db74312a350e7053cecbc1ecac89f8ad691734bf558ba1605caee269d44"
    },
    "full": false
@@ -2161,7 +2161,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rtxpro-v0140",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-rtxpro-v0140",
     "readme_sha256": "8b0eaab0f3751fbc51f23b48300c2394f152e4d76efccb4aed72e6fe88de62a7"
    },
    "full": false
@@ -2295,7 +2295,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rtx5070ti-5900x",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-rtx5070ti-5900x",
     "readme_sha256": "cdd26037a00b1f54108cf94b001cbbfc050a240b20f9ad2c1478219db783833f"
    },
    "full": false
@@ -2324,7 +2324,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rtx4090-toolcall-hotfix",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-rtx4090-toolcall-hotfix",
     "readme_sha256": "34f79e5f275b46c942e33e35c7c41e783cff1710f44b31f5feb4bfb5a5228ce0"
    },
    "full": false
@@ -2353,7 +2353,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rtx4090-opt-ins",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-rtx4090-opt-ins",
     "readme_sha256": "0f96ca64466b68c9630fed66a2c000ef3b29a2b24f4ca7a9d37be9ca090b44e6"
    },
    "full": false
@@ -2447,7 +2447,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rtx3090-egpu-64gb",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-rtx3090-egpu-64gb",
     "readme_sha256": "79f4e6e605e98f0d7841c9d25e15998e15fad1ed10c10f02fd7034b0096ab716"
    },
    "full": false
@@ -2501,7 +2501,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rtx-5090-laptop",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-rtx-5090-laptop",
     "readme_sha256": "f219af63c865c30a0d857e0480287114fa688bf1ee38b111fd0c5b30ef4126b9"
    },
    "full": true
@@ -2555,7 +2555,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-rtx-5060ti",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-rtx-5060ti",
     "readme_sha256": "0c9fca17ebb0f7d566fc6d1cd1a1df91bd2f49a020f16011ce0e17527f0996d2"
    },
    "full": true
@@ -2601,7 +2601,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-r9-2x-rtx-2080-ti",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-r9-2x-rtx-2080-ti",
     "readme_sha256": "cc1c4330efc32d4c07caa92786b4ac3077750ce59ddae812eb11797d5ebec2d4"
    },
    "full": false
@@ -2663,7 +2663,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-4x-tesla-p100",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-4x-tesla-p100",
     "readme_sha256": "bb3b444026ad14e53e6485b53fbfd5a182a4d2db60ea4d2e282740dc89c60a3e"
    },
    "full": false
@@ -2805,7 +2805,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-2x-rx-7900-gre",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-2x-rx-7900-gre",
     "readme_sha256": "29c06d9a879f2e12b3d0666c7f479846f1f13e210d6bb010f79d238c73accb20"
    },
    "full": false
@@ -2947,7 +2947,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-2x-rx-6900xt-0.1.40.1",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-2x-rx-6900xt-0.1.40.1",
     "readme_sha256": "7bb2fb4ab5875142d92e847137fb3563f7bb858f56cfccc28af0d407d8c70836"
    },
    "full": true
@@ -3057,7 +3057,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-2x-rtx-pro-4500-engine-0.1.40.1",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-2x-rtx-pro-4500-engine-0.1.40.1",
     "readme_sha256": "5ca31fc23c760635f852237fb3efa6cd22de6126d8516162e96219e074fdf2d5"
    },
    "full": true
@@ -3119,7 +3119,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-06-community-2x-p100",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-06-community-2x-p100",
     "readme_sha256": "831ee76c46a43fb879f3df0d5e9afe932797e2976c3555488672ae7b8d5ac35a"
    },
    "full": false
@@ -3148,7 +3148,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-v100-sxm2",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-05-community-v100-sxm2",
     "readme_sha256": "43d1bae7c7496fa6fd3766ee44e6fa6fef24b04119eb3e08b6f066a606a4f225"
    },
    "full": false
@@ -3202,7 +3202,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-rx-6700-xt",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-05-community-rx-6700-xt",
     "readme_sha256": "d48c6705f6d610c6892b6b3aa14b13c8b8c3c3759dce8359854befa6780811e4"
    },
    "full": true
@@ -3344,7 +3344,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-rtx5080-9900x3d",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-05-community-rtx5080-9900x3d",
     "readme_sha256": "4c6a921fe8e7592e9177189b2337eeaaf23ebafb885bcf7e8afc5ecf2a512c5e"
    },
    "full": true
@@ -3406,7 +3406,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-rtx-5090-9700x-iq3s",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-05-community-rtx-5090-9700x-iq3s",
     "readme_sha256": "8320ad96bb3bceed8ba5955fc53bbc72b3ee57a90b899ba83d451ceea7a44ee3"
    },
    "full": true
@@ -3460,7 +3460,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-rtx-5060-ti-x2",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-05-community-rtx-5060-ti-x2",
     "readme_sha256": "c039eeea8991a68c426de7c710bb9347faddf14c28cff6e716cb47380d28fd7a"
    },
    "full": true
@@ -3489,7 +3489,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-rtx-4070-ti-super",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-05-community-rtx-4070-ti-super",
     "readme_sha256": "284fa769934a85788fed7d962733eab18c159010f7e2869e7bc9b3d293769fda"
    },
    "full": false
@@ -3518,7 +3518,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-gfx1151",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-05-community-gfx1151",
     "readme_sha256": "effb2c3358442b4e08430a2e33b81af2e483c7a689ac98ce46454e02275344a7"
    },
    "full": false
@@ -3547,7 +3547,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-e5-2673v3-rtx-4060ti",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-05-community-e5-2673v3-rtx-4060ti",
     "readme_sha256": "87522fa5a70a034dad24bc6a9106aa237683b8e551666f47522c1fbbddeba74d"
    },
    "full": false
@@ -3689,7 +3689,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-arc-b65",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-05-community-arc-b65",
     "readme_sha256": "24747b3111cabfaa4af71dec38ee5564fd0b142d6b08e5e6c15f98be4c51e265"
    },
    "full": false
@@ -3831,7 +3831,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-2x-rx-6900xt",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-05-community-2x-rx-6900xt",
     "readme_sha256": "bf192e5a0e6fd18151a8913b8a104c0125380c0b4a3ab202fe9b85f6f790d14f"
    },
    "full": true
@@ -3909,7 +3909,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-2x-rtx-4060ti",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-05-community-2x-rtx-4060ti",
     "readme_sha256": "684f4df08cd73b9cd8edf11a9bfab6181a3d27104262a05f1125b97e7ca1345f"
    },
    "full": true
@@ -3987,7 +3987,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-05-community-2x-p40",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-05-community-2x-p40",
     "readme_sha256": "aa645a17285097459e1303fd6e06417617c956a317d10f81b1418747be1ab572"
    },
    "full": false
@@ -4065,7 +4065,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-v100-rtx4070-split",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-v100-rtx4070-split",
     "readme_sha256": "547726efdec539a2c3dd24df91b3f21dc6eff06443d39d3f51c67224dd8c57c1"
    },
    "full": true
@@ -4119,7 +4119,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-v100-16gb-ram",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-v100-16gb-ram",
     "readme_sha256": "8f839d60757e8398d7c54435c49a3f417e9adb98fea8c57eb83b64d3dc9bbc1d"
    },
    "full": true
@@ -4173,7 +4173,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rx7900xtx-hipblaslt-100500",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-rx7900xtx-hipblaslt-100500",
     "readme_sha256": "9ee75745e4a4aab6cd83bf9bdc6fc71bbb2f05d59f57a1a32b2c780e475af50e"
    },
    "full": false
@@ -4315,7 +4315,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rx-7900-gre",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-rx-7900-gre",
     "readme_sha256": "d2c32c9539d733d23662751e13b1f2a8bc8f64c825753a38cf917c2b3d0a870f"
    },
    "full": false
@@ -4344,7 +4344,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rx-6800-windows",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-rx-6800-windows",
     "readme_sha256": "a6166e2435718a60e93a38773350d8e2457cc778b829eb851f8fbf392db90530"
    },
    "full": false
@@ -4406,7 +4406,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rtx4090-iq3xxs-200k-ru",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-rtx4090-iq3xxs-200k-ru",
     "readme_sha256": "1e00daa6b388d4ee9fd2e8090172c931f82fdbf464fc9e783ab50ef55b246f38"
    },
    "full": true
@@ -4468,7 +4468,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rtx4090-iq3xxs-200k-code",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-rtx4090-iq3xxs-200k-code",
     "readme_sha256": "fbb1bdd42640d581b7248f74995db50adcfa18d3dafbba7091c7b727ade1e872"
    },
    "full": true
@@ -4522,7 +4522,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rtx-5090-9700x",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-rtx-5090-9700x",
     "readme_sha256": "a8c6fcb3dace0a141ce16e4dd5f7348ca7a851b8cbc8000c4b08beb5038aad07"
    },
    "full": true
@@ -4551,7 +4551,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rtx-5070ti-windows",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-rtx-5070ti-windows",
     "readme_sha256": "73ea66d413cde5c49f16cd8ad8251d9dc529fad24d3c82daaee1506bc0b09325"
    },
    "full": false
@@ -4605,7 +4605,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rtx-4090-laptop",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-rtx-4090-laptop",
     "readme_sha256": "6d2bf1309d4248dae17248db9458b340ad23e3aab5be22d4b731329201fe2663"
    },
    "full": true
@@ -4634,7 +4634,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-rtx-4080s-iq3s",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-rtx-4080s-iq3s",
     "readme_sha256": "a9013a0cbbcd5e74b6bbe91b63e728709f4257793f7882834d14af20e0bb7268"
    },
    "full": false
@@ -4688,7 +4688,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-mi50",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-mi50",
     "readme_sha256": "cbd6487e8fc27d6cfca85e95aa6e59f96b10e9f9a70b24d7ffe755d54182701f"
    },
    "full": true
@@ -4717,7 +4717,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-4090-agents-vs-dense-27b",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-4090-agents-vs-dense-27b",
     "readme_sha256": "ba84ee34c3c5b2ee69cbe235bcfbf72c1cb95579ae540b8bc49dc414e63d2488"
    },
    "full": false
@@ -4746,7 +4746,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-4090-32gb-ram-512k",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-4090-32gb-ram-512k",
     "readme_sha256": "d103bfe113b324c1285ed68b11046d584960f39c4740140d2e2b37fb757038a7"
    },
    "full": false
@@ -4800,7 +4800,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-2x-rtx3060",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-2x-rtx3060",
     "readme_sha256": "37089fccc8460d6ec048983ab5c090d9af999ef62d14651df4ea95e0b5fcbc2e"
    },
    "full": false
@@ -4910,7 +4910,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-04-community-2x-arc-pro-b60",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-04-community-2x-arc-pro-b60",
     "readme_sha256": "ca6f0ea9a765553f59e1f57fe2ea3f8ada5a278ef8ab57fb2a43c0d2894a076c"
    },
    "full": false
@@ -5004,7 +5004,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-z840-rtx3090ti",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-03-community-z840-rtx3090ti",
     "readme_sha256": "5e9ab6977fa8be7c29cc1d36f99c763579e507f639236eebcceb4d64fede6ccd"
    },
    "full": false
@@ -5033,7 +5033,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-v100",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-03-community-v100",
     "readme_sha256": "b6e269cce3b3deed4e490e561566d3ad2a5fe2b03901a2a75ca24cd9b6b6ed34"
    },
    "full": false
@@ -5095,7 +5095,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-rx7900xtx-rocm102-nightly",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-03-community-rx7900xtx-rocm102-nightly",
     "readme_sha256": "75fd1e2612000b1fae0f819705e8181bdac498da21b6ce6f7a2352b90eaa51af"
    },
    "full": false
@@ -5157,7 +5157,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-rtx4090-iq3xxs-200k-ru",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-03-community-rtx4090-iq3xxs-200k-ru",
     "readme_sha256": "63211782ba8bb222a717aabae95cf1329ef8ffac9c3878d30e055c0ac7ce8dc2"
    },
    "full": true
@@ -5219,7 +5219,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-rtx4090-iq3xxs-200k-code",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-03-community-rtx4090-iq3xxs-200k-code",
     "readme_sha256": "b0f1a1dae751cf7a25cccccb5210aadb4eeacfec2df19438b44f0bf6f85790d5"
    },
    "full": true
@@ -5281,7 +5281,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-rtx4090-iq3s-140k-ru",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-03-community-rtx4090-iq3s-140k-ru",
     "readme_sha256": "2018d06f3f8594c58a9c10fc673c2ac4dddc5afac8831d3c407a47aaa6dc084f"
    },
    "full": true
@@ -5343,7 +5343,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-rtx4090-iq3s-140k-code",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-03-community-rtx4090-iq3s-140k-code",
     "readme_sha256": "46204b6c30a98d3424bd037508d5d85702aaba18f1cb3fc0343ed0debbb52151"
    },
    "full": true
@@ -5372,7 +5372,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-r9700-windows",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-03-community-r9700-windows",
     "readme_sha256": "a59d58b0d54c12c2715091afdb3a6f504d35139d22a102e59a49f81be4aea225"
    },
    "full": false
@@ -5426,7 +5426,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-03-community-2x-mi50",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-03-community-2x-mi50",
     "readme_sha256": "1e254864edc915632d6f8f21bbffdd9665ecc3ddd537ab8674aebad43047fd2d"
    },
    "full": true
@@ -5455,7 +5455,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-rx9070xt-windows",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-02-community-rx9070xt-windows",
     "readme_sha256": "7d4b05b2425573c5944f10d538f88765a367e9447a69bee010b35c4128ebb769"
    },
    "full": false
@@ -5525,7 +5525,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-rtx5090-1m-agent",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-02-community-rtx5090-1m-agent",
     "readme_sha256": "df98cbad115460d955a2ad49fd55a2c0e37233479b7d0de60e65fbab855669b4"
    },
    "full": false
@@ -5571,7 +5571,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-rtx4000ada-layer-split",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-02-community-rtx4000ada-layer-split",
     "readme_sha256": "12d66c3d28da672026169c3e176b125bad9ac2bf864cf160b769577098f2eced"
    },
    "full": false
@@ -5713,7 +5713,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-rtx2080ti-11gb",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-02-community-rtx2080ti-11gb",
     "readme_sha256": "cc05ab4efe7f5dd9d22b5c860e58bac62be44f49eceeba6737c056de0666b618"
    },
    "full": true
@@ -5775,7 +5775,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-rtx-5090-iq3s",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-02-community-rtx-5090-iq3s",
     "readme_sha256": "b1c871ed428268e6b70fa18b3b63da254c0c2c528d67db882bbf23d3c33039c5"
    },
    "full": false
@@ -5829,7 +5829,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-rtx-5060-ti-x2",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-02-community-rtx-5060-ti-x2",
     "readme_sha256": "40dfe121475f4285a46888d25ef6decd7327694cc4dc9b3b40a3d860995e113c"
    },
    "full": true
@@ -5907,7 +5907,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-2x5060ti",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-02-community-2x5060ti",
     "readme_sha256": "087b8b15eb5549bc33097de450c74eb08f44032f500dfa1cde68c2f7fb6b2f59"
    },
    "full": false
@@ -5936,7 +5936,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-02-community-2x-rtx-pro-4500-engine-0.1.36",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-02-community-2x-rtx-pro-4500-engine-0.1.36",
     "readme_sha256": "29a3513d1f839864f7b5e0e2038e6f7f2e290b46deaa14f3b372c8d53aa4f2bb"
    },
    "full": false
@@ -6078,7 +6078,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-01-community-rtx-pro-4500",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-01-community-rtx-pro-4500",
     "readme_sha256": "07de179c54a86166c35f035754a045a0df2561d3f5296bc34526a62caab0816f"
    },
    "full": false
@@ -6220,7 +6220,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-01-community-rtx-5090-5950x",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-01-community-rtx-5090-5950x",
     "readme_sha256": "f2f263cbddc8422d34a093ae3ec04125516547d8f5d9ab97c453e834af0d7f96"
    },
    "full": false
@@ -6274,7 +6274,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-01-community-2x-titan-rtx",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-01-community-2x-titan-rtx",
     "readme_sha256": "65ababbcd050d697271d31587324311edb2b38d6798ca48a415c25d8328f3bc8"
    },
    "full": true
@@ -6303,7 +6303,7 @@
    "humaneval": null,
    "rows": [],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-10-01-community-2x-rtx-pro-4500",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-10-01-community-2x-rtx-pro-4500",
     "readme_sha256": "475b6149b519b4af8721f9bc4aa0838a5643c22fb22483be2621777b62b72fdd"
    },
    "full": false
@@ -6357,7 +6357,7 @@
     }
    ],
    "source": {
-    "url": "https://github.com/Niko1221/Strata/tree/477ac13cbe8e582c20484871ce459d20d82df09d/bench/results/2026-09-30-community-rtx-5090",
+    "url": "https://github.com/Niko1221/Strata/tree/7dd5cf18e68c639a8773e096c5c79f971ea2a9f5/bench/results/2026-09-30-community-rtx-5090",
     "readme_sha256": "f14bb2b27f968b264f0dcca8a080ecbc2c88464b35e62cdc744d7fb24ce34310"
    },
    "full": true
