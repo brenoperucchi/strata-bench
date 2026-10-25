@@ -1,6 +1,6 @@
 "use strict";
 (function () {
-  var state = { rows: [], filters: { gpu: "", model: "", engine: "", status: "", by: "", machine_id: "", protocol: "" }, selected: [], sort: { key: "date", dir: -1 } };
+  var state = { rows: [], filters: { gpu: "", model: "", quant: "", engine: "", status: "", by: "", machine_id: "", protocol: "" }, selected: [], sort: { key: "date", dir: -1 } };
   var $ = function (id) { return document.getElementById(id); };
   var esc = function (s) { return String(s === null || s === undefined ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   // every value that goes into a table cell as HTML: numbers are formatted, anything else is escaped (a result file is data, never markup)
@@ -105,9 +105,9 @@
   }
 
   function filters(rows) {
-    var defs = [["gpu", "GPU"], ["model", "Model"], ["engine", "Engine"], ["status", "Status"], ["by", "Submitted by"], ["machine_id", "Machine"], ["protocol", "Protocol"]].filter(function (d) {
+    var defs = [["gpu", "GPU"], ["model", "Model"], ["quant", "Quant"], ["engine", "Engine"], ["status", "Status"], ["by", "Submitted by"], ["machine_id", "Machine"], ["protocol", "Protocol"]].filter(function (d) {
       if (d[0] === "protocol") return uniq(rows, "protocol").length > 1;                       // only worth a filter once both protocols are on the page
-      return d[0] === "status" || d[0] === "gpu" || d[0] === "model" || d[0] === "engine" || uniq(rows, d[0]).length > 0;   // the optional filters appear only when some result declares them
+      return d[0] === "status" || d[0] === "gpu" || d[0] === "model" || d[0] === "quant" || d[0] === "engine" || uniq(rows, d[0]).length > 0;   // the optional filters appear only when some result declares them
     });
     $("filters").innerHTML = defs.map(function (d) {
       var opts = d[0] === "status" ? ["ok", "warnings"] : uniq(rows, d[0]);
@@ -119,13 +119,13 @@
     });
   }
 
-  // ?by=name and ?machine=id preselect a filter, so a link can point at one person's or one machine's results
+  // ?by=name, ?machine=id and ?quant=name preselect a filter, so a link can point at one person's, one machine's or one quantisation's results
   function readLink() {
-    try { var q = new URLSearchParams(location.search); state.filters.by = q.get("by") || ""; state.filters.machine_id = q.get("machine") || ""; } catch (e) { /* no URL support */ }
+    try { var q = new URLSearchParams(location.search); state.filters.by = q.get("by") || ""; state.filters.machine_id = q.get("machine") || ""; state.filters.quant = q.get("quant") || ""; } catch (e) { /* no URL support */ }
   }
   function shareLink() {
     try {
-      var q = new URLSearchParams(); if (state.filters.by) q.set("by", state.filters.by); if (state.filters.machine_id) q.set("machine", state.filters.machine_id);
+      var q = new URLSearchParams(); if (state.filters.by) q.set("by", state.filters.by); if (state.filters.machine_id) q.set("machine", state.filters.machine_id); if (state.filters.quant) q.set("quant", state.filters.quant);
       history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : "") + location.hash);
     } catch (e) { /* file:// */ }
   }
@@ -146,7 +146,7 @@
 
   function drawPerf() {
     var rows = state.rows.filter(function (r) {
-      return r.status !== "failed" && (!state.filters.gpu || r.gpu === state.filters.gpu) && (!state.filters.model || r.model === state.filters.model) &&
+      return r.status !== "failed" && (!state.filters.gpu || r.gpu === state.filters.gpu) && (!state.filters.model || r.model === state.filters.model) && (!state.filters.quant || r.quant === state.filters.quant) &&
         (!state.filters.engine || r.engine === state.filters.engine) && (!state.filters.status || r.status === state.filters.status) &&
         (!state.filters.by || r.by === state.filters.by) && (!state.filters.machine_id || r.machine_id === state.filters.machine_id) &&
         (!state.filters.protocol || r.protocol === state.filters.protocol);
@@ -247,13 +247,13 @@
   }
 
   // Dashboard (the overview), Results (the table), the Strata reports and Health. The address keeps the tab: #results, #health, nothing for the Dashboard.
-  // A link that carries a filter (?by=, ?machine=, ?compare=) is about the table, so it opens on Results.
+  // A link that carries a filter (?by=, ?machine=, ?quant=, ?compare=) is about the table, so it opens on Results.
   var TABS = [["dash", "dashboard"], ["perf", "results"], ["reports", "reports"], ["health", "health"]];
   function tabs(redrawMap) {
     var fromHash = function () {
       var h = String(location.hash || "").replace(/^#/, "").toLowerCase(), t = TABS.filter(function (x) { return x[1] === h; })[0];
       if (t) return t[0];
-      try { var q = new URLSearchParams(location.search); if (q.get("by") || q.get("machine") || q.get("compare")) return "perf"; } catch (e) { /* no URL support */ }
+      try { var q = new URLSearchParams(location.search); if (q.get("by") || q.get("machine") || q.get("quant") || q.get("compare")) return "perf"; } catch (e) { /* no URL support */ }
       return "dash";
     };
     var sel = function (which, keep) {
@@ -277,7 +277,7 @@
     if (!state.rows.length) { $("empty").hidden = false; $("view-dash").hidden = true; $("view-perf").hidden = true; $("view-reports").hidden = true; $("view-health").hidden = true; document.querySelector(".tabs").hidden = true; return; }
     readLink();
     try { var pre = new URLSearchParams(location.search).get("compare"); if (pre && state.rows.some(function (r) { return r.id === pre; })) state.selected = [pre]; } catch (e) { /* no URL support */ }   // from a detail page: start the comparison with that result
-    ["by", "machine_id"].forEach(function (k) { if (uniq(state.rows, k).indexOf(state.filters[k]) < 0) state.filters[k] = ""; });   // a link to an unknown name shows everything
+    ["by", "machine_id", "quant"].forEach(function (k) { if (uniq(state.rows, k).indexOf(state.filters[k]) < 0) state.filters[k] = ""; });   // a link to an unknown name shows everything
     filters(state.rows); drawPerf(); drawHealth();
   }).catch(function () {
     $("cards").innerHTML = '<div class="card"><b>–</b><span>data.json could not be loaded</span></div>';

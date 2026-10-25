@@ -304,6 +304,30 @@ class OverviewHtml(unittest.TestCase):
         self.assertEqual(self.opening_tab({"hash": "#health"}), "dash:hidden perf:hidden health:shown")
         self.assertEqual(self.opening_tab({"search": "?by=someone", "hash": "#dashboard"}), "dash:shown perf:hidden health:hidden")   # an explicit tab wins
 
+    def render_at(self, rows, location):
+        data = {"protocols": ["standard-v1", "standard-v2"], "count": len(rows), "results": rows}
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, True)
+        (tmp / "data.json").write_text(json.dumps(data))
+        r = subprocess.run([NODE, str(ROOT / "tests" / "js" / "render_dashboard.mjs"), str(ROOT / "docs" / "app.js"), str(tmp / "data.json"), json.dumps(location)], capture_output=True, text=True, timeout=30)
+        self.assertEqual((r.returncode, r.stderr), (0, ""), r.stderr)
+        return json.loads(r.stdout)
+
+    def test_the_results_have_a_quant_filter_after_the_model_and_a_quant_link_filters_the_table_and_opens_on_the_results(self):
+        rows = [row("a", quant="IQ3_S"), row("b", quant="IQ1_M", machine_id="m2"), row("c", quant="IQ3_S", machine_id="m3")]
+        out = self.render(rows)
+        f = out["filters"]
+        self.assertLess(f.index(">Model<"), f.index(">Quant<"))
+        self.assertLess(f.index(">Quant<"), f.index(">Engine<"))
+        self.assertIn("<option value=\"IQ1_M\">", f)
+        self.assertIn("<option value=\"IQ3_S\">", f)
+        narrowed = self.render_at(rows, {"search": "?quant=IQ1_M"})
+        self.assertEqual(narrowed["perf"].count("class='openable'"), 1)
+        self.assertIn("<option value=\"IQ1_M\" selected>", narrowed["filters"])
+        self.assertTrue(narrowed["__views"].startswith("dash:hidden perf:shown"))        # a link that carries a filter is about the table
+        unknown = self.render_at(rows, {"search": "?quant=nothing"})
+        self.assertEqual(unknown["perf"].count("class='openable'"), 3)                    # a link to an unknown quantisation shows everything
+
     def test_the_tabs_are_dashboard_results_health_and_the_overview_lives_under_the_first(self):
         html = (ROOT / "docs" / "index.html").read_text()
         order = [html.index(f'id="tab-{t}"') for t in ("dash", "perf", "reports", "health")]
