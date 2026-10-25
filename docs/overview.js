@@ -114,16 +114,14 @@
     var used = {}; pts.forEach(function (p) { used[p.machine] = (used[p.machine] || 0) + 1; });
     var legend = Object.keys(used).sort().map(function (k) { return "<span class='key'><i class='sw " + mc[k].cls + "'></i>" + esc(mc[k].label) + "</span>"; }).join("");
     var shapes = "<span class='key'><i class='sw round'></i>standard-v1</span><span class='key'><i class='sw diamond'></i>standard-v2</span>";
-    var field = function (key, name, ph) { return "<input type='number' step='any' min='0' data-axis='" + key + "' aria-label='" + name + "' placeholder='" + ph + "' value='" + (numOr(view[key]) === null ? "" : esc(view[key])) + "'>"; };
-    var zoom = function (k, what) { return "<button type='button' class='z' data-zoom='" + k + "+' title='Zoom in on " + what + "' aria-label='Zoom in on " + what + "'>+</button><button type='button' class='z' data-zoom='" + k + "-' title='Zoom out on " + what + "' aria-label='Zoom out on " + what + "'>−</button>"; };
-    var controls = "<div class='axes'><span class='ax'>Prompt speed (x) " + field("xmin", "x axis from", "0") + " to " + field("xmax", "x axis to", "auto") + " " + zoom("x", "the x axis") + "</span>" +
-      "<span class='ax'>Decode speed (y) " + field("ymin", "y axis from", "0") + " to " + field("ymax", "y axis to", "auto") + " " + zoom("y", "the y axis") + "</span>" +
+    var controls = "<div class='axes'><button type='button' class='z' data-zoom='+' title='Zoom in' aria-label='Zoom in'>+</button><button type='button' class='z' data-zoom='-' title='Zoom out' aria-label='Zoom out'>−</button>" +
       "<button type='button' data-fit>Fit to data</button><button type='button' data-reset>Reset</button></div>";
     var outside = all.length - pts.length ? " " + (all.length - pts.length) + " of " + all.length + " results are outside this range; Reset shows them all." : "";
     var round = function (v) { return +v.toPrecision(6); };
-    return "<button type='button' class='expand' data-expand aria-expanded='false' title='Show the speed map larger'>Expand</button><h2>Speed map</h2><p class='hint'>One point per result: right reads a prompt faster, up writes the answer faster. Drag on the chart to zoom into an area; with the map opened, the wheel zooms around the mouse; + and − scale an axis; click a point to open it.</p>" + controls +
+    return "<button type='button' class='expand' data-expand aria-expanded='false' title='Show the speed map larger'>Expand</button><h2>Speed map</h2><p class='hint'>One point per result: right reads a prompt faster, up writes the answer faster. Click a point to open it.</p>" + controls +
       "<svg class='viz' viewBox='0 0 " + W + " " + H + "' data-view='" + [xmin, xmax, ymin, ymax].map(round).join(",") + "' data-plot='" + [L, R, T, B, W, H].join(",") + "' role='img' aria-label='Decode speed against prompt speed, one point per result'>" + g + "</svg>" +
       "<div class='legend'>" + legend + shapes + "</div>" +
+      "<p class='hint zoomhelp'><b>To zoom:</b> drag a rectangle over the area you want, or use + and −. With the map opened, the wheel zooms around the mouse. Right-click the chart to zoom out; Reset shows everything.</p>" +
       "<p class='hint'>A map of what was measured, not a ranking: the points differ in model, quantisation, engine and configuration." + outside + "</p>";
   }
 

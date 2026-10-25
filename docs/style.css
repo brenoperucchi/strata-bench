@@ -188,9 +188,7 @@ details.gpu > summary { color: var(--fg); }
 #ov-map .expand { position: absolute; top: 10px; right: 12px; background: var(--card); color: var(--accent); border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; font: inherit; font-size: .84rem; cursor: pointer; }
 #ov-map .expand:hover { border-color: var(--accent); }
 #ov-map.expanded { position: fixed; inset: 12px; z-index: 50; overflow: auto; box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .55); padding: 18px 22px; }
-.axes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin: 6px 0 0; font-size: .84rem; color: var(--muted); }
-.axes .ax { display: inline-flex; align-items: center; gap: 4px; }
-.axes input { width: 4.8em; padding: 3px 6px; font: inherit; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 6px; }
+.axes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 6px 0 0; font-size: .84rem; color: var(--muted); }
 .axes button { background: var(--card); color: var(--accent); border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; font: inherit; cursor: pointer; }
 .axes button:hover { border-color: var(--accent); }
 .axes button.z { padding: 1px 8px; min-width: 1.9em; font-weight: 700; }

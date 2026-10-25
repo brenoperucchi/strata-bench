@@ -48,18 +48,18 @@
       else if (closest(e, "[data-fit]")) { var f = fit(); if (f) { ["xmin", "xmax", "ymin", "ymax"].forEach(function (k) { view[k] = f[k]; }); draw(); } }
       else if (closest(e, "[data-reset]")) { ["xmin", "xmax", "ymin", "ymax"].forEach(function (k) { delete view[k]; }); draw(); }
     });
-    // + and − on an axis: the range shrinks or grows around its middle; a drag on the chart zooms into the rectangle
+    // + and − zoom both axes around the middle of the chart; a drag on the chart zooms into the rectangle; a right-click zooms out around the mouse
     var current = function () { var svg = panel.querySelector("svg[data-view]"); if (!svg) return null; var v = svg.getAttribute("data-view").split(",").map(Number); return { svg: svg, x: [v[0], v[1]], y: [v[2], v[3]] }; };
     var round = function (v) { return +v.toPrecision(4); };
-    var zoomAxis = function (axis, factor) {
-      var c = current(); if (!c) return;
-      var lo = c[axis][0], hi = c[axis][1], mid = (lo + hi) / 2, half = (hi - lo) / 2 / factor;
-      view[axis + "min"] = round(Math.max(0, mid - half)); view[axis + "max"] = round(mid + half);
+    var zoomBy = function (factor, at) {
+      var c = current(); if (!c || typeof StrataOverview === "undefined") return;
+      var v = StrataOverview.zoomAt({ x: c.x, y: c.y }, at || { x: 0.5, y: 0.5 }, factor);
+      ["xmin", "xmax", "ymin", "ymax"].forEach(function (key) { view[key] = v[key]; });
       draw();
     };
     panel.addEventListener("click", function (e) {
       var b = closest(e, "[data-zoom]"); if (!b) return;
-      var d = b.getAttribute("data-zoom"); zoomAxis(d.charAt(0), d.charAt(1) === "+" ? 1.6 : 1 / 1.6);
+      zoomBy(b.getAttribute("data-zoom") === "+" ? 1.6 : 1 / 1.6);
     });
     var drag = null;
     panel.addEventListener("pointerdown", function (e) {
@@ -100,15 +100,16 @@
       var at = { x: ((e.clientX - r.left) * k - p[0]) / w, y: ((p[5] - p[3]) - (e.clientY - r.top) * k) / h };
       if (at.x < 0 || at.x > 1 || at.y < 0 || at.y > 1) return;                      // off the plot (on an axis label, say): leave the wheel alone
       e.preventDefault();
-      var v = StrataOverview.zoomAt({ x: c.x, y: c.y }, at, Math.exp(-(e.deltaY * (e.deltaMode === 1 ? 16 : 1)) * 0.0015));
-      ["xmin", "xmax", "ymin", "ymax"].forEach(function (key) { view[key] = v[key]; });
-      draw();
+      zoomBy(Math.exp(-(e.deltaY * (e.deltaMode === 1 ? 16 : 1)) * 0.0015), at);
     }, { passive: false });
-    panel.addEventListener("change", function (e) {                 // an axis box was edited: empty, or a number
-      var box = closest(e, "[data-axis]"); if (!box) return;
-      var v = parseFloat(box.value);
-      if (isFinite(v) && v >= 0) view[box.getAttribute("data-axis")] = v; else delete view[box.getAttribute("data-axis")];
-      draw();
+    panel.addEventListener("contextmenu", function (e) {                // right-click on the plot: zoom out around the mouse, in place of the browser menu
+      var svg = closest(e, "svg[data-view]"); if (!svg || closest(e, "a")) return;
+      var r = svg.getBoundingClientRect(), p = svg.getAttribute("data-plot").split(",").map(Number), k = p[4] / r.width;
+      var w = p[4] - p[0] - p[1], h = p[5] - p[2] - p[3];
+      var at = { x: ((e.clientX - r.left) * k - p[0]) / w, y: ((p[5] - p[3]) - (e.clientY - r.top) * k) / h };
+      if (at.x < 0 || at.x > 1 || at.y < 0 || at.y > 1) return;
+      e.preventDefault();
+      zoomBy(1 / 1.6, at);
     });
     if (typeof document.addEventListener === "function") document.addEventListener("keydown", function (e) { if (e.key === "Escape" && panel.classList.contains("expanded")) set(false); });
     if (typeof window !== "undefined" && typeof window.addEventListener === "function") {

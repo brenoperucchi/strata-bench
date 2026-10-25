@@ -277,10 +277,16 @@ class OverviewHtml(unittest.TestCase):
         fitted = run_node(js % (json.dumps(rows), json.dumps(f)))
         self.assertEqual((fitted["dots"], fitted["outside"]), (3, []))
 
-    def test_the_speed_map_tells_the_page_its_axes_and_has_zoom_buttons_on_both(self):
+    def test_the_speed_map_tells_the_page_its_axes_and_has_one_pair_of_zoom_buttons_and_no_axis_boxes(self):
         h = run_node("const O = require('./docs/overview.js'); console.log(JSON.stringify(O.speedMap(%s, 800, {xmin: 500, xmax: 1500})));" % json.dumps(self.rows()))
-        for k in ("x+", "x-", "y+", "y-"):
-            self.assertIn(f"data-zoom='{k}'", h)
+        self.assertIn("data-zoom='+'", h)
+        self.assertIn("data-zoom='-'", h)
+        self.assertEqual(h.count("data-zoom="), 2)                                   # one pair, for both axes
+        self.assertIn("data-reset", h)
+        for gone in ("data-axis", "Prompt speed (x)", "Decode speed (y)", "<input"):
+            self.assertNotIn(gone, h)                                                # the typed ranges are gone; the buttons, the drag and the wheel do the work
+        for how in ("drag", "wheel", "right-click"):
+            self.assertIn(how, h.lower())                                            # the legend says how to zoom
         self.assertIn("data-view='500,1500,0,", h)                                   # what the zoom buttons and the drag read: the range now on screen
         self.assertIn("data-plot='", h)
         short = run_node("const O = require('./docs/overview.js'); console.log(JSON.stringify([O.speedMap(%s, 800).match(/viewBox='0 0 800 (\\d+)'/)[1], O.speedMap(%s, 800, {}, 600).match(/viewBox='0 0 800 (\\d+)'/)[1]]));" % (json.dumps(self.rows()), json.dumps(self.rows())))
