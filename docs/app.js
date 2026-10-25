@@ -91,6 +91,19 @@
         draw();
       });
     }
+    // The wheel on the opened map zooms around the mouse, as on a trading chart: up zooms in, down zooms out. Closed, the wheel scrolls the page as usual.
+    panel.addEventListener("wheel", function (e) {
+      if (!panel.classList.contains("expanded") || typeof StrataOverview === "undefined") return;
+      var svg = closest(e, "svg[data-view]"), c = current(); if (!svg || !c) return;
+      var r = svg.getBoundingClientRect(), p = svg.getAttribute("data-plot").split(",").map(Number), k = p[4] / r.width;
+      var w = p[4] - p[0] - p[1], h = p[5] - p[2] - p[3];
+      var at = { x: ((e.clientX - r.left) * k - p[0]) / w, y: ((p[5] - p[3]) - (e.clientY - r.top) * k) / h };
+      if (at.x < 0 || at.x > 1 || at.y < 0 || at.y > 1) return;                      // off the plot (on an axis label, say): leave the wheel alone
+      e.preventDefault();
+      var v = StrataOverview.zoomAt({ x: c.x, y: c.y }, at, Math.exp(-(e.deltaY * (e.deltaMode === 1 ? 16 : 1)) * 0.0015));
+      ["xmin", "xmax", "ymin", "ymax"].forEach(function (key) { view[key] = v[key]; });
+      draw();
+    }, { passive: false });
     panel.addEventListener("change", function (e) {                 // an axis box was edited: empty, or a number
       var box = closest(e, "[data-axis]"); if (!box) return;
       var v = parseFloat(box.value);

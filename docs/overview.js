@@ -44,6 +44,17 @@
   var niceStep = function (v) { var p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; };
 
   // The axes the map opens with start at zero; fit() gives the ones that just hold the data, so a cluster of results can be pulled apart.
+  // The wheel on the expanded map: a factor above 1 zooms in, below 1 out, and the value under the mouse stays under the mouse.
+  // `range` is {x:[lo,hi], y:[lo,hi]} as drawn, `at` the mouse as a fraction of the plot (x from the left, y from the bottom).
+  function zoomAt(range, at, factor) {
+    var f = Math.max(factor, 1e-3), out = {};
+    [["x", "xmin", "xmax"], ["y", "ymin", "ymax"]].forEach(function (a) {
+      var lo = range[a[0]][0], hi = range[a[0]][1], span = hi - lo, frac = Math.max(0, Math.min(1, at[a[0]]));
+      var next = Math.max(span / f, span * 1e-4), under = lo + frac * span, nlo = under - frac * next;      // never collapses to a point
+      out[a[1]] = +Math.max(0, nlo).toPrecision(6); out[a[2]] = +(nlo + next).toPrecision(6);
+    });
+    return out;
+  }
   var numOr = function (v) { return typeof v === "number" && isFinite(v) ? v : null; };
   function fit(rows) {
     var pts = I.speedPoints(rows);
@@ -237,7 +248,7 @@
     return "<h2>Same model, different machines</h2>" + one(list[0]) + (list.length > 1 ? "<details class='more'><summary>Show " + (list.length - 1) + " more</summary>" + list.slice(1, 8).map(one).join("") + "</details>" : "");
   }
 
-  var api = { kpi: kpi, speedMap: speedMap, fit: fit, pairs: pairs, sameModel: sameModel, machines: machines };
+  var api = { kpi: kpi, speedMap: speedMap, fit: fit, zoomAt: zoomAt, pairs: pairs, sameModel: sameModel, machines: machines };
   root.StrataOverview = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : this);

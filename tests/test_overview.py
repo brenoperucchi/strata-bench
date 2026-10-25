@@ -287,6 +287,23 @@ class OverviewHtml(unittest.TestCase):
         self.assertLessEqual(int(short[0]), 270)                                     # the card stays low
         self.assertEqual(short[1], "600")                                            # opened over the page it takes the height it is given
 
+    def test_the_wheel_zooms_around_the_point_under_the_mouse(self):
+        z = lambda rng, at, f: run_node("const O = require('./docs/overview.js'); console.log(JSON.stringify(O.zoomAt(%s, %s, %s)));" % (json.dumps(rng), json.dumps(at), f))
+        rng = {"x": [0, 4000], "y": [0, 300]}
+        v = z(rng, {"x": 0.5, "y": 0.5}, 2)                                           # in at the middle: the range halves around the middle
+        self.assertEqual((v["xmin"], v["xmax"], v["ymin"], v["ymax"]), (1000, 3000, 75, 225))
+        v = z(rng, {"x": 0.25, "y": 0.8}, 2)                                          # the value under the mouse stays where the mouse is
+        self.assertAlmostEqual(v["xmin"] + 0.25 * (v["xmax"] - v["xmin"]), 1000, places=3)
+        self.assertAlmostEqual(v["ymin"] + 0.8 * (v["ymax"] - v["ymin"]), 240, places=3)
+        self.assertAlmostEqual(v["xmax"] - v["xmin"], 2000, places=3)
+        v = z(rng, {"x": 0.0, "y": 0.0}, 2)                                           # at the corner the origin stays put
+        self.assertEqual((v["xmin"], v["ymin"]), (0, 0))
+        v = z({"x": [1000, 3000], "y": [50, 250]}, {"x": 0.5, "y": 0.5}, 0.5)         # out: the range doubles, and never goes below zero
+        self.assertEqual((v["xmin"], v["xmax"]), (0, 4000))
+        self.assertEqual((v["ymin"], v["ymax"]), (0, 350))
+        v = z({"x": [0, 4000], "y": [0, 300]}, {"x": 0.5, "y": 0.5}, 1e9)             # a far zoom stops before the range collapses to nothing
+        self.assertGreater(v["xmax"] - v["xmin"], 0)
+
     def opening_tab(self, location=None):
         data = {"protocols": ["standard-v1"], "count": 1, "results": [row("a")]}
         tmp = Path(tempfile.mkdtemp())
