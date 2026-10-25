@@ -121,7 +121,7 @@
       "<button type='button' data-fit>Fit to data</button><button type='button' data-reset>Reset</button></div>";
     var outside = all.length - pts.length ? " " + (all.length - pts.length) + " of " + all.length + " results are outside this range; Reset shows them all." : "";
     var round = function (v) { return +v.toPrecision(6); };
-    return "<button type='button' class='expand' data-expand aria-expanded='false' title='Show the speed map larger'>Expand</button><h2>Speed map</h2><p class='hint'>One point per result: right reads a prompt faster, up writes the answer faster. Drag on the chart to zoom into an area; + and − scale an axis; click a point to open it.</p>" + controls +
+    return "<button type='button' class='expand' data-expand aria-expanded='false' title='Show the speed map larger'>Expand</button><h2>Speed map</h2><p class='hint'>One point per result: right reads a prompt faster, up writes the answer faster. Drag on the chart to zoom into an area; with the map opened, the wheel zooms around the mouse; + and − scale an axis; click a point to open it.</p>" + controls +
       "<svg class='viz' viewBox='0 0 " + W + " " + H + "' data-view='" + [xmin, xmax, ymin, ymax].map(round).join(",") + "' data-plot='" + [L, R, T, B, W, H].join(",") + "' role='img' aria-label='Decode speed against prompt speed, one point per result'>" + g + "</svg>" +
       "<div class='legend'>" + legend + shapes + "</div>" +
       "<p class='hint'>A map of what was measured, not a ranking: the points differ in model, quantisation, engine and configuration." + outside + "</p>";
